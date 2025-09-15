@@ -1,3 +1,4 @@
+import { connectDB } from '@/app/db/dbConnection';
 import { NextRequest, NextResponse } from 'next/server';
 
 interface RouteParams {
@@ -5,21 +6,26 @@ interface RouteParams {
     [key: string]: string;
   };
 }
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  console.log(request, params);
+export async function GET(_request: NextRequest, { params }: RouteParams) {
+  console.log(params);
   return NextResponse.json({
     message: `obteniendo cliente ${params.clienteId}`,
   });
 }
 
 export async function POST() {
+  connectDB();
   return NextResponse.json({ message: 'creando cliente' });
 }
 
-export async function DELETE() {
-  return NextResponse.json({ message: 'Eliminando cliente' });
+export async function DELETE(_request: NextRequest, { params }: RouteParams) {
+  return NextResponse.json({
+    message: ` Eliminando cliente ${params.clienteId}`,
+  });
 }
 
-export async function PUT() {
-  return NextResponse.json({ message: 'Actualizando cliente' });
+export async function PUT(_request: NextRequest, { params }: RouteParams) {
+  return NextResponse.json({
+    message: ` Actualizando cliente ${params.clienteId}`,
+  });
 }
