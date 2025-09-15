@@ -8,8 +8,9 @@ interface RouteParams {
 }
 export async function GET(_request: NextRequest, { params }: RouteParams) {
   console.log(params);
+  const { clienteId } = await params;
   return NextResponse.json({
-    message: `obteniendo cliente ${params.clienteId}`,
+    message: `obteniendo cliente ${clienteId}`,
   });
 }
 
@@ -19,13 +20,15 @@ export async function POST() {
 }
 
 export async function DELETE(_request: NextRequest, { params }: RouteParams) {
+  const { clienteId } = await params;
   return NextResponse.json({
-    message: ` Eliminando cliente ${params.clienteId}`,
+    message: ` Eliminando cliente ${clienteId}`,
   });
 }
 
 export async function PUT(_request: NextRequest, { params }: RouteParams) {
+  const { clienteId } = await params;
   return NextResponse.json({
-    message: ` Actualizando cliente ${params.clienteId}`,
+    message: ` Actualizando cliente ${clienteId}`,
   });
 }
