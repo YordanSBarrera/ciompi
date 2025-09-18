@@ -1,4 +1,3 @@
 export default function Home() {
-  console.log('Console.log en el Cliente');
-  return <>Hola</>;
+  return <>Bienvenidos al sistema de cobros de CIOMPI</>;
 }

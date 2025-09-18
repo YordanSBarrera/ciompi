@@ -21,18 +21,27 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function POST(request: Request) {
-  const data = await request.json();
-  const newClient = new Cliente(data);
-  console.log(newClient);
-  return NextResponse.json({ message: 'creando cliente' });
-}
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  connectDB();
+  try {
+    const clienteBorrado = await Cliente.findByIdAndDelete(params.clienteId);
 
-export async function DELETE(_request: NextRequest, { params }: RouteParams) {
-  const { clienteId } = await params;
-  return NextResponse.json({
-    message: ` Eliminando cliente ${clienteId}`,
-  });
+    if (!clienteBorrado)
+      return NextResponse.json(
+        {
+          message: 'Client not found',
+        },
+        {
+          status: 404,
+        }
+      );
+
+    return NextResponse.json(clienteBorrado);
+  } catch (error: any) {
+    return NextResponse.json(error.message, {
+      status: 400,
+    });
+  }
 }
 
 export async function PUT(request: NextRequest, { params }: RouteParams) {

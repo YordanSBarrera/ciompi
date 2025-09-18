@@ -21,3 +21,10 @@ export async function POST(request: Request) {
     } else return NextResponse.json({ message: 'Error en algun lado ;-)' });
   }
 }
+
+// export async function POST(request: Request) {
+//   const data = await request.json();
+//   const newClient = new Cliente(data);
+//   console.log(newClient);
+//   return NextResponse.json({ message: 'creando cliente' });
+// }
