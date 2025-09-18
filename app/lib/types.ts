@@ -1,4 +1,4 @@
-export interface Cliente {
+export interface ClienteType {
   NOMBRE: string;
   DIRECCION?: string;
   CODCLI: string;
@@ -57,4 +57,10 @@ export interface Venaux {
   CUO_VEN: string;
   P_HASTA: string;
   MONEDA: string;
+}
+
+export interface RouteParams {
+  params: {
+    [key: string]: string;
+  };
 }
