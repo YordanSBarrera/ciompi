@@ -6,9 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
     connectDB();
-    const { clienteId } = params;
     const clienteEncontrado = await Cliente.findById(params.clienteId);
-    console.log('ID ', clienteId, params);
 
     if (!clienteEncontrado) {
       return NextResponse.json(
@@ -18,7 +16,9 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(clienteEncontrado);
-  } catch (error) {}
+  } catch (error: any) {
+    return NextResponse.json(error.message, { status: 404 });
+  }
 }
 
 export async function POST(request: Request) {
@@ -35,9 +35,16 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   });
 }
 
-export async function PUT(_request: NextRequest, { params }: RouteParams) {
-  const { clienteId } = await params;
-  return NextResponse.json({
-    message: ` Actualizando cliente ${clienteId}`,
-  });
+export async function PUT(request: NextRequest, { params }: RouteParams) {
+  try {
+    const data = await request.json();
+    const clienteUpdated = await Cliente.findByIdAndUpdate(
+      params.clienteId,
+      data,
+      { new: true }
+    );
+    return NextResponse.json(clienteUpdated);
+  } catch (error: any) {
+    return NextResponse.json(error.message, { status: 404 });
+  }
 }
