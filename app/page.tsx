@@ -1,3 +1,7 @@
+'use client';
+
+import MainWrapper from './components/MainWrapper';
+
 export default function Home() {
-  return <>Hola</>;
+  return <MainWrapper>Hola bienvenidos a Ciompi</MainWrapper>;
 }
