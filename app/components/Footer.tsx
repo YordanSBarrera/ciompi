@@ -1,24 +1,22 @@
-import { Stack, Typography } from "@mui/material";
-import { bgDarkCard } from "../../utils/const";
-import MyLogo from "../../components/MyLogo";
-import { useTranslation } from "react-i18next";
+import { Stack, Typography } from '@mui/material';
+import { azulBase } from '@/lib/color';
+import LogoApp from './LogoApp';
 
 const Footer = () => {
-  const { t } = useTranslation();
-
   return (
     <Stack
       textAlign="center"
-      bgcolor={bgDarkCard}
+      bgcolor={azulBase}
       color="#fff"
       borderRadius={1}
       width="100%"
       direction="row"
       justifyContent="space-evenly"
       alignItems="center"
+      height={'7vw'}
     >
-      <MyLogo widthProps="120px" />
-      <Typography variant="body2">{t("footer")}</Typography>
+      <Typography variant="body2">Footer</Typography>
+      <LogoApp widthProps={100} />
     </Stack>
   );
 };

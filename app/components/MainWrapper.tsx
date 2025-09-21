@@ -1,7 +1,9 @@
-import { Container, Stack, Typography } from '@mui/material';
+import { Container, Stack } from '@mui/material';
 import { ReactNode } from 'react';
-
-import backgroung from '@/public/ciompiLocal.webp';
+import SearchAppBar from './SearchAppBar';
+import Footer from './Footer';
+import { imgLocal } from '@/lib/imagenes';
+import { blancoAzuloso } from '@/lib/color';
 
 type MainWrapperProps = {
   children: ReactNode;
@@ -13,25 +15,29 @@ const MainWrapper = ({ children }: MainWrapperProps) => {
       sx={{
         mt: 0,
         width: '100vw',
-        backgroundImage: `url(${backgroung})`,
+        backgroundImage: `url(${imgLocal})`,
         backgroundPosition: 'top center',
         backgroundSize: 'cover',
         backgroundRepeat: 'no-repeat',
         backgroundAttachment: 'fixed',
-        color: 'white',
+        color: blancoAzuloso,
         minHeight: '100vh',
       }}
     >
       <Container>
-        <Stack alignSelf="flex-start">"Menu aca"</Stack>
-        <Stack width="100%" justifyContent="center" mt="90px" mb="60px">
-          <Typography variant="h4" component="h2" color="warning">
-            {'Sitio Web en desarrollo'}
-          </Typography>
+        <Stack alignSelf="flex-start">
+          <SearchAppBar />
+        </Stack>
+        <Stack width="100%" justifyContent="center">
           {children}
         </Stack>
-        <Stack position="fixed" width="100%" bottom={0}>
-          "Footer here"
+        <Stack
+          position="fixed"
+          // width="100%"
+          width="100vw"
+          bottom={0}
+        >
+          <Footer />
         </Stack>
       </Container>
     </Stack>
