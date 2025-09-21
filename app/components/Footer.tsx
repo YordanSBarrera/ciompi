@@ -13,9 +13,10 @@ const Footer = () => {
       direction="row"
       justifyContent="space-evenly"
       alignItems="center"
+      height={'7vw'}
     >
-      <LogoApp widthProps={120} />
       <Typography variant="body2">Footer</Typography>
+      <LogoApp widthProps={100} />
     </Stack>
   );
 };
