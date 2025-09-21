@@ -3,6 +3,7 @@ export interface ClienteType {
   DIRECCION?: string;
   CODCLI: string;
   TELEFONO?: string;
+  id: string;
 }
 
 export interface Cuoaux {

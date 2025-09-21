@@ -5,12 +5,7 @@ import { Stack } from '@mui/material';
 
 export default function Home() {
   return (
-    <Stack
-      border=" 1px solid red"
-      position="relative"
-      width="100%"
-      height="70vw"
-    >
+    <Stack position="relative" width="100%" height="70vw">
       <Image
         src={imgLocal}
         alt="img del local"
@@ -20,7 +15,7 @@ export default function Home() {
         //   objectPosition: 'center',
         // }}
         style={{
-          objectFit: 'cover',
+          objectFit: 'contain',
           objectPosition: 'center',
           width: '100%',
           height: '100%',
