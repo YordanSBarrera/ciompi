@@ -1,3 +1,4 @@
+'use client';
 import { homeRoute } from '@/lib/rutas';
 import { Box, styled } from '@mui/material';
 import Link from 'next/link';

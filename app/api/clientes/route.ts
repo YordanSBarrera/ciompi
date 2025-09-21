@@ -1,5 +1,5 @@
-import { connectDB } from '@/app/db/dbConnection';
-import Cliente from '@/app/models/cliente';
+import { connectDB } from '@/db/dbConnection';
+import Cliente from '@/models/cliente';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
