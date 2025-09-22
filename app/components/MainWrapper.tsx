@@ -1,6 +1,6 @@
 import { Container, Stack } from '@mui/material';
 import { ReactNode } from 'react';
-import SearchAppBar from './SearchAppBar';
+import SearchAppBar from './searchAppBar/SearchAppBar';
 import Footer from './Footer';
 import { imgLocal } from '@/lib/imagenes';
 
