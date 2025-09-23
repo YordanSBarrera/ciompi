@@ -1,17 +1,25 @@
 'use client';
-import * as React from 'react';
+import { MouseEvent, useState } from 'react';
 import { styled, alpha } from '@mui/material/styles';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
-import Toolbar from '@mui/material/Toolbar';
-import IconButton from '@mui/material/IconButton';
-import Typography from '@mui/material/Typography';
-import InputBase from '@mui/material/InputBase';
-import MenuIcon from '@mui/icons-material/Menu';
-import SearchIcon from '@mui/icons-material/Search';
 import LogoApp from '../LogoApp';
 import { azulBase } from '@/lib/color';
 import { AccountMenu } from '../accountMenu';
+import {
+  Divider,
+  IconButton,
+  InputBase,
+  Menu,
+  MenuItem,
+  Toolbar,
+  Tooltip,
+  Typography,
+} from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
+import SearchIcon from '@mui/icons-material/Search';
+import { clientesRoute, empresasRoute, operacionesRoute } from '@/lib/rutas';
+import Link from 'next/link';
 
 const Search = styled('div')(({ theme }) => ({
   position: 'relative',
@@ -56,19 +64,72 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 }));
 
 export default function SearchAppBar() {
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+  const handleClick = (event: MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static" sx={{ backgroundColor: azulBase }}>
         <Toolbar>
-          <IconButton
-            size="large"
-            edge="start"
-            color="inherit"
-            aria-label="open drawer"
-            sx={{ mr: 2 }}
+          <Tooltip title="Menu">
+            <IconButton
+              size="large"
+              edge="start"
+              color="inherit"
+              aria-label="open drawer"
+              sx={{ mr: 2 }}
+              onClick={handleClick}
+            >
+              <MenuIcon />
+            </IconButton>
+          </Tooltip>
+          <Menu
+            id="demo-positioned-menu"
+            aria-labelledby="demo-positioned-button"
+            anchorEl={anchorEl}
+            open={open}
+            onClose={handleClose}
+            anchorOrigin={{
+              vertical: 'top',
+              horizontal: 'left',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'left',
+            }}
           >
-            <MenuIcon />
-          </IconButton>
+            <Link
+              href={`${clientesRoute}`}
+              style={{ textDecoration: 'none', color: 'inherit' }}
+            >
+              <MenuItem onClick={handleClose}>Clientes</MenuItem>
+            </Link>
+            <Link
+              href={`${empresasRoute}`}
+              style={{ textDecoration: 'none', color: 'inherit' }}
+            >
+              <MenuItem onClick={handleClose}>Empresas</MenuItem>
+            </Link>
+            <Link
+              href={`${operacionesRoute}`}
+              style={{ textDecoration: 'none', color: 'inherit' }}
+            >
+              <MenuItem onClick={handleClose}>Operaciones</MenuItem>
+            </Link>
+            <Divider />
+            <Link
+              href={`${operacionesRoute}`}
+              style={{ textDecoration: 'none', color: 'inherit' }}
+            >
+              <MenuItem onClick={handleClose}>Usuario</MenuItem>
+            </Link>
+          </Menu>
           <Typography
             variant="h6"
             noWrap
@@ -92,4 +153,3 @@ export default function SearchAppBar() {
     </Box>
   );
 }
-// ----------------------------------------------------------------------

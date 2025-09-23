@@ -71,9 +71,7 @@ export const AccountMenu = () => {
         <MenuItem onClick={handleClose}>
           <Avatar /> Profile
         </MenuItem>
-
         <Divider />
-
         <MenuItem onClick={handleClose}>
           <ListItemIcon>
             <Settings fontSize="small" />
