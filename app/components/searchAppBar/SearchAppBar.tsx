@@ -18,7 +18,14 @@ import {
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import SearchIcon from '@mui/icons-material/Search';
-import { clientesRoute, empresasRoute, operacionesRoute } from '@/lib/rutas';
+import {
+  clientesRoute,
+  datosGeneralesRoute,
+  empresasRoute,
+  operacionesRoute,
+  usuarioRoute,
+  utilitariosRoute,
+} from '@/lib/rutas';
 import Link from 'next/link';
 
 const Search = styled('div')(({ theme }) => ({
@@ -122,9 +129,21 @@ export default function SearchAppBar() {
             >
               <MenuItem onClick={handleClose}>Operaciones</MenuItem>
             </Link>
+            <Link
+              href={`${datosGeneralesRoute}`}
+              style={{ textDecoration: 'none', color: 'inherit' }}
+            >
+              <MenuItem onClick={handleClose}>Datos Generales</MenuItem>
+            </Link>
+            <Link
+              href={`${utilitariosRoute}`}
+              style={{ textDecoration: 'none', color: 'inherit' }}
+            >
+              <MenuItem onClick={handleClose}>Utilitarios</MenuItem>
+            </Link>
             <Divider />
             <Link
-              href={`${operacionesRoute}`}
+              href={`${usuarioRoute}`}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
               <MenuItem onClick={handleClose}>Usuario</MenuItem>
