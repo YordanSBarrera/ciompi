@@ -13,7 +13,6 @@ const Footer = () => {
       direction="row"
       justifyContent="space-evenly"
       alignItems="center"
-      height={'7vw'}
     >
       <Typography variant="body2">Footer</Typography>
       <LogoApp widthProps={100} />

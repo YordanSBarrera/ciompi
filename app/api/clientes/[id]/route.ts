@@ -1,12 +1,12 @@
-import { connectDB } from '@/app/db/dbConnection';
-import { RouteParams } from '@/app/lib/types';
-import Cliente from '@/app/models/cliente';
+import { connectDB } from '@/db/dbConnection';
+import { RouteParams } from '@/lib/types';
+import Cliente from '@/models/cliente';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(_request: NextRequest, { params }: RouteParams) {
+export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     connectDB();
-    const clienteEncontrado = await Cliente.findById(params.clienteId);
+    const clienteEncontrado = await Cliente.findById(params.id);
 
     if (!clienteEncontrado) {
       return NextResponse.json(
@@ -24,7 +24,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   connectDB();
   try {
-    const clienteBorrado = await Cliente.findByIdAndDelete(params.clienteId);
+    const clienteBorrado = await Cliente.findByIdAndDelete(params.id);
 
     if (!clienteBorrado)
       return NextResponse.json(
@@ -47,11 +47,9 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
     const data = await request.json();
-    const clienteUpdated = await Cliente.findByIdAndUpdate(
-      params.clienteId,
-      data,
-      { new: true }
-    );
+    const clienteUpdated = await Cliente.findByIdAndUpdate(params.id, data, {
+      new: true,
+    });
     return NextResponse.json(clienteUpdated);
   } catch (error: any) {
     return NextResponse.json(error.message, { status: 404 });
