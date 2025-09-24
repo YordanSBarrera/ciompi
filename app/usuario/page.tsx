@@ -4,7 +4,6 @@ import ColorPalette from '../components/ColorPalette';
 const UsuarioPage = () => {
   return (
     <div>
-      UsuarioPage
       <ColorPalette />
     </div>
   );

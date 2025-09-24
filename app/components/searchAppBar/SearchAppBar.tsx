@@ -5,7 +5,7 @@ import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import LogoApp from '../LogoApp';
 import { azulBase } from '@/lib/color';
-import { AccountMenu } from '../accountMenu';
+// import { AccountMenu } from '../accountMenu';
 import {
   Divider,
   IconButton,
@@ -22,6 +22,7 @@ import {
   clientesRoute,
   datosGeneralesRoute,
   empresasRoute,
+  nuevoUsuarioRoute,
   operacionesRoute,
   usuarioRoute,
   utilitariosRoute,
@@ -141,12 +142,19 @@ export default function SearchAppBar() {
             >
               <MenuItem onClick={handleClose}>Utilitarios</MenuItem>
             </Link>
+
             <Divider />
             <Link
               href={`${usuarioRoute}`}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
               <MenuItem onClick={handleClose}>Usuario</MenuItem>
+            </Link>
+            <Link
+              href={`${nuevoUsuarioRoute}`}
+              style={{ textDecoration: 'none', color: 'inherit' }}
+            >
+              <MenuItem onClick={handleClose}>Nuevo Usuario</MenuItem>
             </Link>
           </Menu>
           <Typography
@@ -166,7 +174,7 @@ export default function SearchAppBar() {
               inputProps={{ 'aria-label': 'search' }}
             />
           </Search>
-          <AccountMenu />
+          {/* <AccountMenu /> */}
         </Toolbar>
       </AppBar>
     </Box>

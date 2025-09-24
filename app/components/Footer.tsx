@@ -14,7 +14,7 @@ const Footer = () => {
       justifyContent="space-evenly"
       alignItems="center"
     >
-      <Typography variant="body2">Footer</Typography>
+      <Typography variant="body2"></Typography>
       <LogoApp widthProps={100} />
     </Stack>
   );

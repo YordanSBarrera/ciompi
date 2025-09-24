@@ -65,3 +65,65 @@ export interface RouteParams {
     [key: string]: string;
   };
 }
+
+export interface Usuario {
+  _id?: string;
+  usuario: string;
+  password: string;
+  email: string;
+  nombre: string;
+  avatar?: Avatar | string; // Puede ser objeto o string simple
+  rol: 'admin' | 'supervisor' | 'usuario';
+  estado: 'activo' | 'inactivo' | 'bloqueado' | 'pendiente';
+  ultimoAcceso?: Date;
+  fechaCreacion: Date;
+  fechaActualizacion: Date;
+  preferencias?: PreferenciasUsuario;
+  informacionContacto?: InformacionContacto;
+  metadata?: MetadataUsuario;
+  departamento?: string;
+  cargo?: string;
+  permisosEspeciales?: string[];
+}
+
+export interface Avatar {
+  url: string;
+  publicId: string; // Para Cloudinary o similar
+  thumbnail?: string; // URL de miniatura
+}
+
+export interface PreferenciasUsuario {
+  tema: 'claro' | 'oscuro' | 'sistema';
+  idioma: string;
+  notificaciones: {
+    email: boolean;
+    push: boolean;
+    sms: boolean;
+  };
+}
+
+export interface InformacionContacto {
+  telefono?: string;
+  direccion?: {
+    calle: string;
+    ciudad: string;
+    estado: string;
+    codigoPostal: string;
+    pais: string;
+  };
+}
+
+export interface MetadataUsuario {
+  intentosLogin: number;
+  bloqueadoHasta?: Date;
+  fechaExpiracionPassword: Date;
+  sesionesActivas: number;
+  ipUltimoAcceso?: string;
+  dispositivoUltimoAcceso?: string;
+}
+
+export interface LoginCredentials {
+  usuario: string;
+  password: string;
+  rememberMe?: boolean;
+}
