@@ -44,14 +44,37 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   }
 }
 
+// export async function PUT(request: NextRequest, { params }: RouteParams) {
+//   try {
+//     const data = await request.json();
+//     const clienteUpdated = await Cliente.findByIdAndUpdate(params.id, data, {
+//       new: true,
+//     });
+//     return NextResponse.json(clienteUpdated);
+//   } catch (error: any) {
+//     return NextResponse.json(error.message, { status: 404 });
+//   }
+// }
+
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
+    await connectDB();
     const data = await request.json();
+
     const clienteUpdated = await Cliente.findByIdAndUpdate(params.id, data, {
       new: true,
+      runValidators: true,
     });
+
+    if (!clienteUpdated) {
+      return NextResponse.json(
+        { message: 'Cliente no encontrado' },
+        { status: 404 }
+      );
+    }
+
     return NextResponse.json(clienteUpdated);
   } catch (error: any) {
-    return NextResponse.json(error.message, { status: 404 });
+    return NextResponse.json({ message: error.message }, { status: 400 });
   }
 }

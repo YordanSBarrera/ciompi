@@ -90,13 +90,6 @@ export default function ClienteDetailPage() {
     );
   }
 
-  // Función para formatear teléfono
-  const formatTelefono = (telefono?: string) => {
-    if (!telefono) return 'No especificado';
-    // Formato básico para teléfonos
-    return telefono.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
-  };
-
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Box sx={{ mb: 3 }}>
@@ -212,7 +205,7 @@ export default function ClienteDetailPage() {
                 gutterBottom
                 sx={{ fontFamily: 'monospace' }}
               >
-                {formatTelefono(cliente.TELEFONO)}
+                {cliente.TELEFONO}
               </Typography>
             </Box>
 

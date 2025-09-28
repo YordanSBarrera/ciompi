@@ -9,6 +9,16 @@ export interface ClienteType {
   _id: string;
 }
 
+export interface ClienteFormType {
+  NOMBRE: string;
+  cedula?: string;
+  correo?: string;
+  profesion?: string;
+  DIRECCION?: string;
+  CODCLI: string;
+  TELEFONO?: string;
+}
+
 export interface Cuoaux {
   FECHA: string;
   SALDO: string;
