@@ -64,7 +64,6 @@ async function cargarClientes(): Promise<ClienteType[]> {
   try {
     await connectDB();
     const listaClientes = await cliente.find().lean();
-    // Convertir a objetos simples para serialización
     return JSON.parse(JSON.stringify(listaClientes));
   } catch (error) {
     console.error('Error cargando clientes:', error);

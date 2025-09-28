@@ -18,16 +18,8 @@ import {
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import SearchIcon from '@mui/icons-material/Search';
-import {
-  clientesRoute,
-  datosGeneralesRoute,
-  empresasRoute,
-  nuevoUsuarioRoute,
-  operacionesRoute,
-  usuarioRoute,
-  utilitariosRoute,
-} from '@/lib/rutas';
 import Link from 'next/link';
+import { routes } from '@/lib/rutas';
 
 const Search = styled('div')(({ theme }) => ({
   position: 'relative',
@@ -113,31 +105,31 @@ export default function SearchAppBar() {
             }}
           >
             <Link
-              href={`${clientesRoute}`}
+              href={routes.clientes}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
               <MenuItem onClick={handleClose}>Clientes</MenuItem>
             </Link>
             <Link
-              href={`${empresasRoute}`}
+              href={routes.empresas}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
               <MenuItem onClick={handleClose}>Empresas</MenuItem>
             </Link>
             <Link
-              href={`${operacionesRoute}`}
+              href={routes.operaciones}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
               <MenuItem onClick={handleClose}>Operaciones</MenuItem>
             </Link>
             <Link
-              href={`${datosGeneralesRoute}`}
+              href={routes.datosGenerales}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
               <MenuItem onClick={handleClose}>Datos Generales</MenuItem>
             </Link>
             <Link
-              href={`${utilitariosRoute}`}
+              href={routes.utilitarios}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
               <MenuItem onClick={handleClose}>Utilitarios</MenuItem>
@@ -145,13 +137,13 @@ export default function SearchAppBar() {
 
             <Divider />
             <Link
-              href={`${usuarioRoute}`}
+              href={routes.usuario}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
               <MenuItem onClick={handleClose}>Usuario</MenuItem>
             </Link>
             <Link
-              href={`${nuevoUsuarioRoute}`}
+              href={routes.nuevoUsuario}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
               <MenuItem onClick={handleClose}>Nuevo Usuario</MenuItem>

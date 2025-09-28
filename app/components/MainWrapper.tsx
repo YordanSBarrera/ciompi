@@ -27,15 +27,10 @@ const MainWrapper = ({ children }: MainWrapperProps) => {
         <Stack alignSelf="flex-start">
           <SearchAppBar />
         </Stack>
-        <Stack width="100%" justifyContent="center">
+        <Stack width="100%" justifyContent="center" mb={4}>
           {children}
         </Stack>
-        <Stack
-          position="fixed"
-          // width="100%"
-          width="100vw"
-          bottom={0}
-        >
+        <Stack position="fixed" width="100vw" bottom={0}>
           <Footer />
         </Stack>
       </Container>
