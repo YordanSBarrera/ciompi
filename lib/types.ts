@@ -1,9 +1,12 @@
 export interface ClienteType {
   NOMBRE: string;
+  cedula?: string;
+  correo?: string;
+  profesion?: string;
   DIRECCION?: string;
   CODCLI: string;
   TELEFONO?: string;
-  id: string;
+  _id: string;
 }
 
 export interface Cuoaux {
