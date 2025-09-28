@@ -18,7 +18,6 @@ import {
   Tooltip,
   MenuItem,
   Menu,
-  Fade,
 } from '@mui/material';
 import {
   Visibility as ViewIcon,
@@ -47,21 +46,44 @@ interface ListaClientesProps {
   clientes: ClienteType[];
 }
 
+interface MenuState {
+  anchorEl: HTMLElement | null;
+  clienteId: string | null;
+}
+
 export default function ListaClientes({ clientes }: ListaClientesProps) {
   const [filter, setFilter] = React.useState('');
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const open = Boolean(anchorEl);
+  const [menuState, setMenuState] = React.useState<MenuState>({
+    anchorEl: null,
+    clienteId: null,
+  });
   const router = useRouter();
 
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
+  const handleMenuOpen = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    clienteId: string
+  ) => {
+    setMenuState({
+      anchorEl: event.currentTarget,
+      clienteId,
+    });
   };
-  const handleClose = () => {
-    setAnchorEl(null);
+
+  const handleMenuClose = () => {
+    setMenuState({
+      anchorEl: null,
+      clienteId: null,
+    });
   };
+
   const handleClickVerDetalles = (id: string) => {
-    handleClose();
+    handleMenuClose();
     router.push(dynamicRoutes.cliente(id));
+  };
+
+  const handleClickEditar = (id: string) => {
+    handleMenuClose();
+    router.push(dynamicRoutes.clienteEditar(id));
   };
 
   const filteredClientes = clientes.filter(
@@ -198,20 +220,14 @@ export default function ListaClientes({ clientes }: ListaClientesProps) {
                 }}
               >
                 <TableCell>
-                  <Typography
-                    sx={{
-                      fontWeight: 600,
-                      color: grisOscuro,
-                    }}
-                  >
+                  <Typography sx={{ fontWeight: 600, color: grisOscuro }}>
                     {cliente.NOMBRE}
                   </Typography>
                 </TableCell>
-                {/* nombre/cedula/telefono/correo/direccion/profesion */}
+
                 <TableCell>
                   <Typography
                     sx={{
-                      variant: cliente.cedula ? 'body1' : 'caption',
                       color: cliente.cedula ? grisOscuro : azulClaro,
                       fontFamily: 'monospace',
                     }}
@@ -219,6 +235,7 @@ export default function ListaClientes({ clientes }: ListaClientesProps) {
                     {cliente.cedula || 'Sin dato'}
                   </Typography>
                 </TableCell>
+
                 <TableCell>
                   <Typography
                     sx={{
@@ -230,6 +247,7 @@ export default function ListaClientes({ clientes }: ListaClientesProps) {
                     {cliente.TELEFONO || 'No Data'}
                   </Typography>
                 </TableCell>
+
                 <TableCell>
                   <Typography
                     sx={{
@@ -241,10 +259,10 @@ export default function ListaClientes({ clientes }: ListaClientesProps) {
                     {cliente.correo || 'No Data'}
                   </Typography>
                 </TableCell>
+
                 <TableCell>
                   <Typography
                     sx={{
-                      variant: cliente.DIRECCION ? 'body1' : 'overline',
                       color: cliente.DIRECCION
                         ? 'text.primary'
                         : 'text.secondary',
@@ -257,11 +275,7 @@ export default function ListaClientes({ clientes }: ListaClientesProps) {
 
                 <TableCell>
                   <Typography
-                    // variant="caption"
-                    sx={{
-                      color: grisTexto,
-                      fontFamily: 'monospace',
-                    }}
+                    sx={{ color: grisTexto, fontFamily: 'monospace' }}
                   >
                     {cliente.profesion || 'No Data'}
                   </Typography>
@@ -271,29 +285,27 @@ export default function ListaClientes({ clientes }: ListaClientesProps) {
                   <Stack alignItems="flex-end">
                     <Tooltip title="Acciones" placement="top">
                       <IconButton
-                        aria-controls={open ? 'long-menu' : undefined}
-                        aria-expanded={open ? 'true' : undefined}
-                        aria-haspopup="true"
-                        onClick={handleClick}
+                        onClick={event => handleMenuOpen(event, cliente._id)}
                       >
                         <MoreVertIcon />
                       </IconButton>
                     </Tooltip>
 
+                    {/* Menú individual para cada fila */}
                     <Menu
-                      anchorEl={anchorEl}
-                      open={open}
-                      onClose={handleClose}
+                      anchorEl={menuState.anchorEl}
+                      open={Boolean(
+                        menuState.anchorEl &&
+                          menuState.clienteId === cliente._id
+                      )}
+                      onClose={handleMenuClose}
                       sx={{
                         '& .MuiPaper-root': {
                           borderRadius: '8px !important',
                           border: `1px solid ${grisClaro} !important`,
                           boxShadow: '0px 2px 3px rgba(0,0,0,0.1) !important',
                           minWidth: '140px !important',
-                          // Reset completo de estilos no deseados
                           outline: 'none !important',
-                          borderImage: 'none !important',
-                          backgroundImage: 'none !important',
                         },
                         '& .MuiMenu-list': {
                           padding: '4px 0 !important',
@@ -307,10 +319,18 @@ export default function ListaClientes({ clientes }: ListaClientesProps) {
                       <MenuItem
                         onClick={() => handleClickVerDetalles(cliente._id)}
                       >
+                        <ViewIcon
+                          sx={{ fontSize: 18, mr: 1, color: azulBase }}
+                        />
                         Ver Detalles
                       </MenuItem>
-                      <MenuItem onClick={handleClose}>Editar</MenuItem>
-                      <MenuItem onClick={handleClose}>
+                      <MenuItem onClick={() => handleClickEditar(cliente._id)}>
+                        <EditIcon
+                          sx={{ fontSize: 18, mr: 1, color: azulBase }}
+                        />
+                        Editar
+                      </MenuItem>
+                      <MenuItem onClick={handleMenuClose}>
                         <Typography variant="body2" color="error.main">
                           Eliminar
                         </Typography>
