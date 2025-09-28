@@ -70,7 +70,7 @@ export const Theme = createTheme({
     MuiPaper: {
       styleOverrides: {
         root: {
-          borderRadius: 12,
+          borderRadius: 'none',
         },
       },
     },

@@ -1,70 +1,338 @@
-import { GET } from '@/app/api/clientes/[id]/route';
+'use client';
 import { blanco, grisClaro, grisMedio } from '@/lib/color';
-import { ClienteType, RouteParams } from '@/lib/types';
-import { Stack } from '@mui/material';
-import React from 'react';
+import { ClienteType } from '@/lib/types';
+import {
+  Alert,
+  Box,
+  Button,
+  Chip,
+  CircularProgress,
+  Container,
+  Divider,
+  Grid,
+  Paper,
+  Typography,
+} from '@mui/material';
+import Link from 'next/link';
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 
-async function cargarDatosCliente({ params }: RouteParams) {
-  // Simula un objeto NextRequest mínimo para pasar como primer argumento
-  const fakeRequest = {
-    nextUrl: { searchParams: new URLSearchParams({}) },
-  } as any;
-  const clienteData = await GET(fakeRequest, { params });
-  console.log('Params: ', params);
-  console.log('Cliente Data: ', clienteData);
+export default function ClienteDetailPage() {
+  const params = useParams();
+  const id = params.id as string;
 
-  //   try {
-  //     connectDB();
-  //     const clienteEncontrado = await Cliente.findById(params.clienteId);
+  const [cliente, setCliente] = useState<ClienteType | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // await connectDB();
-  // const datosClliente = await cliente.find();
-  // return datosClliente;
-  return { id: '1', NOMBRE: 'Cliente Ejemplo', CODCLI: 'C001' } as ClienteType;
-}
+  useEffect(() => {
+    const fetchCliente = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-// type ClienteDetailProps = { cliente: ClienteType };
+        const response = await fetch(`/ciompi/api/clientes/${id}`);
 
-export default async function ClienteDetailPage({ params }: RouteParams) {
-  const cliente: ClienteType = await cargarDatosCliente({ params });
-  console.log('ClienteDetailPage', cliente);
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error('Cliente no encontrado');
+          }
+          throw new Error('Error al cargar el cliente');
+        }
+
+        const data = await response.json();
+        setCliente(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Error desconocido');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchCliente();
+    }
+  }, [id]);
+
+  if (loading) {
+    return (
+      <Container maxWidth="md" sx={{ mt: 4 }}>
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          minHeight="50vh"
+        >
+          <CircularProgress />
+        </Box>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container maxWidth="md" sx={{ mt: 4 }}>
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+        <Link href="/clientes">
+          <Button variant="contained">Volver a la lista</Button>
+        </Link>
+      </Container>
+    );
+  }
+
+  if (!cliente) {
+    return (
+      <Container maxWidth="md" sx={{ mt: 4 }}>
+        <Alert severity="warning">No se encontró información del cliente</Alert>
+      </Container>
+    );
+  }
 
   return (
-    <Stack bgcolor={blanco}>
-      <Stack
-        spacing={2}
-        p={4}
-        borderRadius={3}
-        boxShadow={2}
-        bgcolor={grisClaro}
-        maxWidth={400}
-        mx="auto"
-        my={6}
-        border={`1px solid ${grisMedio}`}
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+      <Box sx={{ mb: 3 }}>
+        <Button
+          component={Link}
+          href="/clientes"
+          variant="outlined"
+          sx={{ mb: 2 }}
+        >
+          ← Volver al listado de clientes
+        </Button>
+
+        <Typography variant="h4" component="h1" gutterBottom>
+          Detalles del Cliente
+        </Typography>
+      </Box>
+
+      <Paper
+        elevation={3}
+        sx={{ p: 4, bgcolor: grisClaro, border: `1px solid ${grisMedio}` }}
       >
-        <Stack direction="row" alignItems="center" spacing={2} mb={2}>
-          <span style={{ fontWeight: 700, fontSize: 24, color: grisMedio }}>
-            {cliente?.NOMBRE ?? '-'}
-          </span>
-        </Stack>
-        <Stack spacing={1}>
-          <span>
-            <strong>ID:</strong> {cliente.id}
-          </span>
-          <span>
-            <strong>Nombre:</strong> {cliente?.NOMBRE ?? '-'}
-          </span>
-          <span>
-            <strong>Teléfono:</strong> {cliente?.TELEFONO ?? '-'}
-          </span>
-          <span>
-            <strong>Dirección:</strong> {cliente?.DIRECCION ?? '-'}
-          </span>
-          <span>
-            <strong>Provincia:</strong> {cliente?.CODCLI ?? '-'}
-          </span>
-        </Stack>
-      </Stack>
-    </Stack>
+        {/* Header con información principal */}
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            mb: 3,
+          }}
+        >
+          <Box>
+            <Typography
+              variant="h4"
+              component="h2"
+              gutterBottom
+              sx={{ fontWeight: 600 }}
+            >
+              {cliente.NOMBRE}
+            </Typography>
+            <Typography variant="body1" color="textSecondary">
+              ID: {cliente._id}
+            </Typography>
+          </Box>
+          <Chip
+            label={`Código: ${cliente.CODCLI}`}
+            color="primary"
+            variant="filled"
+            sx={{ fontSize: '1rem', padding: '8px 16px' }}
+          />
+        </Box>
+
+        <Divider sx={{ my: 3 }} />
+
+        <Grid container spacing={4}>
+          {/* Columna 1: Información Personal */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Typography
+              variant="h6"
+              gutterBottom
+              sx={{ color: 'primary.main', fontWeight: 600 }}
+            >
+              Información Personal
+            </Typography>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="body2" color="textSecondary" gutterBottom>
+                Nombre Completo
+              </Typography>
+              <Typography variant="body1" gutterBottom sx={{ fontWeight: 500 }}>
+                {cliente.NOMBRE}
+              </Typography>
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="body2" color="textSecondary" gutterBottom>
+                Cédula
+              </Typography>
+              <Typography
+                variant="body1"
+                gutterBottom
+                sx={{ fontFamily: 'monospace' }}
+              >
+                {cliente.cedula || 'No especificada'}
+              </Typography>
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="body2" color="textSecondary" gutterBottom>
+                Profesión
+              </Typography>
+              <Typography variant="body1" gutterBottom>
+                {cliente.profesion || 'No especificada'}
+              </Typography>
+            </Box>
+          </Grid>
+
+          {/* Columna 2: Información de Contacto */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Typography
+              variant="h6"
+              gutterBottom
+              sx={{ color: 'primary.main', fontWeight: 600 }}
+            >
+              Información de Contacto
+            </Typography>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="body2" color="textSecondary" gutterBottom>
+                Teléfono
+              </Typography>
+              <Typography
+                variant="body1"
+                gutterBottom
+                sx={{ fontFamily: 'monospace' }}
+              >
+                {cliente.TELEFONO}
+              </Typography>
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="body2" color="textSecondary" gutterBottom>
+                Correo Electrónico
+              </Typography>
+              <Typography
+                variant="body1"
+                gutterBottom
+                sx={{ wordBreak: 'break-word' }}
+              >
+                {cliente.correo || 'No especificado'}
+              </Typography>
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="body2" color="textSecondary" gutterBottom>
+                Dirección
+              </Typography>
+              <Typography variant="body1" gutterBottom sx={{ lineHeight: 1.6 }}>
+                {cliente.DIRECCION || 'No especificada'}
+              </Typography>
+            </Box>
+          </Grid>
+
+          {/* Columna 3: Información del Sistema */}
+          <Grid size={{ xs: 12 }}>
+            <Divider sx={{ my: 2 }} />
+            <Typography
+              variant="h6"
+              gutterBottom
+              sx={{ color: 'primary.main', fontWeight: 600 }}
+            >
+              Información del Sistema
+            </Typography>
+
+            <Grid container spacing={3}>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <Box>
+                  <Typography
+                    variant="body2"
+                    color="textSecondary"
+                    gutterBottom
+                  >
+                    Código de Cliente
+                  </Typography>
+                  <Chip
+                    label={cliente.CODCLI}
+                    variant="outlined"
+                    color="primary"
+                    sx={{ fontFamily: 'monospace', fontWeight: 600 }}
+                  />
+                </Box>
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 4 }}>
+                <Box>
+                  <Typography
+                    variant="body2"
+                    color="textSecondary"
+                    gutterBottom
+                  >
+                    ID de Base de Datos
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}
+                  >
+                    {cliente._id}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              {/* {(cliente.createdAt || cliente.updatedAt) && (
+                <Grid item xs={12} md={4}>
+                  <Box>
+                    <Typography variant="body2" color="textSecondary" gutterBottom>
+                      Fechas
+                    </Typography>
+                    {cliente.createdAt && (
+                      <Typography variant="body2">
+                        Creado: {new Date(cliente.createdAt).toLocaleDateString()}
+                      </Typography>
+                    )}
+                    {cliente.updatedAt && (
+                      <Typography variant="body2">
+                        Actualizado: {new Date(cliente.updatedAt).toLocaleDateString()}
+                      </Typography>
+                    )}
+                  </Box>
+                </Grid>
+              )} */}
+            </Grid>
+          </Grid>
+        </Grid>
+
+        {/* Botones de acción */}
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 2,
+            justifyContent: 'flex-end',
+            mt: 4,
+            pt: 3,
+            borderTop: `1px solid ${grisMedio}`,
+          }}
+        >
+          <Button
+            component={Link}
+            href={`/clientes/${id}/editar`}
+            variant="contained"
+            color="primary"
+            size="large"
+          >
+            Editar Cliente
+          </Button>
+          <Button
+            component={Link}
+            href="/clientes"
+            variant="outlined"
+            size="large"
+          >
+            Volver al Listado
+          </Button>
+        </Box>
+      </Paper>
+    </Container>
   );
 }

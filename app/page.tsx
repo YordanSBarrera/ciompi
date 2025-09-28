@@ -2,6 +2,7 @@
 import Image from 'next/image';
 import imgLocal from '@/public/ciompiLocal.webp';
 import { Stack } from '@mui/material';
+import UserLogin from './components/UserLogin';
 
 export default function Home() {
   return (
@@ -21,6 +22,7 @@ export default function Home() {
           height: '100%',
         }}
       />
+      <UserLogin />
     </Stack>
   );
 }
