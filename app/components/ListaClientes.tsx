@@ -24,7 +24,6 @@ import {
   Edit as EditIcon,
   Search as SearchIcon,
 } from '@mui/icons-material';
-import Link from 'next/link';
 import { ClienteType } from '@/lib/types';
 import {
   azulBase,
@@ -290,8 +289,6 @@ export default function ListaClientes({ clientes }: ListaClientesProps) {
                         <MoreVertIcon />
                       </IconButton>
                     </Tooltip>
-
-                    {/* Menú individual para cada fila */}
                     <Menu
                       anchorEl={menuState.anchorEl}
                       open={Boolean(

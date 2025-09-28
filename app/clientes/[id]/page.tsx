@@ -1,6 +1,6 @@
 'use client';
 import { blanco, grisClaro, grisMedio } from '@/lib/color';
-import { ClienteType, RouteParams } from '@/lib/types';
+import { ClienteType } from '@/lib/types';
 import {
   Alert,
   Box,
@@ -11,7 +11,6 @@ import {
   Divider,
   Grid,
   Paper,
-  Stack,
   Typography,
 } from '@mui/material';
 import Link from 'next/link';
@@ -90,8 +89,16 @@ export default function ClienteDetailPage() {
       </Container>
     );
   }
+
+  // Función para formatear teléfono
+  const formatTelefono = (telefono?: string) => {
+    if (!telefono) return 'No especificado';
+    // Formato básico para teléfonos
+    return telefono.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
+  };
+
   return (
-    <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Box sx={{ mb: 3 }}>
         <Button
           component={Link}
@@ -102,127 +109,237 @@ export default function ClienteDetailPage() {
           ← Volver al listado de clientes
         </Button>
 
-        <Typography
-          variant="h5"
-          component="h4"
-          gutterBottom
-          color="textDisabled"
-        >
+        <Typography variant="h4" component="h1" gutterBottom>
           Detalles del Cliente
         </Typography>
       </Box>
 
       <Paper
         elevation={3}
-        sx={{ p: 3, bgcolor: grisClaro, border: `1px solid ${grisMedio}` }}
+        sx={{ p: 4, bgcolor: grisClaro, border: `1px solid ${grisMedio}` }}
       >
-        <Grid container spacing={3}>
-          <Grid size={{ xs: 12, md: 8 }}>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-              }}
+        {/* Header con información principal */}
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            mb: 3,
+          }}
+        >
+          <Box>
+            <Typography
+              variant="h4"
+              component="h2"
+              gutterBottom
+              sx={{ fontWeight: 600 }}
             >
-              <Typography variant="h5" component="h2" gutterBottom>
+              {cliente.NOMBRE}
+            </Typography>
+            <Typography variant="body1" color="textSecondary">
+              ID: {cliente._id}
+            </Typography>
+          </Box>
+          <Chip
+            label={`Código: ${cliente.CODCLI}`}
+            color="primary"
+            variant="filled"
+            sx={{ fontSize: '1rem', padding: '8px 16px' }}
+          />
+        </Box>
+
+        <Divider sx={{ my: 3 }} />
+
+        <Grid container spacing={4}>
+          {/* Columna 1: Información Personal */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Typography
+              variant="h6"
+              gutterBottom
+              sx={{ color: 'primary.main', fontWeight: 600 }}
+            >
+              Información Personal
+            </Typography>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="body2" color="textSecondary" gutterBottom>
+                Nombre Completo
+              </Typography>
+              <Typography variant="body1" gutterBottom sx={{ fontWeight: 500 }}>
                 {cliente.NOMBRE}
               </Typography>
-              <Chip
-                label={`Código: ${cliente.CODCLI}`}
-                color="primary"
-                variant="outlined"
-              />
             </Box>
-            <Divider sx={{ my: 2 }} />
-          </Grid>
 
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Typography variant="subtitle1" color="textSecondary" gutterBottom>
-              Información General
-            </Typography>
-            <Box sx={{ mt: 1 }}>
-              <Typography variant="body1" gutterBottom>
-                <strong>Nombre:</strong> {cliente.NOMBRE}
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="body2" color="textSecondary" gutterBottom>
+                Cédula
               </Typography>
-              <Typography variant="body1" gutterBottom>
-                <strong>Código:</strong> {cliente.CODCLI}
-              </Typography>
-              {cliente.TELEFONO && (
-                <Typography variant="body1" gutterBottom>
-                  <strong>Teléfono:</strong> {cliente.TELEFONO}
-                </Typography>
-              )}
-            </Box>
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Typography variant="subtitle1" color="textSecondary" gutterBottom>
-              Dirección
-            </Typography>
-            {cliente.DIRECCION ? (
-              <Typography variant="body1" sx={{ mt: 1 }}>
-                {cliente.DIRECCION}
-              </Typography>
-            ) : (
-              <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
-                No especificada
-              </Typography>
-            )}
-          </Grid>
-
-          {/* {(cliente.createdAt || cliente.updatedAt) && (
-            <Grid size={{ xs: 12 }}>
-              <Divider sx={{ my: 2 }} />
               <Typography
-                variant="subtitle1"
-                color="textSecondary"
+                variant="body1"
                 gutterBottom
+                sx={{ fontFamily: 'monospace' }}
               >
-                Información del Sistema
+                {cliente.cedula || 'No especificada'}
               </Typography>
-              <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
-                {cliente.createdAt && (
-                  <Typography variant="body2" color="textSecondary">
-                    <strong>Creado:</strong>{' '}
-                    {new Date(cliente.createdAt).toLocaleDateString()}
-                  </Typography>
-                )}
-                {cliente.updatedAt && (
-                  <Typography variant="body2" color="textSecondary">
-                    <strong>Actualizado:</strong>{' '}
-                    {new Date(cliente.updatedAt).toLocaleDateString()}
-                  </Typography>
-                )}
-              </Box>
-            </Grid>
-          )} */}
-
-          <Grid size={{ xs: 12 }}>
-            <Box
-              sx={{
-                display: 'flex',
-                gap: 2,
-                justifyContent: 'flex-end',
-                mt: 2,
-              }}
-            >
-              <Button
-                component={Link}
-                href={`/clientes/${id}/editar`}
-                variant="contained"
-                color="primary"
-              >
-                Editar
-              </Button>
-              <Button component={Link} href="/clientes" variant="outlined">
-                Volver
-              </Button>
             </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="body2" color="textSecondary" gutterBottom>
+                Profesión
+              </Typography>
+              <Typography variant="body1" gutterBottom>
+                {cliente.profesion || 'No especificada'}
+              </Typography>
+            </Box>
+          </Grid>
+
+          {/* Columna 2: Información de Contacto */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Typography
+              variant="h6"
+              gutterBottom
+              sx={{ color: 'primary.main', fontWeight: 600 }}
+            >
+              Información de Contacto
+            </Typography>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="body2" color="textSecondary" gutterBottom>
+                Teléfono
+              </Typography>
+              <Typography
+                variant="body1"
+                gutterBottom
+                sx={{ fontFamily: 'monospace' }}
+              >
+                {formatTelefono(cliente.TELEFONO)}
+              </Typography>
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="body2" color="textSecondary" gutterBottom>
+                Correo Electrónico
+              </Typography>
+              <Typography
+                variant="body1"
+                gutterBottom
+                sx={{ wordBreak: 'break-word' }}
+              >
+                {cliente.correo || 'No especificado'}
+              </Typography>
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="body2" color="textSecondary" gutterBottom>
+                Dirección
+              </Typography>
+              <Typography variant="body1" gutterBottom sx={{ lineHeight: 1.6 }}>
+                {cliente.DIRECCION || 'No especificada'}
+              </Typography>
+            </Box>
+          </Grid>
+
+          {/* Columna 3: Información del Sistema */}
+          <Grid size={{ xs: 12 }}>
+            <Divider sx={{ my: 2 }} />
+            <Typography
+              variant="h6"
+              gutterBottom
+              sx={{ color: 'primary.main', fontWeight: 600 }}
+            >
+              Información del Sistema
+            </Typography>
+
+            <Grid container spacing={3}>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <Box>
+                  <Typography
+                    variant="body2"
+                    color="textSecondary"
+                    gutterBottom
+                  >
+                    Código de Cliente
+                  </Typography>
+                  <Chip
+                    label={cliente.CODCLI}
+                    variant="outlined"
+                    color="primary"
+                    sx={{ fontFamily: 'monospace', fontWeight: 600 }}
+                  />
+                </Box>
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 4 }}>
+                <Box>
+                  <Typography
+                    variant="body2"
+                    color="textSecondary"
+                    gutterBottom
+                  >
+                    ID de Base de Datos
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}
+                  >
+                    {cliente._id}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              {/* {(cliente.createdAt || cliente.updatedAt) && (
+                <Grid item xs={12} md={4}>
+                  <Box>
+                    <Typography variant="body2" color="textSecondary" gutterBottom>
+                      Fechas
+                    </Typography>
+                    {cliente.createdAt && (
+                      <Typography variant="body2">
+                        Creado: {new Date(cliente.createdAt).toLocaleDateString()}
+                      </Typography>
+                    )}
+                    {cliente.updatedAt && (
+                      <Typography variant="body2">
+                        Actualizado: {new Date(cliente.updatedAt).toLocaleDateString()}
+                      </Typography>
+                    )}
+                  </Box>
+                </Grid>
+              )} */}
+            </Grid>
           </Grid>
         </Grid>
+
+        {/* Botones de acción */}
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 2,
+            justifyContent: 'flex-end',
+            mt: 4,
+            pt: 3,
+            borderTop: `1px solid ${grisMedio}`,
+          }}
+        >
+          <Button
+            component={Link}
+            href={`/clientes/${id}/editar`}
+            variant="contained"
+            color="primary"
+            size="large"
+          >
+            Editar Cliente
+          </Button>
+          <Button
+            component={Link}
+            href="/clientes"
+            variant="outlined"
+            size="large"
+          >
+            Volver al Listado
+          </Button>
+        </Box>
       </Paper>
     </Container>
-    // </Stack>
   );
 }
