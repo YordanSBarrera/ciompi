@@ -16,6 +16,9 @@ import {
   InputAdornment,
   TextField,
   Tooltip,
+  MenuItem,
+  Menu,
+  Fade,
 } from '@mui/material';
 import {
   Visibility as ViewIcon,
@@ -36,6 +39,9 @@ import {
   naranja,
   turquesa,
 } from '@/lib/color';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import { dynamicRoutes } from '@/lib/rutas';
+import { useRouter } from 'next/navigation';
 
 interface ListaClientesProps {
   clientes: ClienteType[];
@@ -43,6 +49,20 @@ interface ListaClientesProps {
 
 export default function ListaClientes({ clientes }: ListaClientesProps) {
   const [filter, setFilter] = React.useState('');
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const open = Boolean(anchorEl);
+  const router = useRouter();
+
+  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+  const handleClickVerDetalles = (id: string) => {
+    handleClose();
+    router.push(dynamicRoutes.cliente(id));
+  };
 
   const filteredClientes = clientes.filter(
     cliente =>
@@ -54,12 +74,6 @@ export default function ListaClientes({ clientes }: ListaClientesProps) {
 
   const getStatusColor = (index: number) => {
     return index % 2 === 0 ? blanco : grisClaro;
-  };
-
-  const formatTelefono = (telefono?: string) => {
-    if (!telefono) return '-';
-    // Formato básico para teléfonos
-    return telefono.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3');
   };
 
   return (
@@ -135,17 +149,12 @@ export default function ListaClientes({ clientes }: ListaClientesProps) {
               <TableCell
                 sx={{ color: blanco, fontWeight: 600, fontSize: '1rem' }}
               >
-                Código
-              </TableCell>
-              <TableCell
-                sx={{ color: blanco, fontWeight: 600, fontSize: '1rem' }}
-              >
                 Nombre
               </TableCell>
               <TableCell
                 sx={{ color: blanco, fontWeight: 600, fontSize: '1rem' }}
               >
-                Dirección
+                Cedula
               </TableCell>
               <TableCell
                 sx={{ color: blanco, fontWeight: 600, fontSize: '1rem' }}
@@ -155,7 +164,17 @@ export default function ListaClientes({ clientes }: ListaClientesProps) {
               <TableCell
                 sx={{ color: blanco, fontWeight: 600, fontSize: '1rem' }}
               >
-                ID
+                Correo
+              </TableCell>
+              <TableCell
+                sx={{ color: blanco, fontWeight: 600, fontSize: '1rem' }}
+              >
+                Dirección
+              </TableCell>
+              <TableCell
+                sx={{ color: blanco, fontWeight: 600, fontSize: '1rem' }}
+              >
+                Profesión
               </TableCell>
               <TableCell
                 sx={{ color: blanco, fontWeight: 600, fontSize: '1rem' }}
@@ -167,7 +186,7 @@ export default function ListaClientes({ clientes }: ListaClientesProps) {
           <TableBody>
             {filteredClientes.map((cliente, index) => (
               <TableRow
-                key={cliente.id}
+                key={cliente._id}
                 sx={{
                   backgroundColor: getStatusColor(index),
                   transition: 'all 0.2s ease-in-out',
@@ -179,18 +198,6 @@ export default function ListaClientes({ clientes }: ListaClientesProps) {
                 }}
               >
                 <TableCell>
-                  <Chip
-                    label={cliente.CODCLI}
-                    size="small"
-                    sx={{
-                      backgroundColor: azulClaro,
-                      color: blanco,
-                      fontWeight: 600,
-                    }}
-                  />
-                </TableCell>
-
-                <TableCell>
                   <Typography
                     sx={{
                       fontWeight: 600,
@@ -200,77 +207,115 @@ export default function ListaClientes({ clientes }: ListaClientesProps) {
                     {cliente.NOMBRE}
                   </Typography>
                 </TableCell>
-
+                {/* nombre/cedula/telefono/correo/direccion/profesion */}
                 <TableCell>
                   <Typography
                     sx={{
-                      color: grisTexto,
+                      variant: cliente.cedula ? 'body1' : 'caption',
+                      color: cliente.cedula ? grisOscuro : azulClaro,
+                      fontFamily: 'monospace',
+                    }}
+                  >
+                    {cliente.cedula || 'Sin dato'}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography
+                    sx={{
+                      fontFamily: 'monospace',
+                      color: cliente.TELEFONO ? grisOscuro : 'text.secondary',
+                      fontStyle: cliente.TELEFONO ? 'normal' : 'italic',
+                    }}
+                  >
+                    {cliente.TELEFONO || 'No Data'}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography
+                    sx={{
+                      fontFamily: 'monospace',
+                      color: cliente.correo ? 'text.primary' : 'text.secondary',
+                      fontStyle: cliente.correo ? 'normal' : 'italic',
+                    }}
+                  >
+                    {cliente.correo || 'No Data'}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography
+                    sx={{
+                      variant: cliente.DIRECCION ? 'body1' : 'overline',
+                      color: cliente.DIRECCION
+                        ? 'text.primary'
+                        : 'text.secondary',
                       fontStyle: cliente.DIRECCION ? 'normal' : 'italic',
                     }}
                   >
-                    {cliente.DIRECCION || 'No especificada'}
+                    {cliente.DIRECCION || 'No especificado'}
                   </Typography>
                 </TableCell>
 
                 <TableCell>
                   <Typography
-                    sx={{
-                      color: grisOscuro,
-                      fontFamily: 'monospace',
-                    }}
-                  >
-                    {formatTelefono(cliente.TELEFONO)}
-                  </Typography>
-                </TableCell>
-
-                <TableCell>
-                  <Typography
-                    variant="caption"
+                    // variant="caption"
                     sx={{
                       color: grisTexto,
                       fontFamily: 'monospace',
                     }}
                   >
-                    {cliente.id}
-                    {/* {cliente.id.slice(0, 8)}... */}
+                    {cliente.profesion || 'No Data'}
                   </Typography>
                 </TableCell>
 
                 <TableCell>
-                  <Stack direction="row" spacing={1}>
-                    <Tooltip title="Ver detalles">
-                      <Link href={`/clientes/${cliente.id}`} passHref>
-                        <IconButton
-                          size="small"
-                          sx={{
-                            backgroundColor: turquesa + '20',
-                            color: turquesa,
-                            '&:hover': {
-                              backgroundColor: turquesa,
-                              color: blanco,
-                            },
-                          }}
-                        >
-                          <ViewIcon />
-                        </IconButton>
-                      </Link>
-                    </Tooltip>
-
-                    <Tooltip title="Editar cliente">
+                  <Stack alignItems="flex-end">
+                    <Tooltip title="Acciones" placement="top">
                       <IconButton
-                        size="small"
-                        sx={{
-                          backgroundColor: naranja + '20',
-                          color: naranja,
-                          '&:hover': {
-                            backgroundColor: naranja,
-                            color: blanco,
-                          },
-                        }}
+                        aria-controls={open ? 'long-menu' : undefined}
+                        aria-expanded={open ? 'true' : undefined}
+                        aria-haspopup="true"
+                        onClick={handleClick}
                       >
-                        <EditIcon />
+                        <MoreVertIcon />
                       </IconButton>
                     </Tooltip>
+
+                    <Menu
+                      anchorEl={anchorEl}
+                      open={open}
+                      onClose={handleClose}
+                      sx={{
+                        '& .MuiPaper-root': {
+                          borderRadius: '8px !important',
+                          border: `1px solid ${grisClaro} !important`,
+                          boxShadow: '0px 2px 3px rgba(0,0,0,0.1) !important',
+                          minWidth: '140px !important',
+                          // Reset completo de estilos no deseados
+                          outline: 'none !important',
+                          borderImage: 'none !important',
+                          backgroundImage: 'none !important',
+                        },
+                        '& .MuiMenu-list': {
+                          padding: '4px 0 !important',
+                        },
+                        '& .MuiMenuItem-root': {
+                          fontSize: '0.875rem',
+                          minHeight: '36px',
+                        },
+                      }}
+                    >
+                      <MenuItem
+                        onClick={() => handleClickVerDetalles(cliente._id)}
+                      >
+                        Ver Detalles
+                      </MenuItem>
+                      <MenuItem onClick={handleClose}>Editar</MenuItem>
+                      <MenuItem onClick={handleClose}>
+                        <Typography variant="body2" color="error.main">
+                          Eliminar
+                        </Typography>
+                      </MenuItem>
+                    </Menu>
                   </Stack>
                 </TableCell>
               </TableRow>
