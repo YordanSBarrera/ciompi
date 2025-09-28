@@ -26,12 +26,12 @@ import {
   azulOscuro,
   blanco,
   grisMedio,
-  grisOscuro,
   grisTexto,
   naranja,
   turquesa,
   coral1,
 } from '@/lib/color';
+import imgLocal from '@/public/ciompiLocal.webp';
 
 interface LoginForm {
   usuario: string;
@@ -106,12 +106,33 @@ export default function UserLogin({ onLoginSuccess }: UserLoginProps) {
   return (
     <Box
       sx={{
-        minHeight: '100vh',
-        background: `linear-gradient(135deg, ${azulBase} 0%, ${azulOscuro} 100%)`,
+        //   minHeight: '100vh',
+        //   background: `linear-gradient(135deg, ${azulBase} 0%, ${azulOscuro} 100%)`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        p: 2,
+        // p: 2,
+
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        backgroundImage: `url(${imgLocal.src})`,
+        backgroundPosition: 'top center',
+        backgroundSize: 'cover',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(255, 255, 255, 0.5)', // 50% de transparencia
+          backdropFilter: 'blur(1px)', // Opcional: efecto de desenfoque sutil
+        },
       }}
     >
       <Paper

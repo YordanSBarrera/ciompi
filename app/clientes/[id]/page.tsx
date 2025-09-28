@@ -1,70 +1,242 @@
-import { GET } from '@/app/api/clientes/[id]/route';
+'use client';
 import { blanco, grisClaro, grisMedio } from '@/lib/color';
 import { ClienteType, RouteParams } from '@/lib/types';
-import { Stack } from '@mui/material';
-import React from 'react';
+import {
+  Alert,
+  Box,
+  Button,
+  Chip,
+  CircularProgress,
+  Container,
+  Divider,
+  Grid,
+  Paper,
+  Stack,
+  Typography,
+} from '@mui/material';
+import Link from 'next/link';
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'next/navigation';
 
-async function cargarDatosCliente({ params }: RouteParams) {
-  // Simula un objeto NextRequest mínimo para pasar como primer argumento
-  const fakeRequest = {
-    nextUrl: { searchParams: new URLSearchParams({}) },
-  } as any;
-  const clienteData = await GET(fakeRequest, { params });
-  console.log('Params: ', params);
-  console.log('Cliente Data: ', clienteData);
+export default function ClienteDetailPage() {
+  const params = useParams();
+  const id = params.id as string;
 
-  //   try {
-  //     connectDB();
-  //     const clienteEncontrado = await Cliente.findById(params.clienteId);
+  const [cliente, setCliente] = useState<ClienteType | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // await connectDB();
-  // const datosClliente = await cliente.find();
-  // return datosClliente;
-  return { id: '1', NOMBRE: 'Cliente Ejemplo', CODCLI: 'C001' } as ClienteType;
-}
+  useEffect(() => {
+    const fetchCliente = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-// type ClienteDetailProps = { cliente: ClienteType };
+        const response = await fetch(`/ciompi/api/clientes/${id}`);
+        console.log('Data response: ', response);
 
-export default async function ClienteDetailPage({ params }: RouteParams) {
-  const cliente: ClienteType = await cargarDatosCliente({ params });
-  console.log('ClienteDetailPage', cliente);
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error('Cliente no encontrado');
+          }
+          throw new Error('Error al cargar el cliente');
+        }
 
+        const data = await response.json();
+        setCliente(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Error desconocido');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchCliente();
+    }
+  }, [id]);
+
+  if (loading) {
+    return (
+      <Container maxWidth="md" sx={{ mt: 4 }}>
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          minHeight="50vh"
+        >
+          <CircularProgress />
+        </Box>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container maxWidth="md" sx={{ mt: 4 }}>
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+        <Link href="/clientes">
+          <Button variant="contained">Volver a la lista</Button>
+        </Link>
+      </Container>
+    );
+  }
+
+  if (!cliente) {
+    return (
+      <Container maxWidth="md" sx={{ mt: 4 }}>
+        <Alert severity="warning">No se encontró información del cliente</Alert>
+      </Container>
+    );
+  }
   return (
     <Stack bgcolor={blanco}>
-      <Stack
-        spacing={2}
-        p={4}
-        borderRadius={3}
-        boxShadow={2}
-        bgcolor={grisClaro}
-        maxWidth={400}
-        mx="auto"
-        my={6}
-        border={`1px solid ${grisMedio}`}
-      >
-        <Stack direction="row" alignItems="center" spacing={2} mb={2}>
-          <span style={{ fontWeight: 700, fontSize: 24, color: grisMedio }}>
-            {cliente?.NOMBRE ?? '-'}
-          </span>
-        </Stack>
-        <Stack spacing={1}>
-          <span>
-            <strong>ID:</strong> {cliente.id}
-          </span>
-          <span>
-            <strong>Nombre:</strong> {cliente?.NOMBRE ?? '-'}
-          </span>
-          <span>
-            <strong>Teléfono:</strong> {cliente?.TELEFONO ?? '-'}
-          </span>
-          <span>
-            <strong>Dirección:</strong> {cliente?.DIRECCION ?? '-'}
-          </span>
-          <span>
-            <strong>Provincia:</strong> {cliente?.CODCLI ?? '-'}
-          </span>
-        </Stack>
-      </Stack>
+      <Container maxWidth="md" sx={{ mt: 4, mb: 4 }}>
+        <Box sx={{ mb: 3 }}>
+          <Button
+            component={Link}
+            href="/clientes"
+            variant="outlined"
+            sx={{ mb: 2 }}
+          >
+            ← Volver al listado de clientes
+          </Button>
+
+          <Typography
+            variant="h5"
+            component="h4"
+            gutterBottom
+            color="textDisabled"
+          >
+            Detalles del Cliente
+          </Typography>
+        </Box>
+
+        <Paper
+          elevation={3}
+          sx={{ p: 3, bgcolor: grisClaro, border: `1px solid ${grisMedio}` }}
+        >
+          <Grid container spacing={3}>
+            <Grid size={{ xs: 12, md: 8 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                }}
+              >
+                <Typography variant="h5" component="h2" gutterBottom>
+                  {cliente.NOMBRE}
+                </Typography>
+                <Chip
+                  label={`Código: ${cliente.CODCLI}`}
+                  color="primary"
+                  variant="outlined"
+                />
+              </Box>
+              <Divider sx={{ my: 2 }} />
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Typography
+                variant="subtitle1"
+                color="textSecondary"
+                gutterBottom
+              >
+                Información General
+              </Typography>
+              <Box sx={{ mt: 1 }}>
+                <Typography variant="body1" gutterBottom>
+                  <strong>Nombre:</strong> {cliente.NOMBRE}
+                </Typography>
+                <Typography variant="body1" gutterBottom>
+                  <strong>Código:</strong> {cliente.CODCLI}
+                </Typography>
+                {cliente.TELEFONO && (
+                  <Typography variant="body1" gutterBottom>
+                    <strong>Teléfono:</strong> {cliente.TELEFONO}
+                  </Typography>
+                )}
+              </Box>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Typography
+                variant="subtitle1"
+                color="textSecondary"
+                gutterBottom
+              >
+                Dirección
+              </Typography>
+              {cliente.DIRECCION ? (
+                <Typography variant="body1" sx={{ mt: 1 }}>
+                  {cliente.DIRECCION}
+                </Typography>
+              ) : (
+                <Typography
+                  variant="body2"
+                  color="textSecondary"
+                  sx={{ mt: 1 }}
+                >
+                  No especificada
+                </Typography>
+              )}
+            </Grid>
+
+            {/* {(cliente.createdAt || cliente.updatedAt) && (
+            <Grid size={{ xs: 12 }}>
+              <Divider sx={{ my: 2 }} />
+              <Typography
+                variant="subtitle1"
+                color="textSecondary"
+                gutterBottom
+              >
+                Información del Sistema
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
+                {cliente.createdAt && (
+                  <Typography variant="body2" color="textSecondary">
+                    <strong>Creado:</strong>{' '}
+                    {new Date(cliente.createdAt).toLocaleDateString()}
+                  </Typography>
+                )}
+                {cliente.updatedAt && (
+                  <Typography variant="body2" color="textSecondary">
+                    <strong>Actualizado:</strong>{' '}
+                    {new Date(cliente.updatedAt).toLocaleDateString()}
+                  </Typography>
+                )}
+              </Box>
+            </Grid>
+          )} */}
+
+            <Grid size={{ xs: 12 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 2,
+                  justifyContent: 'flex-end',
+                  mt: 2,
+                }}
+              >
+                <Button
+                  component={Link}
+                  href={`/clientes/${id}/editar`}
+                  variant="contained"
+                  color="primary"
+                >
+                  Editar
+                </Button>
+                <Button component={Link} href="/clientes" variant="outlined">
+                  Volver
+                </Button>
+              </Box>
+            </Grid>
+          </Grid>
+        </Paper>
+      </Container>
     </Stack>
   );
 }
