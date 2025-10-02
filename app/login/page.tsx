@@ -2,7 +2,7 @@
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/hook/useAuth';
 import UserLogin from '@/app/components/UserLogin';
-import { homeRoute } from '@/lib/rutas';
+import { routes } from '@/lib/rutas';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -11,7 +11,7 @@ export default function LoginPage() {
   const handleLoginSuccess = async () => {
     try {
       // La lógica de login se manejaría en el componente Login con los datos del formulario
-      router.push(`${homeRoute}`);
+      router.push(`${routes.home}`);
     } catch (error) {
       console.error('Error en redirección:', error);
     }

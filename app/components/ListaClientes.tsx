@@ -57,6 +57,7 @@ export default function ListaClientes({ clientes }: ListaClientesProps) {
     clienteId: null,
   });
   const router = useRouter();
+  const emptyData = '-';
 
   const handleMenuOpen = (
     event: React.MouseEvent<HTMLButtonElement>,
@@ -98,8 +99,7 @@ export default function ListaClientes({ clientes }: ListaClientesProps) {
   };
 
   return (
-    <Stack spacing={3} sx={{ p: 3 }}>
-      {/* Header */}
+    <Stack spacing={2} sx={{ p: 2 }}>
       <Box
         sx={{
           display: 'flex',
@@ -168,6 +168,11 @@ export default function ListaClientes({ clientes }: ListaClientesProps) {
           <TableHead>
             <TableRow sx={{ backgroundColor: azulBase }}>
               <TableCell
+                sx={{ color: blanco, fontWeight: 500, fontSize: '1rem' }}
+              >
+                #
+              </TableCell>
+              <TableCell
                 sx={{ color: blanco, fontWeight: 600, fontSize: '1rem' }}
               >
                 Nombre
@@ -219,6 +224,11 @@ export default function ListaClientes({ clientes }: ListaClientesProps) {
                 }}
               >
                 <TableCell>
+                  <Typography sx={{ fontWeight: 500, color: grisOscuro }}>
+                    {index + 1}
+                  </Typography>
+                </TableCell>
+                <TableCell>
                   <Typography sx={{ fontWeight: 600, color: grisOscuro }}>
                     {cliente.NOMBRE}
                   </Typography>
@@ -231,7 +241,7 @@ export default function ListaClientes({ clientes }: ListaClientesProps) {
                       fontFamily: 'monospace',
                     }}
                   >
-                    {cliente.cedula || 'Sin dato'}
+                    {cliente.cedula || '-'}
                   </Typography>
                 </TableCell>
 
@@ -243,7 +253,7 @@ export default function ListaClientes({ clientes }: ListaClientesProps) {
                       fontStyle: cliente.TELEFONO ? 'normal' : 'italic',
                     }}
                   >
-                    {cliente.TELEFONO || 'No Data'}
+                    {cliente.TELEFONO || emptyData}
                   </Typography>
                 </TableCell>
 
@@ -255,7 +265,7 @@ export default function ListaClientes({ clientes }: ListaClientesProps) {
                       fontStyle: cliente.correo ? 'normal' : 'italic',
                     }}
                   >
-                    {cliente.correo || 'No Data'}
+                    {cliente.correo || emptyData}
                   </Typography>
                 </TableCell>
 
@@ -268,7 +278,7 @@ export default function ListaClientes({ clientes }: ListaClientesProps) {
                       fontStyle: cliente.DIRECCION ? 'normal' : 'italic',
                     }}
                   >
-                    {cliente.DIRECCION || 'No especificado'}
+                    {cliente.DIRECCION || emptyData}
                   </Typography>
                 </TableCell>
 
@@ -276,7 +286,7 @@ export default function ListaClientes({ clientes }: ListaClientesProps) {
                   <Typography
                     sx={{ color: grisTexto, fontFamily: 'monospace' }}
                   >
-                    {cliente.profesion || 'No Data'}
+                    {cliente.profesion || emptyData}
                   </Typography>
                 </TableCell>
 

@@ -3,10 +3,14 @@ import { RouteParams } from '@/lib/types';
 import Cliente from '@/models/cliente';
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     connectDB();
-    const clienteEncontrado = await Cliente.findById(params.id);
+    const { id } = await params;
+    const clienteEncontrado = await Cliente.findById(id);
 
     if (!clienteEncontrado) {
       return NextResponse.json(
@@ -21,10 +25,14 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   connectDB();
   try {
-    const clienteBorrado = await Cliente.findByIdAndDelete(params.id);
+    const { id } = await params;
+    const clienteBorrado = await Cliente.findByIdAndDelete(id);
 
     if (!clienteBorrado)
       return NextResponse.json(
@@ -56,12 +64,16 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 //   }
 // }
 
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     await connectDB();
     const data = await request.json();
 
-    const clienteUpdated = await Cliente.findByIdAndUpdate(params.id, data, {
+    const { id } = await params;
+    const clienteUpdated = await Cliente.findByIdAndUpdate(id, data, {
       new: true,
       runValidators: true,
     });
