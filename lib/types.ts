@@ -140,3 +140,26 @@ export interface LoginCredentials {
   password: string;
   rememberMe?: boolean;
 }
+
+export interface VehiculoType {
+  _id?: string;
+  Marca: string;
+  Modelo: string;
+  Matricula: string;
+  Padron?: number;
+  Descripcion?: string;
+  Año?: number;
+  Color?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface VehiculoFormType {
+  Marca: string;
+  Modelo: string;
+  Matricula: string;
+  Padron?: number;
+  Descripcion?: string;
+  Año?: number;
+  Color?: string;
+}

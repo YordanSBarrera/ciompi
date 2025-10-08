@@ -252,6 +252,28 @@ export default function SearchAppBar() {
                 Utilitarios
               </MenuItem>
             </Link>
+            <Link
+              href={routes.autos}
+              style={{ textDecoration: 'none', color: 'inherit' }}
+            >
+              <MenuItem
+                onClick={handleClose}
+                sx={{
+                  color: '#ffffff',
+                  '&:hover': {
+                    backgroundColor: '#333333',
+                    color: '#ffffff',
+                  },
+                  '&:focus': {
+                    backgroundColor: '#444444',
+                  },
+                  py: 1.5,
+                  px: 2,
+                }}
+              >
+                Autos
+              </MenuItem>
+            </Link>
 
             <Divider sx={{ backgroundColor: '#444444', my: 1 }} />
             <Link

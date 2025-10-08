@@ -18,3 +18,11 @@ export const azulOscuro = '#1E2A38';
 export const azulClaro1 = '#4A6580';
 export const beige1 = '#F4F1DE';
 export const coral1 = '#E07A5F';
+
+// Colores de estado y acento
+export const rojo = '#D32F2F'; // Rojo principal para errores y alertas
+export const rojoClaro = '#FFCDD2'; // Rojo claro para fondos
+export const rojoOscuro = '#B71C1C'; // Rojo oscuro para hover y estados activos
+export const verde = '#388E3C'; // Verde principal para éxito y confirmaciones
+export const verdeClaro = '#C8E6C9'; // Verde claro para fondos
+export const verdeOscuro = '#1B5E20'; // Verde oscuro para hover y estados activos
