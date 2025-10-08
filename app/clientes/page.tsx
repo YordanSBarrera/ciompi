@@ -59,6 +59,7 @@
 import React, { useState, useEffect } from 'react';
 import { ClienteType } from '@/lib/types';
 import ListaClientes from '@/app/components/ListaClientes';
+import AuthGuard from '@/app/components/AuthGuard';
 import { Box, CircularProgress, Alert } from '@mui/material';
 
 async function cargarClientes(): Promise<ClienteType[]> {
@@ -127,9 +128,11 @@ export default function ClientesPage() {
   }
 
   return (
-    <ListaClientes
-      clientes={clientes}
-      onClienteEliminado={handleClienteEliminado}
-    />
+    <AuthGuard>
+      <ListaClientes
+        clientes={clientes}
+        onClienteEliminado={handleClienteEliminado}
+      />
+    </AuthGuard>
   );
 }

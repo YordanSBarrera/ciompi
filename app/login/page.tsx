@@ -2,7 +2,7 @@
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/hook/useAuth';
 import UserLogin from '@/app/components/UserLogin';
-import { routes } from '@/lib/rutas';
+import AuthGuard from '@/app/components/AuthGuard';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -10,12 +10,16 @@ export default function LoginPage() {
 
   const handleLoginSuccess = async () => {
     try {
-      // La lógica de login se manejaría en el componente Login con los datos del formulario
-      router.push(`${routes.home}`);
+      // Redirigir a la página principal de ciompi
+      router.push('/ciompi');
     } catch (error) {
       console.error('Error en redirección:', error);
     }
   };
 
-  return <UserLogin onLoginSuccess={handleLoginSuccess} />;
+  return (
+    <AuthGuard requireAuth={false}>
+      <UserLogin onLoginSuccess={handleLoginSuccess} />
+    </AuthGuard>
+  );
 }

@@ -3,6 +3,7 @@ import { blanco, grisClaro, grisMedio } from '@/lib/color';
 import { ClienteType } from '@/lib/types';
 import { formatCedula } from '@/lib/utils';
 import { useEliminarCliente } from '@/app/hook/useEliminarCliente';
+import AuthGuard from '@/app/components/AuthGuard';
 import {
   Alert,
   Box,
@@ -46,7 +47,7 @@ export default function ClienteDetailPage() {
   } = useEliminarCliente({
     onClienteEliminado: () => {
       // Redirigir a la lista de clientes después de eliminar
-      router.push('/clientes');
+      router.push('/ciompi/clientes');
     },
   });
 
@@ -116,198 +117,207 @@ export default function ClienteDetailPage() {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Box sx={{ mb: 3 }}>
-        <Button
-          component={Link}
-          href="/clientes"
-          variant="outlined"
-          sx={{ mb: 2 }}
-        >
-          ← Volver al listado de clientes
-        </Button>
+    <AuthGuard>
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Box sx={{ mb: 3 }}>
+          <Button
+            component={Link}
+            href="/ciompi/clientes"
+            variant="outlined"
+            sx={{ mb: 2 }}
+          >
+            ← Volver al listado de clientes
+          </Button>
 
-        <Typography variant="h4" component="h1" gutterBottom>
-          Detalles del Cliente
-        </Typography>
-      </Box>
-
-      <Paper
-        elevation={3}
-        sx={{ p: 4, bgcolor: grisClaro, border: `1px solid ${grisMedio}` }}
-      >
-        {/* Header con información principal */}
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            mb: 3,
-          }}
-        >
-          <Box>
-            <Typography
-              variant="h4"
-              component="h2"
-              gutterBottom
-              sx={{ fontWeight: 600 }}
-            >
-              {cliente.NOMBRE}
-            </Typography>
-            <Typography variant="body1" color="textSecondary">
-              ID: {cliente._id}
-            </Typography>
-          </Box>
-          <Chip
-            label={`Código: ${cliente.CODCLI}`}
-            color="primary"
-            variant="filled"
-            sx={{ fontSize: '1rem', padding: '8px 16px' }}
-          />
+          <Typography variant="h4" component="h1" gutterBottom>
+            Detalles del Cliente
+          </Typography>
         </Box>
 
-        <Divider sx={{ my: 3 }} />
-
-        <Grid container spacing={4}>
-          {/* Columna 1: Información Personal */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Typography
-              variant="h6"
-              gutterBottom
-              sx={{ color: 'primary.main', fontWeight: 600 }}
-            >
-              Información Personal
-            </Typography>
-
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="body2" color="textSecondary" gutterBottom>
-                Nombre Completo
-              </Typography>
-              <Typography variant="body1" gutterBottom sx={{ fontWeight: 500 }}>
+        <Paper
+          elevation={3}
+          sx={{ p: 4, bgcolor: grisClaro, border: `1px solid ${grisMedio}` }}
+        >
+          {/* Header con información principal */}
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              mb: 3,
+            }}
+          >
+            <Box>
+              <Typography
+                variant="h4"
+                component="h2"
+                gutterBottom
+                sx={{ fontWeight: 600 }}
+              >
                 {cliente.NOMBRE}
               </Typography>
-            </Box>
-
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="body2" color="textSecondary" gutterBottom>
-                Cédula
+              <Typography variant="body1" color="textSecondary">
+                ID: {cliente._id}
               </Typography>
+            </Box>
+            <Chip
+              label={`Código: ${cliente.CODCLI}`}
+              color="primary"
+              variant="filled"
+              sx={{ fontSize: '1rem', padding: '8px 16px' }}
+            />
+          </Box>
+
+          <Divider sx={{ my: 3 }} />
+
+          <Grid container spacing={4}>
+            {/* Columna 1: Información Personal */}
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography
-                variant="body1"
+                variant="h6"
                 gutterBottom
-                sx={{ fontFamily: 'monospace' }}
+                sx={{ color: 'primary.main', fontWeight: 600 }}
               >
-                {cliente.cedula
-                  ? formatCedula(cliente.cedula)
-                  : 'No especificada'}
+                Información Personal
               </Typography>
-            </Box>
 
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="body2" color="textSecondary" gutterBottom>
-                Profesión
-              </Typography>
-              <Typography variant="body1" gutterBottom>
-                {cliente.profesion || 'No especificada'}
-              </Typography>
-            </Box>
-          </Grid>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="body2" color="textSecondary" gutterBottom>
+                  Nombre Completo
+                </Typography>
+                <Typography
+                  variant="body1"
+                  gutterBottom
+                  sx={{ fontWeight: 500 }}
+                >
+                  {cliente.NOMBRE}
+                </Typography>
+              </Box>
 
-          {/* Columna 2: Información de Contacto */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Typography
-              variant="h6"
-              gutterBottom
-              sx={{ color: 'primary.main', fontWeight: 600 }}
-            >
-              Información de Contacto
-            </Typography>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="body2" color="textSecondary" gutterBottom>
+                  Cédula
+                </Typography>
+                <Typography
+                  variant="body1"
+                  gutterBottom
+                  sx={{ fontFamily: 'monospace' }}
+                >
+                  {cliente.cedula
+                    ? formatCedula(cliente.cedula)
+                    : 'No especificada'}
+                </Typography>
+              </Box>
 
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="body2" color="textSecondary" gutterBottom>
-                Teléfono
-              </Typography>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="body2" color="textSecondary" gutterBottom>
+                  Profesión
+                </Typography>
+                <Typography variant="body1" gutterBottom>
+                  {cliente.profesion || 'No especificada'}
+                </Typography>
+              </Box>
+            </Grid>
+
+            {/* Columna 2: Información de Contacto */}
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography
-                variant="body1"
+                variant="h6"
                 gutterBottom
-                sx={{ fontFamily: 'monospace' }}
+                sx={{ color: 'primary.main', fontWeight: 600 }}
               >
-                {cliente.TELEFONO}
+                Información de Contacto
               </Typography>
-            </Box>
 
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="body2" color="textSecondary" gutterBottom>
-                Correo Electrónico
-              </Typography>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="body2" color="textSecondary" gutterBottom>
+                  Teléfono
+                </Typography>
+                <Typography
+                  variant="body1"
+                  gutterBottom
+                  sx={{ fontFamily: 'monospace' }}
+                >
+                  {cliente.TELEFONO}
+                </Typography>
+              </Box>
+
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="body2" color="textSecondary" gutterBottom>
+                  Correo Electrónico
+                </Typography>
+                <Typography
+                  variant="body1"
+                  gutterBottom
+                  sx={{ wordBreak: 'break-word' }}
+                >
+                  {cliente.correo || 'No especificado'}
+                </Typography>
+              </Box>
+
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="body2" color="textSecondary" gutterBottom>
+                  Dirección
+                </Typography>
+                <Typography
+                  variant="body1"
+                  gutterBottom
+                  sx={{ lineHeight: 1.6 }}
+                >
+                  {cliente.DIRECCION || 'No especificada'}
+                </Typography>
+              </Box>
+            </Grid>
+
+            {/* Columna 3: Información del Sistema */}
+            <Grid size={{ xs: 12 }}>
+              <Divider sx={{ my: 2 }} />
               <Typography
-                variant="body1"
+                variant="h6"
                 gutterBottom
-                sx={{ wordBreak: 'break-word' }}
+                sx={{ color: 'primary.main', fontWeight: 600 }}
               >
-                {cliente.correo || 'No especificado'}
+                Información del Sistema
               </Typography>
-            </Box>
 
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="body2" color="textSecondary" gutterBottom>
-                Dirección
-              </Typography>
-              <Typography variant="body1" gutterBottom sx={{ lineHeight: 1.6 }}>
-                {cliente.DIRECCION || 'No especificada'}
-              </Typography>
-            </Box>
-          </Grid>
+              <Grid container spacing={3}>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
+                    >
+                      Código de Cliente
+                    </Typography>
+                    <Chip
+                      label={cliente.CODCLI}
+                      variant="outlined"
+                      color="primary"
+                      sx={{ fontFamily: 'monospace', fontWeight: 600 }}
+                    />
+                  </Box>
+                </Grid>
 
-          {/* Columna 3: Información del Sistema */}
-          <Grid size={{ xs: 12 }}>
-            <Divider sx={{ my: 2 }} />
-            <Typography
-              variant="h6"
-              gutterBottom
-              sx={{ color: 'primary.main', fontWeight: 600 }}
-            >
-              Información del Sistema
-            </Typography>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
+                    >
+                      ID de Base de Datos
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}
+                    >
+                      {cliente._id}
+                    </Typography>
+                  </Box>
+                </Grid>
 
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    color="textSecondary"
-                    gutterBottom
-                  >
-                    Código de Cliente
-                  </Typography>
-                  <Chip
-                    label={cliente.CODCLI}
-                    variant="outlined"
-                    color="primary"
-                    sx={{ fontFamily: 'monospace', fontWeight: 600 }}
-                  />
-                </Box>
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 4 }}>
-                <Box>
-                  <Typography
-                    variant="body2"
-                    color="textSecondary"
-                    gutterBottom
-                  >
-                    ID de Base de Datos
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}
-                  >
-                    {cliente._id}
-                  </Typography>
-                </Box>
-              </Grid>
-
-              {/* {(cliente.createdAt || cliente.updatedAt) && (
+                {/* {(cliente.createdAt || cliente.updatedAt) && (
                 <Grid item xs={12} md={4}>
                   <Box>
                     <Typography variant="body2" color="textSecondary" gutterBottom>
@@ -326,98 +336,101 @@ export default function ClienteDetailPage() {
                   </Box>
                 </Grid>
               )} */}
+              </Grid>
             </Grid>
           </Grid>
-        </Grid>
 
-        {/* Botones de acción */}
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 2,
-            justifyContent: 'space-between',
-            mt: 4,
-            pt: 3,
-            borderTop: `1px solid ${grisMedio}`,
-          }}
+          {/* Botones de acción */}
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 2,
+              justifyContent: 'space-between',
+              mt: 4,
+              pt: 3,
+              borderTop: `1px solid ${grisMedio}`,
+            }}
+          >
+            <Box>
+              <Button
+                onClick={() => handleClickEliminar(cliente._id, cliente.NOMBRE)}
+                variant="contained"
+                color="error"
+                size="large"
+                disabled={deleting}
+              >
+                {deleting ? 'Eliminando...' : 'Eliminar Cliente'}
+              </Button>
+            </Box>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button
+                component={Link}
+                href={`/ciompi/clientes/${id}/editar`}
+                variant="contained"
+                color="primary"
+                size="large"
+              >
+                Editar Cliente
+              </Button>
+
+              <Button
+                component={Link}
+                href="/ciompi/clientes"
+                variant="outlined"
+                size="large"
+              >
+                Volver al Listado
+              </Button>
+            </Box>
+          </Box>
+        </Paper>
+
+        {/* Diálogo de confirmación */}
+        <Dialog
+          open={confirmDialog.open}
+          onClose={handleCancelEliminar}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
         >
-          <Box>
+          <DialogTitle id="alert-dialog-title">
+            Confirmar eliminación
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText id="alert-dialog-description">
+              ¿Estás seguro de que deseas eliminar al cliente "
+              {confirmDialog.clienteNombre}"? Esta acción no se puede deshacer.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCancelEliminar} disabled={deleting}>
+              Cancelar
+            </Button>
             <Button
-              onClick={() => handleClickEliminar(cliente._id, cliente.NOMBRE)}
-              variant="contained"
+              onClick={handleConfirmEliminar}
               color="error"
-              size="large"
+              variant="contained"
               disabled={deleting}
             >
-              {deleting ? 'Eliminando...' : 'Eliminar Cliente'}
+              {deleting ? 'Eliminando...' : 'Eliminar'}
             </Button>
-          </Box>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <Button
-              component={Link}
-              href={`/clientes/${id}/editar`}
-              variant="contained"
-              color="primary"
-              size="large"
-            >
-              Editar Cliente
-            </Button>
+          </DialogActions>
+        </Dialog>
 
-            <Button
-              component={Link}
-              href="/clientes"
-              variant="outlined"
-              size="large"
-            >
-              Volver al Listado
-            </Button>
-          </Box>
-        </Box>
-      </Paper>
-
-      {/* Diálogo de confirmación */}
-      <Dialog
-        open={confirmDialog.open}
-        onClose={handleCancelEliminar}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">Confirmar eliminación</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            ¿Estás seguro de que deseas eliminar al cliente "
-            {confirmDialog.clienteNombre}"? Esta acción no se puede deshacer.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelEliminar} disabled={deleting}>
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleConfirmEliminar}
-            color="error"
-            variant="contained"
-            disabled={deleting}
-          >
-            {deleting ? 'Eliminando...' : 'Eliminar'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Snackbar para notificaciones */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-      >
-        <Alert
+        {/* Snackbar para notificaciones */}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
           onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
         >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Container>
+          <Alert
+            onClose={handleCloseSnackbar}
+            severity={snackbar.severity}
+            sx={{ width: '100%' }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Container>
+    </AuthGuard>
   );
 }

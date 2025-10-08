@@ -119,12 +119,12 @@ export default function ListaClientes({
 
   const handleClickVerDetalles = (id: string) => {
     handleMenuClose();
-    router.push(dynamicRoutes.cliente(id));
+    router.push(`/ciompi/clientes/${id}`);
   };
 
   const handleClickEditar = (id: string) => {
     handleMenuClose();
-    router.push(dynamicRoutes.clienteEditar(id));
+    router.push(`/ciompi/clientes/${id}/editar`);
   };
 
   // Wrapper para handleClickEliminar que también cierra el menú
