@@ -9,6 +9,7 @@ export const routes = {
   usuario: '/usuario',
   utilitarios: '/utilitarios',
   nuevoUsuario: '/usuarios/nuevo',
+  autos: '/autos',
 } as const;
 
 // Helper para rutas dinámicas
@@ -22,10 +23,10 @@ export const dynamicRoutes = {
 export const getFullUrl = (path: string): string => {
   // En el cliente, usa window.location.origin
   if (typeof window !== 'undefined') {
-    return `${window.location.origin}${basePath}${path}`;
+    return `${window.location.origin}${path}`;
   }
   // En el servidor, podrías necesitar construir la URL base
-  return `${basePath}${path}`;
+  return path;
 };
 
 export type AppRoute = keyof typeof routes;

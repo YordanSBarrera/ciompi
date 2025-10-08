@@ -19,21 +19,45 @@ const MainWrapper = ({ children }: MainWrapperProps) => {
         backgroundSize: 'cover',
         backgroundRepeat: 'no-repeat',
         backgroundAttachment: 'fixed',
-
         minHeight: '100vh',
+        position: 'relative',
       }}
     >
-      <Container>
-        <Stack alignSelf="flex-start">
-          <SearchAppBar />
-        </Stack>
-        <Stack width="100%" justifyContent="center" mb={4}>
-          {children}
-        </Stack>
-        <Stack position="fixed" width="100vw" bottom={0}>
-          <Footer />
-        </Stack>
-      </Container>
+      {/* SearchAppBar positioned at the top */}
+      <Stack
+        sx={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 1000,
+          width: '100%',
+        }}
+      >
+        <SearchAppBar />
+      </Stack>
+
+      {/* Main content area with proper spacing */}
+      <Stack
+        sx={{
+          flex: 1,
+          width: '100%',
+          minHeight: 'calc(100vh - 120px)', // Adjust based on header/footer height
+          pb: 8, // Add padding bottom to prevent footer overlap
+        }}
+      >
+        <Container sx={{ flex: 1 }}>{children}</Container>
+      </Stack>
+
+      {/* Footer positioned at the bottom */}
+      <Stack
+        sx={{
+          position: 'sticky',
+          bottom: 0,
+          zIndex: 1000,
+          width: '100%',
+        }}
+      >
+        <Footer />
+      </Stack>
     </Stack>
   );
 };

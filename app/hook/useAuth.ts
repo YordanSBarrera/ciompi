@@ -40,7 +40,7 @@ export function useAuth() {
 
   const verifyToken = async (token: string): Promise<boolean> => {
     try {
-      const response = await fetch('/ciompi/api/auth/verify', {
+      const response = await fetch('/api/auth/verify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -66,7 +66,7 @@ export function useAuth() {
 
   const login = async (usuario: string, password: string) => {
     try {
-      const response = await fetch('/ciompi/api/auth/login', {
+      const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
