@@ -22,6 +22,47 @@ export async function POST(request: Request) {
   }
 }
 
+export async function DELETE(request: Request) {
+  try {
+    await connectDB();
+
+    const { searchParams } = new URL(request.url);
+    const clienteId = searchParams.get('id');
+
+    if (!clienteId) {
+      return NextResponse.json(
+        { error: 'ID del cliente es requerido' },
+        { status: 400 }
+      );
+    }
+
+    const clienteEliminado = await Cliente.findByIdAndDelete(clienteId);
+
+    if (!clienteEliminado) {
+      return NextResponse.json(
+        { error: 'Cliente no encontrado' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Cliente eliminado exitosamente',
+      cliente: clienteEliminado,
+    });
+  } catch (error: unknown) {
+    console.error('Error eliminando cliente:', error);
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    } else {
+      return NextResponse.json(
+        { error: 'Error interno del servidor' },
+        { status: 500 }
+      );
+    }
+  }
+}
+
 // export async function POST(request: Request) {
 //   const data = await request.json();
 //   const newClient = new Cliente(data);

@@ -129,6 +129,7 @@ export default function ListaClientes({
 
   const handleClickEliminar = (id: string, nombre: string) => {
     handleMenuClose();
+    console.log('Eliminando cliente:', { id, nombre }); // Debug log
     setConfirmDialog({
       open: true,
       clienteId: id,
@@ -137,18 +138,36 @@ export default function ListaClientes({
   };
 
   const handleConfirmEliminar = async () => {
-    if (!confirmDialog.clienteId) return;
+    if (!confirmDialog.clienteId) {
+      console.error('No hay ID de cliente para eliminar');
+      return;
+    }
+
+    console.log('Confirmando eliminación de cliente:', {
+      id: confirmDialog.clienteId,
+      nombre: confirmDialog.clienteNombre,
+    });
 
     setLoading(true);
     try {
-      const response = await fetch(
-        `/api/clientes?id=${confirmDialog.clienteId}`,
-        {
-          method: 'DELETE',
-        }
+      const url = `/ciompi/api/clientes?id=${confirmDialog.clienteId}`;
+      console.log('URL de eliminación:', url);
+
+      const response = await fetch(url, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      console.log(
+        'Respuesta del servidor:',
+        response.status,
+        response.statusText
       );
 
       const data = await response.json();
+      console.log('Datos de respuesta:', data);
 
       if (response.ok && data.success) {
         setSnackbar({
@@ -158,6 +177,7 @@ export default function ListaClientes({
         });
         onClienteEliminado?.();
       } else {
+        console.error('Error en respuesta del servidor:', data);
         setSnackbar({
           open: true,
           message: data.error || 'Error al eliminar el cliente',
@@ -165,9 +185,10 @@ export default function ListaClientes({
         });
       }
     } catch (error) {
+      console.error('Error eliminando cliente:', error);
       setSnackbar({
         open: true,
-        message: 'Error de conexión',
+        message: 'Error de conexión al eliminar el cliente',
         severity: 'error',
       });
     } finally {
