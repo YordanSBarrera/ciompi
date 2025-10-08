@@ -4,7 +4,12 @@ interface User {
   id: string;
   usuario: string;
   nombre: string;
-  role: 'user' | 'admin';
+  email: string;
+  avatar: string;
+  rol: 'user' | 'admin';
+  estado: string;
+  fechaCreacion: string;
+  fechaActualizacion: string;
 }
 
 export function useAuth() {
@@ -12,30 +17,83 @@ export function useAuth() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Verificar si hay un usuario en localStorage
+    // Verificar si hay un token y usuario en localStorage
+    const token = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
+
+    if (token && savedUser) {
+      // Verificar si el token sigue siendo válido
+      verifyToken(token).then(isValid => {
+        if (isValid) {
+          setUser(JSON.parse(savedUser));
+        } else {
+          // Token inválido, limpiar localStorage
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        }
+        setLoading(false);
+      });
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
 
-  const login = async (usuario: string, password: string) => {
-    // Aquí iría tu lógica real de autenticación con tu API
-    const userData: User = {
-      id: '1',
-      usuario,
-      nombre: usuario === 'admin' ? 'Administrador' : 'Usuario',
-      role: usuario === 'admin' ? 'admin' : 'user',
-    };
+  const verifyToken = async (token: string): Promise<boolean> => {
+    try {
+      const response = await fetch('/ciompi/api/auth/verify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token }),
+      });
 
-    setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
-    return userData;
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          // Actualizar datos del usuario
+          setUser(data.usuario);
+          localStorage.setItem('user', JSON.stringify(data.usuario));
+          return true;
+        }
+      }
+      return false;
+    } catch (error) {
+      console.error('Error verificando token:', error);
+      return false;
+    }
+  };
+
+  const login = async (usuario: string, password: string) => {
+    try {
+      const response = await fetch('/ciompi/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ usuario, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Guardar token y datos del usuario
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.usuario));
+        setUser(data.usuario);
+        return data.usuario;
+      } else {
+        throw new Error(data.error || 'Error al iniciar sesión');
+      }
+    } catch (error) {
+      console.error('Error en login:', error);
+      throw error;
+    }
   };
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('token');
     localStorage.removeItem('user');
   };
 
