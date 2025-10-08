@@ -2,6 +2,7 @@
 import { blanco, grisClaro, grisMedio } from '@/lib/color';
 import { ClienteType } from '@/lib/types';
 import { formatCedula } from '@/lib/utils';
+import { useEliminarCliente } from '@/app/hook/useEliminarCliente';
 import {
   Alert,
   Box,
@@ -9,22 +10,45 @@ import {
   Chip,
   CircularProgress,
   Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   Divider,
   Grid,
   Paper,
+  Snackbar,
   Typography,
 } from '@mui/material';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 
 export default function ClienteDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const id = params.id as string;
 
   const [cliente, setCliente] = useState<ClienteType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Hook para eliminar cliente
+  const {
+    confirmDialog,
+    loading: deleting,
+    snackbar,
+    handleClickEliminar,
+    handleConfirmEliminar,
+    handleCancelEliminar,
+    handleCloseSnackbar,
+  } = useEliminarCliente({
+    onClienteEliminado: () => {
+      // Redirigir a la lista de clientes después de eliminar
+      router.push('/clientes');
+    },
+  });
 
   useEffect(() => {
     const fetchCliente = async () => {
@@ -311,31 +335,89 @@ export default function ClienteDetailPage() {
           sx={{
             display: 'flex',
             gap: 2,
-            justifyContent: 'flex-end',
+            justifyContent: 'space-between',
             mt: 4,
             pt: 3,
             borderTop: `1px solid ${grisMedio}`,
           }}
         >
-          <Button
-            component={Link}
-            href={`/clientes/${id}/editar`}
-            variant="contained"
-            color="primary"
-            size="large"
-          >
-            Editar Cliente
-          </Button>
-          <Button
-            component={Link}
-            href="/clientes"
-            variant="outlined"
-            size="large"
-          >
-            Volver al Listado
-          </Button>
+          <Box>
+            <Button
+              onClick={() => handleClickEliminar(cliente._id, cliente.NOMBRE)}
+              variant="contained"
+              color="error"
+              size="large"
+              disabled={deleting}
+            >
+              {deleting ? 'Eliminando...' : 'Eliminar Cliente'}
+            </Button>
+          </Box>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button
+              component={Link}
+              href={`/clientes/${id}/editar`}
+              variant="contained"
+              color="primary"
+              size="large"
+            >
+              Editar Cliente
+            </Button>
+
+            <Button
+              component={Link}
+              href="/clientes"
+              variant="outlined"
+              size="large"
+            >
+              Volver al Listado
+            </Button>
+          </Box>
         </Box>
       </Paper>
+
+      {/* Diálogo de confirmación */}
+      <Dialog
+        open={confirmDialog.open}
+        onClose={handleCancelEliminar}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">Confirmar eliminación</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            ¿Estás seguro de que deseas eliminar al cliente "
+            {confirmDialog.clienteNombre}"? Esta acción no se puede deshacer.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelEliminar} disabled={deleting}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleConfirmEliminar}
+            color="error"
+            variant="contained"
+            disabled={deleting}
+          >
+            {deleting ? 'Eliminando...' : 'Eliminar'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar para notificaciones */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 }

@@ -37,6 +37,7 @@ import {
 } from '@mui/icons-material';
 import { ClienteType } from '@/lib/types';
 import { formatCedula } from '@/lib/utils';
+import { useEliminarCliente } from '@/app/hook/useEliminarCliente';
 import {
   azulBase,
   azulClaro,
@@ -72,17 +73,16 @@ export default function ListaClientes({
     anchorEl: null,
     clienteId: null,
   });
-  const [confirmDialog, setConfirmDialog] = React.useState({
-    open: false,
-    clienteId: null as string | null,
-    clienteNombre: '',
-  });
-  const [loading, setLoading] = React.useState(false);
-  const [snackbar, setSnackbar] = React.useState({
-    open: false,
-    message: '',
-    severity: 'success' as 'success' | 'error',
-  });
+  // Hook personalizado para eliminar cliente
+  const {
+    confirmDialog,
+    loading,
+    snackbar,
+    handleClickEliminar,
+    handleConfirmEliminar,
+    handleCancelEliminar,
+    handleCloseSnackbar,
+  } = useEliminarCliente({ onClienteEliminado });
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -127,90 +127,10 @@ export default function ListaClientes({
     router.push(dynamicRoutes.clienteEditar(id));
   };
 
-  const handleClickEliminar = (id: string, nombre: string) => {
+  // Wrapper para handleClickEliminar que también cierra el menú
+  const handleClickEliminarWrapper = (id: string, nombre: string) => {
     handleMenuClose();
-    console.log('Eliminando cliente:', { id, nombre }); // Debug log
-    setConfirmDialog({
-      open: true,
-      clienteId: id,
-      clienteNombre: nombre,
-    });
-  };
-
-  const handleConfirmEliminar = async () => {
-    if (!confirmDialog.clienteId) {
-      console.error('No hay ID de cliente para eliminar');
-      return;
-    }
-
-    console.log('Confirmando eliminación de cliente:', {
-      id: confirmDialog.clienteId,
-      nombre: confirmDialog.clienteNombre,
-    });
-
-    setLoading(true);
-    try {
-      const url = `/ciompi/api/clientes?id=${confirmDialog.clienteId}`;
-      console.log('URL de eliminación:', url);
-
-      const response = await fetch(url, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      console.log(
-        'Respuesta del servidor:',
-        response.status,
-        response.statusText
-      );
-
-      const data = await response.json();
-      console.log('Datos de respuesta:', data);
-
-      if (response.ok && data.success) {
-        setSnackbar({
-          open: true,
-          message: `Cliente "${confirmDialog.clienteNombre}" eliminado exitosamente`,
-          severity: 'success',
-        });
-        onClienteEliminado?.();
-      } else {
-        console.error('Error en respuesta del servidor:', data);
-        setSnackbar({
-          open: true,
-          message: data.error || 'Error al eliminar el cliente',
-          severity: 'error',
-        });
-      }
-    } catch (error) {
-      console.error('Error eliminando cliente:', error);
-      setSnackbar({
-        open: true,
-        message: 'Error de conexión al eliminar el cliente',
-        severity: 'error',
-      });
-    } finally {
-      setLoading(false);
-      setConfirmDialog({
-        open: false,
-        clienteId: null,
-        clienteNombre: '',
-      });
-    }
-  };
-
-  const handleCancelEliminar = () => {
-    setConfirmDialog({
-      open: false,
-      clienteId: null,
-      clienteNombre: '',
-    });
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbar(prev => ({ ...prev, open: false }));
+    handleClickEliminar(id, nombre);
   };
 
   const filteredClientes = clientes.filter(
@@ -649,7 +569,10 @@ export default function ListaClientes({
                       </MenuItem>
                       <MenuItem
                         onClick={() =>
-                          handleClickEliminar(cliente._id, cliente.NOMBRE)
+                          handleClickEliminarWrapper(
+                            cliente._id,
+                            cliente.NOMBRE
+                          )
                         }
                       >
                         <DeleteIcon
