@@ -1,6 +1,7 @@
 'use client';
 import { blanco, grisClaro, grisMedio } from '@/lib/color';
 import { ClienteType } from '@/lib/types';
+import { formatCedula } from '@/lib/utils';
 import {
   Alert,
   Box,
@@ -172,7 +173,9 @@ export default function ClienteDetailPage() {
                 gutterBottom
                 sx={{ fontFamily: 'monospace' }}
               >
-                {cliente.cedula || 'No especificada'}
+                {cliente.cedula
+                  ? formatCedula(cliente.cedula)
+                  : 'No especificada'}
               </Typography>
             </Box>
 

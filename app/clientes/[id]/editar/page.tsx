@@ -1,6 +1,7 @@
 'use client';
 import { blanco, grisClaro, grisMedio } from '@/lib/color';
 import { ClienteType, ClienteFormType } from '@/lib/types';
+import { validateCedula, handleCedulaInput, cleanCedula } from '@/lib/utils';
 import {
   Alert,
   Box,
@@ -37,6 +38,7 @@ export default function EditarClientePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [cedulaError, setCedulaError] = useState<string | null>(null);
 
   // Cargar datos del cliente
   useEffect(() => {
@@ -58,7 +60,7 @@ export default function EditarClientePage() {
         setCliente(data);
         setFormData({
           NOMBRE: data.NOMBRE || '',
-          cedula: data.cedula || '',
+          cedula: data.cedula ? handleCedulaInput(data.cedula) : '',
           correo: data.correo || '',
           profesion: data.profesion || '',
           DIRECCION: data.DIRECCION || '',
@@ -80,10 +82,38 @@ export default function EditarClientePage() {
   // Manejar cambios en el formulario
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value,
-    }));
+
+    // Manejo especial para cédula
+    if (name === 'cedula') {
+      const formattedValue = handleCedulaInput(value);
+      setFormData(prev => ({
+        ...prev,
+        [name]: formattedValue,
+      }));
+
+      // Validar cédula en tiempo real
+      if (formattedValue && formattedValue.length > 0) {
+        const cleanValue = cleanCedula(formattedValue);
+        if (cleanValue.length === 8) {
+          if (!validateCedula(cleanValue)) {
+            setCedulaError('La cédula debe tener exactamente 8 dígitos');
+          } else {
+            setCedulaError(null);
+          }
+        } else if (cleanValue.length > 0) {
+          setCedulaError('La cédula debe tener exactamente 8 dígitos');
+        } else {
+          setCedulaError(null);
+        }
+      } else {
+        setCedulaError(null);
+      }
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
   };
 
   // Validar formulario
@@ -96,6 +126,17 @@ export default function EditarClientePage() {
       setError('El código de cliente es obligatorio');
       return false;
     }
+
+    // Validar cédula si se proporciona
+    if (formData.cedula && formData.cedula.trim()) {
+      const cleanCedulaValue = cleanCedula(formData.cedula);
+      if (!validateCedula(cleanCedulaValue)) {
+        setError('La cédula debe tener exactamente 8 dígitos');
+        setCedulaError('La cédula debe tener exactamente 8 dígitos');
+        return false;
+      }
+    }
+
     return true;
   };
 
@@ -109,12 +150,20 @@ export default function EditarClientePage() {
       setSaving(true);
       setError(null);
 
+      // Preparar datos para envío, limpiando la cédula
+      const dataToSend = {
+        ...formData,
+        cedula: formData.cedula
+          ? cleanCedula(formData.cedula)
+          : formData.cedula,
+      };
+
       const response = await fetch(`/ciompi/api/clientes/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(dataToSend),
       });
 
       if (!response.ok) {
@@ -253,6 +302,12 @@ export default function EditarClientePage() {
                 name="cedula"
                 value={formData.cedula}
                 onChange={handleChange}
+                error={!!cedulaError}
+                helperText={cedulaError || 'Formato: 1.234.567-8'}
+                placeholder="12345678"
+                inputProps={{
+                  maxLength: 12, // #.###.###-# = 12 caracteres
+                }}
                 sx={{ mb: 2 }}
               />
             </Grid>
