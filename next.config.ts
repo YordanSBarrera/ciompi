@@ -1,9 +1,7 @@
 import type { NextConfig } from 'next';
 
-const basePath = '/ciompi';
 const nextConfig: NextConfig = {
-  basePath,
+  // basePath removido para evitar problemas con las rutas de API
 };
 
 export default nextConfig;
-export { basePath };

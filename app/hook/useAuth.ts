@@ -74,6 +74,14 @@ export function useAuth() {
         body: JSON.stringify({ usuario, password }),
       });
 
+      // Verificar si la respuesta es HTML (error 404 o similar)
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('Respuesta no es JSON:', text.substring(0, 200));
+        throw new Error('Error del servidor: La respuesta no es JSON válido');
+      }
+
       const data = await response.json();
 
       if (response.ok && data.success) {

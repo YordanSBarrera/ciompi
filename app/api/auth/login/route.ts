@@ -7,9 +7,12 @@ const JWT_SECRET = process.env.JWT_SECRET || 'tu-clave-secreta-super-segura';
 
 export async function POST(request: Request) {
   try {
+    console.log('Iniciando proceso de login...');
     await connectDB();
+    console.log('Base de datos conectada');
 
     const { usuario, password } = await request.json();
+    console.log('Datos recibidos:', { usuario, password: '***' });
 
     // Validaciones básicas
     if (!usuario || !password) {
@@ -34,16 +37,19 @@ export async function POST(request: Request) {
     }
 
     // Buscar usuario en la base de datos
+    console.log('Buscando usuario:', usuario.toLowerCase().trim());
     const usuarioEncontrado = await Usuario.findOne({
       usuario: usuario.toLowerCase().trim(),
     });
 
     if (!usuarioEncontrado) {
+      console.log('Usuario no encontrado');
       return NextResponse.json(
         { error: 'Credenciales inválidas' },
         { status: 401 }
       );
     }
+    console.log('Usuario encontrado:', usuarioEncontrado.usuario);
 
     // Verificar si el usuario está activo
     if (usuarioEncontrado.estado !== 'activo') {
@@ -96,7 +102,10 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Error en login:', error);
     return NextResponse.json(
-      { error: 'Error interno del servidor' },
+      {
+        error: 'Error interno del servidor',
+        details: error instanceof Error ? error.message : 'Error desconocido',
+      },
       { status: 500 }
     );
   }

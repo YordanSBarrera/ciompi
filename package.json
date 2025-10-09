@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "create-admin": "node scripts/createAdminUser.js"
+    "create-admin": "node scripts/createAdminUser.js",
+    "test-db": "node scripts/testConnection.js"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

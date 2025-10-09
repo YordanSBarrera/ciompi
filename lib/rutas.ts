@@ -1,5 +1,3 @@
-import { basePath } from '../next.config';
-
 export const routes = {
   home: '/',
   clientes: '/clientes',
