@@ -8,7 +8,7 @@ export async function connectDB() {
   const mongoUri =
     process.env.MONGO_URI ||
     process.env.MONGODB_URI ||
-    'mongodb://localhost:27017/ciompi';
+    'mongodb://localhost:27017';
 
   try {
     const db = await connect(mongoUri);

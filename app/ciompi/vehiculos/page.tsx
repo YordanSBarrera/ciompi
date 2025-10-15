@@ -7,7 +7,7 @@ import ListaVehiculos from '@/app/components/ListaVehiculos';
 import FormularioVehiculo from '@/app/components/FormularioVehiculo';
 import { azulBase, blanco } from '@/lib/color';
 
-export default function AutosPage() {
+export default function VehiculosPage() {
   const { createVehiculo, updateVehiculo } = useVehiculos();
   const [formularioOpen, setFormularioOpen] = useState(false);
   const [vehiculoSeleccionado, setVehiculoSeleccionado] =
@@ -27,8 +27,8 @@ export default function AutosPage() {
   };
 
   const handleVerVehiculo = (vehiculo: VehiculoType) => {
-    // Aquí podrías implementar una vista de detalles
-    console.log('Ver vehículo:', vehiculo);
+    // Navegar a la página de detalles del vehículo
+    window.location.href = `/ciompi/vehiculos/${vehiculo._id}`;
   };
 
   const handleGuardarVehiculo = async (vehiculoData: VehiculoFormType) => {

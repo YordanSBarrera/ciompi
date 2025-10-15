@@ -126,27 +126,60 @@ export default function FormularioVehiculo({
   const validateForm = (): boolean => {
     const newErrors: Partial<VehiculoFormType> = {};
 
+    // Validación de marca
     if (!formData.Marca.trim()) {
       newErrors.Marca = 'La marca es requerida';
+    } else if (formData.Marca.trim().length < 2) {
+      newErrors.Marca = 'La marca debe tener al menos 2 caracteres';
+    } else if (formData.Marca.trim().length > 50) {
+      newErrors.Marca = 'La marca no puede exceder 50 caracteres';
     }
 
+    // Validación de modelo
     if (!formData.Modelo.trim()) {
       newErrors.Modelo = 'El modelo es requerido';
+    } else if (formData.Modelo.trim().length < 1) {
+      newErrors.Modelo = 'El modelo debe tener al menos 1 carácter';
+    } else if (formData.Modelo.trim().length > 50) {
+      newErrors.Modelo = 'El modelo no puede exceder 50 caracteres';
     }
 
+    // Validación de matrícula
     if (!formData.Matricula.trim()) {
       newErrors.Matricula = 'La matrícula es requerida';
+    } else {
+      const matriculaRegex = /^[A-Z0-9-]{3,10}$/;
+      if (!matriculaRegex.test(formData.Matricula.trim())) {
+        newErrors.Matricula =
+          'La matrícula debe tener entre 3 y 10 caracteres alfanuméricos y guiones';
+      }
     }
 
-    if (
-      formData.Año &&
-      (formData.Año < 1900 || formData.Año > new Date().getFullYear() + 1)
-    ) {
-      newErrors.Año = 'El año debe ser válido';
+    // Validación de año
+    if (formData.Año) {
+      const currentYear = new Date().getFullYear();
+      if (formData.Año < 1900 || formData.Año > currentYear + 1) {
+        newErrors.Año = `El año debe estar entre 1900 y ${currentYear + 1}`;
+      }
     }
 
-    if (formData.Padron && formData.Padron < 0) {
-      newErrors.Padron = 'El padrón debe ser un número positivo';
+    // Validación de padrón
+    if (formData.Padron !== undefined && formData.Padron !== null) {
+      if (formData.Padron < 0) {
+        newErrors.Padron = 'El padrón debe ser un número positivo';
+      } else if (formData.Padron > 999999999) {
+        newErrors.Padron = 'El padrón no puede exceder 999,999,999';
+      }
+    }
+
+    // Validación de descripción
+    if (formData.Descripcion && formData.Descripcion.length > 500) {
+      newErrors.Descripcion = 'La descripción no puede exceder 500 caracteres';
+    }
+
+    // Validación de color
+    if (formData.Color && formData.Color.length > 30) {
+      newErrors.Color = 'El color no puede exceder 30 caracteres';
     }
 
     setErrors(newErrors);
@@ -155,8 +188,46 @@ export default function FormularioVehiculo({
 
   const handleInputChange = (field: keyof VehiculoFormType, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+
+    // Limpiar error del campo cuando el usuario empieza a escribir
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+
+    // Validación en tiempo real para algunos campos
+    if (field === 'Matricula' && value) {
+      const matriculaRegex = /^[A-Z0-9-]{3,10}$/;
+      if (!matriculaRegex.test(value.trim())) {
+        setErrors(prev => ({
+          ...prev,
+          Matricula:
+            'Formato inválido. Use letras, números y guiones (3-10 caracteres)',
+        }));
+      }
+    }
+
+    if (field === 'Año' && value) {
+      const currentYear = new Date().getFullYear();
+      if (value < 1900 || value > currentYear + 1) {
+        setErrors(prev => ({
+          ...prev,
+          Año: `El año debe estar entre 1900 y ${currentYear + 1}`,
+        }));
+      }
+    }
+
+    if (field === 'Padron' && value !== undefined && value !== null) {
+      if (value < 0) {
+        setErrors(prev => ({
+          ...prev,
+          Padron: 'El padrón debe ser un número positivo',
+        }));
+      } else if (value > 999999999) {
+        setErrors(prev => ({
+          ...prev,
+          Padron: 'El padrón no puede exceder 999,999,999',
+        }));
+      }
     }
   };
 
@@ -260,7 +331,8 @@ export default function FormularioVehiculo({
                 value={formData.Modelo}
                 onChange={e => handleInputChange('Modelo', e.target.value)}
                 error={!!errors.Modelo}
-                helperText={errors.Modelo}
+                helperText={errors.Modelo || `${formData.Modelo.length}/50`}
+                inputProps={{ maxLength: 50 }}
               />
             </Grid>
 
@@ -274,8 +346,11 @@ export default function FormularioVehiculo({
                   handleInputChange('Matricula', e.target.value.toUpperCase())
                 }
                 error={!!errors.Matricula}
-                helperText={errors.Matricula}
+                helperText={
+                  errors.Matricula || `${formData.Matricula.length}/10`
+                }
                 placeholder="ABC-1234"
+                inputProps={{ maxLength: 10 }}
               />
             </Grid>
 
@@ -390,7 +465,12 @@ export default function FormularioVehiculo({
                 rows={3}
                 value={formData.Descripcion}
                 onChange={e => handleInputChange('Descripcion', e.target.value)}
+                error={!!errors.Descripcion}
+                helperText={
+                  errors.Descripcion || `${formData.Descripcion.length}/500`
+                }
                 placeholder="Detalles adicionales del vehículo..."
+                inputProps={{ maxLength: 500 }}
               />
             </Grid>
           </Grid>

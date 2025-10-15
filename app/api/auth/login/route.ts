@@ -3,10 +3,16 @@ import Usuario from '@/models/Usuario';
 import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'tu-clave-secreta-super-segura';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export async function POST(request: Request) {
   try {
+    if (!JWT_SECRET) {
+      return NextResponse.json(
+        { error: 'JWT  la clave secreta no esta cargada o no está definida' },
+        { status: 500 }
+      );
+    }
     console.log('Iniciando proceso de login...');
     await connectDB();
     console.log('Base de datos conectada');

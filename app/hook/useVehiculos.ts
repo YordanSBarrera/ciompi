@@ -1,32 +1,61 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { VehiculoType, VehiculoFormType } from '@/lib/types';
+
+interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  message?: string;
+}
 
 export function useVehiculos() {
   const [vehiculos, setVehiculos] = useState<VehiculoType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const fetchVehiculos = async () => {
+  const fetchVehiculos = useCallback(async (showLoading = true) => {
     try {
-      setLoading(true);
-      const response = await fetch('/api/vehiculos');
+      if (showLoading) {
+        setLoading(true);
+      } else {
+        setRefreshing(true);
+      }
+      setError(null);
+
+      const response = await fetch('/api/vehiculos', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
       if (response.ok) {
         const data = await response.json();
         setVehiculos(data);
         setError(null);
+        return { success: true, data };
       } else {
         const errorData = await response.json();
-        setError(errorData.error || 'Error al cargar vehículos');
+        const errorMessage =
+          errorData.error || `Error ${response.status}: ${response.statusText}`;
+        setError(errorMessage);
+        return { success: false, error: errorMessage };
       }
     } catch (err) {
-      setError('Error de conexión');
+      const errorMessage =
+        err instanceof Error ? err.message : 'Error de conexión';
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, []);
 
-  const createVehiculo = async (vehiculoData: VehiculoFormType) => {
+  const createVehiculo = useCallback(async (vehiculoData: VehiculoFormType) => {
     try {
+      setError(null);
       const response = await fetch('/api/vehiculos', {
         method: 'POST',
         headers: {
@@ -41,46 +70,65 @@ export function useVehiculos() {
         return { success: true, vehiculo: newVehiculo };
       } else {
         const errorData = await response.json();
+        const errorMessage =
+          errorData.error || `Error ${response.status}: ${response.statusText}`;
+        setError(errorMessage);
         return {
           success: false,
-          error: errorData.error || 'Error al crear vehículo',
+          error: errorMessage,
         };
       }
     } catch (err) {
-      return { success: false, error: 'Error de conexión' };
+      const errorMessage =
+        err instanceof Error ? err.message : 'Error de conexión';
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
     }
-  };
+  }, []);
 
-  const updateVehiculo = async (id: string, vehiculoData: VehiculoFormType) => {
-    try {
-      const response = await fetch(`/api/vehiculos/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(vehiculoData),
-      });
+  const updateVehiculo = useCallback(
+    async (id: string, vehiculoData: VehiculoFormType) => {
+      try {
+        setError(null);
+        const response = await fetch(`/api/vehiculos/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(vehiculoData),
+        });
 
-      if (response.ok) {
-        const updatedVehiculo = await response.json();
-        setVehiculos(prev =>
-          prev.map(v => (v._id === id ? updatedVehiculo : v))
-        );
-        return { success: true, vehiculo: updatedVehiculo };
-      } else {
-        const errorData = await response.json();
-        return {
-          success: false,
-          error: errorData.message || 'Error al actualizar vehículo',
-        };
+        if (response.ok) {
+          const updatedVehiculo = await response.json();
+          setVehiculos(prev =>
+            prev.map(v => (v._id === id ? updatedVehiculo : v))
+          );
+          return { success: true, vehiculo: updatedVehiculo };
+        } else {
+          const errorData = await response.json();
+          const errorMessage =
+            errorData.message ||
+            errorData.error ||
+            `Error ${response.status}: ${response.statusText}`;
+          setError(errorMessage);
+          return {
+            success: false,
+            error: errorMessage,
+          };
+        }
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : 'Error de conexión';
+        setError(errorMessage);
+        return { success: false, error: errorMessage };
       }
-    } catch (err) {
-      return { success: false, error: 'Error de conexión' };
-    }
-  };
+    },
+    []
+  );
 
-  const deleteVehiculo = async (id: string) => {
+  const deleteVehiculo = useCallback(async (id: string) => {
     try {
+      setError(null);
       const response = await fetch(`/api/vehiculos/${id}`, {
         method: 'DELETE',
       });
@@ -90,27 +138,46 @@ export function useVehiculos() {
         return { success: true };
       } else {
         const errorData = await response.json();
+        const errorMessage =
+          errorData.message ||
+          errorData.error ||
+          `Error ${response.status}: ${response.statusText}`;
+        setError(errorMessage);
         return {
           success: false,
-          error: errorData.message || 'Error al eliminar vehículo',
+          error: errorMessage,
         };
       }
     } catch (err) {
-      return { success: false, error: 'Error de conexión' };
+      const errorMessage =
+        err instanceof Error ? err.message : 'Error de conexión';
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchVehiculos();
+  }, [fetchVehiculos]);
+
+  const refreshVehiculos = useCallback(() => {
+    return fetchVehiculos(false);
+  }, [fetchVehiculos]);
+
+  const clearError = useCallback(() => {
+    setError(null);
   }, []);
 
   return {
     vehiculos,
     loading,
+    refreshing,
     error,
     fetchVehiculos,
+    refreshVehiculos,
     createVehiculo,
     updateVehiculo,
     deleteVehiculo,
+    clearError,
   };
 }

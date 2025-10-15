@@ -5,7 +5,6 @@ import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import LogoApp from '../LogoApp';
 import { azulBase } from '@/lib/color';
-// import { AccountMenu } from '../accountMenu';
 import {
   Divider,
   IconButton,
@@ -165,7 +164,7 @@ export default function SearchAppBar() {
               </MenuItem>
             </Link>
             <Link
-              href={routes.autos}
+              href={routes.vehiculos}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
               <MenuItem
@@ -183,7 +182,7 @@ export default function SearchAppBar() {
                   px: 2,
                 }}
               >
-                Autos
+                Vehículos
               </MenuItem>
             </Link>
             <Link
@@ -253,7 +252,7 @@ export default function SearchAppBar() {
               </MenuItem>
             </Link>
             <Link
-              href={routes.autos}
+              href={routes.vehiculos}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
               <MenuItem
@@ -271,7 +270,7 @@ export default function SearchAppBar() {
                   px: 2,
                 }}
               >
-                Autos
+                Vehículos
               </MenuItem>
             </Link>
 

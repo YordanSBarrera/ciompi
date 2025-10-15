@@ -51,7 +51,6 @@ import {
   turquesa,
 } from '@/lib/color';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import { dynamicRoutes } from '@/lib/rutas';
 import { useRouter } from 'next/navigation';
 
 interface ListaClientesProps {

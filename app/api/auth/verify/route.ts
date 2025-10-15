@@ -3,10 +3,16 @@ import Usuario from '@/models/Usuario';
 import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'tu-clave-secreta-super-segura';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export async function POST(request: Request) {
   try {
+    if (!JWT_SECRET) {
+      return NextResponse.json(
+        { error: 'JWT no esta cargada o no está definida' },
+        { status: 500 }
+      );
+    }
     await connectDB();
 
     const { token } = await request.json();
@@ -27,8 +33,6 @@ export async function POST(request: Request) {
         { status: 401 }
       );
     }
-
-    // Verificar si el usuario está activo
     if (usuario.estado !== 'activo') {
       return NextResponse.json({ error: 'Usuario inactivo' }, { status: 401 });
     }

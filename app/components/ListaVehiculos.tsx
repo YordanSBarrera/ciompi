@@ -26,6 +26,7 @@ import {
   useTheme,
   useMediaQuery,
   Chip,
+  CircularProgress,
 } from '@mui/material';
 import {
   Visibility as ViewIcon,
@@ -33,9 +34,11 @@ import {
   Search as SearchIcon,
   Delete as DeleteIcon,
   Add as AddIcon,
+  FilterList as FilterIcon,
 } from '@mui/icons-material';
 import { VehiculoType } from '@/lib/types';
 import { useVehiculos } from '@/app/hook/useVehiculos';
+import FiltrosAvanzadosVehiculos from './FiltrosAvanzadosVehiculos';
 import {
   azulBase,
   azulClaro,
@@ -58,13 +61,36 @@ interface ListaVehiculosProps {
   onViewVehiculo: (vehiculo: VehiculoType) => void;
 }
 
+interface FiltrosVehiculos {
+  marca: string;
+  modelo: string;
+  matricula: string;
+  color: string;
+  añoMin: number | '';
+  añoMax: number | '';
+  padronMin: number | '';
+  padronMax: number | '';
+}
+
 export default function ListaVehiculos({
   onAddVehiculo,
   onEditVehiculo,
   onViewVehiculo,
 }: ListaVehiculosProps) {
-  const { vehiculos, loading, error, deleteVehiculo } = useVehiculos();
+  const { vehiculos, loading, error, deleteVehiculo, refreshing } =
+    useVehiculos();
   const [searchTerm, setSearchTerm] = useState('');
+  const [filtrosAvanzados, setFiltrosAvanzados] = useState<FiltrosVehiculos>({
+    marca: '',
+    modelo: '',
+    matricula: '',
+    color: '',
+    añoMin: '',
+    añoMax: '',
+    padronMin: '',
+    padronMax: '',
+  });
+  const [filtrosDialogOpen, setFiltrosDialogOpen] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean;
     vehiculo: VehiculoType | null;
@@ -78,14 +104,69 @@ export default function ListaVehiculos({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  const filteredVehiculos = vehiculos.filter(
-    vehiculo =>
+  const filteredVehiculos = vehiculos.filter(vehiculo => {
+    // Filtro de búsqueda general
+    const matchesSearch =
+      !searchTerm ||
       vehiculo.Marca.toLowerCase().includes(searchTerm.toLowerCase()) ||
       vehiculo.Modelo.toLowerCase().includes(searchTerm.toLowerCase()) ||
       vehiculo.Matricula.toLowerCase().includes(searchTerm.toLowerCase()) ||
       vehiculo.Color?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      vehiculo.Descripcion?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+      vehiculo.Descripcion?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    // Filtros avanzados
+    const matchesMarca =
+      !filtrosAvanzados.marca ||
+      vehiculo.Marca.toLowerCase().includes(
+        filtrosAvanzados.marca.toLowerCase()
+      );
+
+    const matchesModelo =
+      !filtrosAvanzados.modelo ||
+      vehiculo.Modelo.toLowerCase().includes(
+        filtrosAvanzados.modelo.toLowerCase()
+      );
+
+    const matchesMatricula =
+      !filtrosAvanzados.matricula ||
+      vehiculo.Matricula.toLowerCase().includes(
+        filtrosAvanzados.matricula.toLowerCase()
+      );
+
+    const matchesColor =
+      !filtrosAvanzados.color ||
+      vehiculo.Color?.toLowerCase().includes(
+        filtrosAvanzados.color.toLowerCase()
+      );
+
+    const matchesAñoMin =
+      !filtrosAvanzados.añoMin ||
+      (vehiculo.Año && vehiculo.Año >= filtrosAvanzados.añoMin);
+
+    const matchesAñoMax =
+      !filtrosAvanzados.añoMax ||
+      (vehiculo.Año && vehiculo.Año <= filtrosAvanzados.añoMax);
+
+    const matchesPadronMin =
+      !filtrosAvanzados.padronMin ||
+      (vehiculo.Padron && vehiculo.Padron >= filtrosAvanzados.padronMin);
+
+    const matchesPadronMax =
+      !filtrosAvanzados.padronMax ||
+      (vehiculo.Padron && vehiculo.Padron <= filtrosAvanzados.padronMax);
+
+    return (
+      matchesSearch &&
+      matchesMarca &&
+      matchesModelo &&
+      matchesMatricula &&
+      matchesColor &&
+      matchesAñoMin &&
+      matchesAñoMax &&
+      matchesPadronMin &&
+      matchesPadronMax
+    );
+  });
 
   const handleDeleteClick = (vehiculo: VehiculoType) => {
     setDeleteDialog({ open: true, vehiculo });
@@ -119,14 +200,44 @@ export default function ListaVehiculos({
     setSnackbar({ ...snackbar, open: false });
   };
 
+  const handleApplyFilters = (filters: FiltrosVehiculos) => {
+    setFiltrosAvanzados(filters);
+  };
+
+  const handleClearFilters = () => {
+    setFiltrosAvanzados({
+      marca: '',
+      modelo: '',
+      matricula: '',
+      color: '',
+      añoMin: '',
+      añoMax: '',
+      padronMin: '',
+      padronMax: '',
+    });
+  };
+
+  const contarFiltrosActivos = () => {
+    let count = 0;
+    Object.values(filtrosAvanzados).forEach(value => {
+      if (value !== '' && value !== null && value !== undefined) {
+        count++;
+      }
+    });
+    return count;
+  };
+
   if (loading) {
     return (
       <Box
         display="flex"
+        flexDirection="column"
         justifyContent="center"
         alignItems="center"
         minHeight="200px"
+        gap={2}
       >
+        <CircularProgress />
         <Typography>Cargando vehículos...</Typography>
       </Box>
     );
@@ -142,7 +253,7 @@ export default function ListaVehiculos({
 
   return (
     <Box>
-      {/* Header con búsqueda y botón agregar */}
+      {/* Header con búsqueda y botones */}
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
         spacing={2}
@@ -167,20 +278,50 @@ export default function ListaVehiculos({
             ),
           }}
         />
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={onAddVehiculo}
-          sx={{
-            backgroundColor: azulBase,
-            '&:hover': {
-              backgroundColor: azulOscuro,
-            },
-            minWidth: { xs: '100%', sm: 'auto' },
-          }}
-        >
-          Agregar Vehículo
-        </Button>
+        <Stack direction="row" spacing={1}>
+          <Button
+            variant="outlined"
+            startIcon={<FilterIcon />}
+            onClick={() => setFiltrosDialogOpen(true)}
+            sx={{
+              borderColor: azulBase,
+              color: azulBase,
+              '&:hover': {
+                borderColor: azulOscuro,
+                backgroundColor: azulBase + '10',
+              },
+            }}
+          >
+            Filtros
+            {contarFiltrosActivos() > 0 && (
+              <Chip
+                label={contarFiltrosActivos()}
+                size="small"
+                sx={{
+                  ml: 1,
+                  backgroundColor: azulBase,
+                  color: blanco,
+                  height: 20,
+                  fontSize: '0.75rem',
+                }}
+              />
+            )}
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={onAddVehiculo}
+            disabled={refreshing}
+            sx={{
+              backgroundColor: azulBase,
+              '&:hover': {
+                backgroundColor: azulOscuro,
+              },
+            }}
+          >
+            {refreshing ? 'Actualizando...' : 'Agregar Vehículo'}
+          </Button>
+        </Stack>
       </Stack>
 
       {/* Tabla de vehículos */}
@@ -349,6 +490,15 @@ export default function ListaVehiculos({
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Filtros avanzados */}
+      <FiltrosAvanzadosVehiculos
+        open={filtrosDialogOpen}
+        onClose={() => setFiltrosDialogOpen(false)}
+        onApplyFilters={handleApplyFilters}
+        onClearFilters={handleClearFilters}
+        initialFilters={filtrosAvanzados}
+      />
 
       {/* Snackbar para notificaciones */}
       <Snackbar

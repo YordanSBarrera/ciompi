@@ -1,5 +1,5 @@
 import React from 'react';
-import ColorPalette from '../components/ColorPalette';
+import ColorPalette from '@/app/components/ColorPalette';
 
 const UsuarioPage = () => {
   return (

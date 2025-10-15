@@ -9,7 +9,6 @@ import {
   Grid,
   Card,
   CardContent,
-  Button,
   Avatar,
   Chip,
 } from '@mui/material';
@@ -60,6 +59,7 @@ export default function CiompiHomePage() {
     <AuthGuard>
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         {/* Header */}
+        <h3>CIOMPI Home Page</h3>
         <Box sx={{ mb: 4 }}>
           <Box
             sx={{
@@ -101,7 +101,7 @@ export default function CiompiHomePage() {
         {/* Menu Cards */}
         <Grid container spacing={3}>
           {menuItems.map((item, index) => (
-            <Grid item xs={12} sm={6} md={3} key={index}>
+            <Grid key={index} size={{ xs: 12, md: 6 }}>
               <Card
                 component={Link}
                 href={item.href}
@@ -155,7 +155,7 @@ export default function CiompiHomePage() {
             Resumen Rápido
           </Typography>
           <Grid container spacing={3}>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Paper sx={{ p: 3, textAlign: 'center' }}>
                 <Typography variant="h4" color="primary" gutterBottom>
                   --
@@ -163,7 +163,7 @@ export default function CiompiHomePage() {
                 <Typography variant="body1">Total Clientes</Typography>
               </Paper>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Paper sx={{ p: 3, textAlign: 'center' }}>
                 <Typography variant="h4" color="secondary" gutterBottom>
                   --
@@ -171,7 +171,7 @@ export default function CiompiHomePage() {
                 <Typography variant="body1">Total Empresas</Typography>
               </Paper>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Paper sx={{ p: 3, textAlign: 'center' }}>
                 <Typography variant="h4" color="success.main" gutterBottom>
                   --
