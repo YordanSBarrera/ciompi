@@ -3,22 +3,36 @@ import Cliente from '@/models/cliente';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-  connectDB();
-  const cliente = await Cliente.find();
-  return NextResponse.json(cliente);
+  try {
+    await connectDB();
+    const cliente = await Cliente.find();
+    return NextResponse.json(cliente);
+  } catch (error) {
+    console.error('Error obteniendo clientes:', error);
+    return NextResponse.json(
+      { error: 'Error interno del servidor' },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(request: Request) {
-  connectDB();
   try {
+    await connectDB();
     const body = await request.json();
     const newCliente = new Cliente(body);
     const savedCliente = await newCliente.save();
     return NextResponse.json(savedCliente);
   } catch (error: unknown) {
+    console.error('Error creando cliente:', error);
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
-    } else return NextResponse.json({ message: 'Error en algun lado ;-)' });
+    } else {
+      return NextResponse.json(
+        { error: 'Error interno del servidor' },
+        { status: 500 }
+      );
+    }
   }
 }
 
@@ -62,10 +76,3 @@ export async function DELETE(request: Request) {
     }
   }
 }
-
-// export async function POST(request: Request) {
-//   const data = await request.json();
-//   const newClient = new Cliente(data);
-//   console.log(newClient);
-//   return NextResponse.json({ message: 'creando cliente' });
-// }

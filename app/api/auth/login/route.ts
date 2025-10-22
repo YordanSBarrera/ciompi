@@ -9,13 +9,30 @@ export async function POST(request: Request) {
   try {
     if (!JWT_SECRET) {
       return NextResponse.json(
-        { error: 'JWT  la clave secreta no esta cargada o no está definida' },
+        { error: 'JWT: la clave secreta no está cargada o no está definida' },
         { status: 500 }
       );
     }
+
     console.log('Iniciando proceso de login...');
-    await connectDB();
-    console.log('Base de datos conectada');
+
+    // Intentar conectar a la base de datos con manejo de errores mejorado
+    try {
+      await connectDB();
+      console.log('Base de datos conectada');
+    } catch (dbError) {
+      console.error('Error conectando a la base de datos:', dbError);
+      return NextResponse.json(
+        {
+          error: 'Error de conexión a la base de datos',
+          details:
+            dbError instanceof Error
+              ? dbError.message
+              : 'Error desconocido de BD',
+        },
+        { status: 500 }
+      );
+    }
 
     const { usuario, password } = await request.json();
     console.log('Datos recibidos:', { usuario, password: '***' });
@@ -107,12 +124,24 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error('Error en login:', error);
+
+    // Asegurar que siempre devolvemos JSON, nunca HTML
+    const errorMessage =
+      error instanceof Error ? error.message : 'Error desconocido';
+
     return NextResponse.json(
       {
+        success: false,
         error: 'Error interno del servidor',
-        details: error instanceof Error ? error.message : 'Error desconocido',
+        details: errorMessage,
+        timestamp: new Date().toISOString(),
       },
-      { status: 500 }
+      {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
     );
   }
 }

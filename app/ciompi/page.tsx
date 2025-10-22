@@ -19,6 +19,7 @@ import {
   Assessment as AssessmentIcon,
 } from '@mui/icons-material';
 import { azulBase, azulClaro, naranja, turquesa } from '@/lib/color';
+import { routes } from '@/lib/rutas';
 import Link from 'next/link';
 
 export default function CiompiHomePage() {
@@ -29,28 +30,28 @@ export default function CiompiHomePage() {
       title: 'Clientes',
       description: 'Gestionar información de clientes',
       icon: <PeopleIcon sx={{ fontSize: 40 }} />,
-      href: '/ciompi/clientes',
+      href: `/${routes.clientes}`,
       color: azulBase,
     },
     {
       title: 'Empresas',
       description: 'Administrar empresas',
       icon: <BusinessIcon sx={{ fontSize: 40 }} />,
-      href: '/ciompi/empresas',
+      href: `/${routes.empresas}`,
       color: azulClaro,
     },
     {
       title: 'Operaciones',
       description: 'Gestionar operaciones',
       icon: <AssessmentIcon sx={{ fontSize: 40 }} />,
-      href: '/ciompi/operaciones',
+      href: `/${routes.operaciones}`,
       color: naranja,
     },
     {
       title: 'Configuración',
       description: 'Configuración del sistema',
       icon: <SettingsIcon sx={{ fontSize: 40 }} />,
-      href: '/ciompi/datosGenerales',
+      href: `/${routes.datosGenerales}`,
       color: turquesa,
     },
   ];

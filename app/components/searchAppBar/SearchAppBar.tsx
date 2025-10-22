@@ -50,7 +50,6 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   width: '100%',
   '& .MuiInputBase-input': {
     padding: theme.spacing(1, 1, 1, 0),
-    // vertical padding + font size from searchIcon
     paddingLeft: `calc(1em + ${theme.spacing(4)})`,
     transition: theme.transitions.create('width'),
     [theme.breakpoints.up('sm')]: {
@@ -120,7 +119,7 @@ export default function SearchAppBar() {
             }}
           >
             <Link
-              href={routes.clientes}
+              href={`/${routes.clientes}`}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
               <MenuItem
@@ -142,7 +141,7 @@ export default function SearchAppBar() {
               </MenuItem>
             </Link>
             <Link
-              href={routes.empresas}
+              href={`/${routes.empresas}`}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
               <MenuItem
@@ -164,7 +163,7 @@ export default function SearchAppBar() {
               </MenuItem>
             </Link>
             <Link
-              href={routes.vehiculos}
+              href={`/${routes.vehiculos}`}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
               <MenuItem
@@ -186,7 +185,7 @@ export default function SearchAppBar() {
               </MenuItem>
             </Link>
             <Link
-              href={routes.operaciones}
+              href={`/${routes.operaciones}`}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
               <MenuItem
@@ -208,7 +207,7 @@ export default function SearchAppBar() {
               </MenuItem>
             </Link>
             <Link
-              href={routes.datosGenerales}
+              href={`/${routes.datosGenerales}`}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
               <MenuItem
@@ -230,7 +229,7 @@ export default function SearchAppBar() {
               </MenuItem>
             </Link>
             <Link
-              href={routes.utilitarios}
+              href={`/${routes.utilitarios}`}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
               <MenuItem
@@ -252,7 +251,7 @@ export default function SearchAppBar() {
               </MenuItem>
             </Link>
             <Link
-              href={routes.vehiculos}
+              href={`/${routes.vehiculos}`}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
               <MenuItem
@@ -276,7 +275,7 @@ export default function SearchAppBar() {
 
             <Divider sx={{ backgroundColor: '#444444', my: 1 }} />
             <Link
-              href={routes.usuario}
+              href={`/${routes.usuario}`}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
               <MenuItem
@@ -298,7 +297,7 @@ export default function SearchAppBar() {
               </MenuItem>
             </Link>
             <Link
-              href={routes.nuevoUsuario}
+              href={`/${routes.nuevoUsuario}`}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
               <MenuItem

@@ -64,7 +64,7 @@ import { Box, CircularProgress, Alert } from '@mui/material';
 
 async function cargarClientes(): Promise<ClienteType[]> {
   try {
-    const response = await fetch('/ciompi/api/clientes');
+    const response = await fetch('/api/clientes');
     if (!response.ok) {
       throw new Error('Error al cargar clientes');
     }

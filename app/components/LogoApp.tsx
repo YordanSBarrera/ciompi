@@ -20,7 +20,10 @@ type MyLogoProps = {
   linkTo?: string;
 };
 
-const LogoApp = ({ widthProps = 150, linkTo = routes.home }: MyLogoProps) => {
+const LogoApp = ({
+  widthProps = 150,
+  linkTo = `/${routes.home}`,
+}: MyLogoProps) => {
   return (
     <Link href={linkTo}>
       <Box component="span">

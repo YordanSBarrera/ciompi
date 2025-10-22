@@ -54,7 +54,7 @@ export const useEliminarCliente = ({
 
     setLoading(true);
     try {
-      const url = `/ciompi/api/clientes?id=${confirmDialog.clienteId}`;
+      const url = `/api/clientes?id=${confirmDialog.clienteId}`;
       console.log('URL de eliminación:', url);
 
       const response = await fetch(url, {
