@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Paper,
@@ -18,10 +18,6 @@ import {
   FormHelperText,
   Card,
   CardContent,
-  Divider,
-  Chip,
-  Switch,
-  FormControlLabel,
 } from '@mui/material';
 import {
   Visibility as VisibilityIcon,
@@ -41,12 +37,12 @@ import {
   blanco,
   grisClaro,
   grisMedio,
-  grisOscuro,
   grisTexto,
   naranja,
   turquesa,
 } from '@/lib/color';
 import { Usuario } from '@/lib/types';
+import { Roles } from '@/lib/utils';
 
 interface FormularioUsuarioProps {
   usuarioExistente?: Usuario;
@@ -66,42 +62,27 @@ export default function FormularioUsuario({
     password: '',
     email: '',
     nombre: '',
-    rol: 'usuario',
+    rol: Roles.Usuario,
     estado: 'activo',
-    departamento: '',
     cargo: '',
-    informacionContacto: {
-      telefono: '',
-      direccion: {
-        calle: '',
-        ciudad: '',
-        estado: '',
-        codigoPostal: '',
-        pais: '',
-      },
-    },
-    preferencias: {
-      tema: 'claro',
-      idioma: 'es',
-      notificaciones: {
-        email: true,
-        push: false,
-        sms: false,
-      },
-    },
-    permisosEspeciales: [],
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const roleValues = Object.values(Roles);
 
   // Si es edición, cargar datos existentes
-  React.useEffect(() => {
+  useEffect(() => {
     if (usuarioExistente) {
       setFormData({
-        ...usuarioExistente,
-        password: '', // No mostrar password existente
+        usuario: usuarioExistente.usuario || '',
+        password: '', // No mostrar password existente por seguridad
+        email: usuarioExistente.email || '',
+        nombre: usuarioExistente.nombre || '',
+        rol: usuarioExistente.rol || 'Usuario',
+        estado: usuarioExistente.estado || 'activo',
+        cargo: usuarioExistente.cargo || '',
       });
     }
   }, [usuarioExistente]);
@@ -116,18 +97,6 @@ export default function FormularioUsuario({
         [parent]: {
           ...(prev[parent as keyof Usuario] as any),
           [child]: value,
-        },
-      }));
-    } else if (field.includes('preferencias.notificaciones.')) {
-      const [, , notificationType] = field.split('.');
-      setFormData(prev => ({
-        ...prev,
-        preferencias: {
-          ...prev.preferencias!,
-          notificaciones: {
-            ...prev.preferencias!.notificaciones,
-            [notificationType]: event.target.checked,
-          },
         },
       }));
     } else {
@@ -146,20 +115,10 @@ export default function FormularioUsuario({
   const handleSwitchChange =
     (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
       const value = event.target.checked;
-
-      if (field.includes('preferencias.notificaciones.')) {
-        const [, , notificationType] = field.split('.');
-        setFormData(prev => ({
-          ...prev,
-          preferencias: {
-            ...prev.preferencias!,
-            notificaciones: {
-              ...prev.preferencias!.notificaciones,
-              [notificationType]: value,
-            },
-          },
-        }));
-      }
+      setFormData(prev => ({
+        ...prev,
+        [field]: value,
+      }));
     };
 
   const validateForm = (): boolean => {
@@ -193,7 +152,22 @@ export default function FormularioUsuario({
     if (!validateForm()) return;
 
     try {
-      await onSubmit(formData);
+      // Preparar datos para envío
+      const usuarioData: Partial<Usuario> = {
+        usuario: formData.usuario,
+        email: formData.email,
+        nombre: formData.nombre,
+        rol: formData.rol,
+        estado: formData.estado,
+        cargo: formData.cargo,
+      };
+
+      // Solo incluir password si se está creando un nuevo usuario o si se proporcionó uno nuevo
+      if (!usuarioExistente || formData.password) {
+        usuarioData.password = formData.password;
+      }
+
+      await onSubmit(usuarioData);
       setSuccessMessage(
         usuarioExistente
           ? 'Usuario actualizado exitosamente'
@@ -207,30 +181,9 @@ export default function FormularioUsuario({
           password: '',
           email: '',
           nombre: '',
-          rol: 'usuario',
+          rol: Roles.Usuario,
           estado: 'activo',
-          departamento: '',
           cargo: '',
-          informacionContacto: {
-            telefono: '',
-            direccion: {
-              calle: '',
-              ciudad: '',
-              estado: '',
-              codigoPostal: '',
-              pais: '',
-            },
-          },
-          preferencias: {
-            tema: 'claro',
-            idioma: 'es',
-            notificaciones: {
-              email: true,
-              push: false,
-              sms: false,
-            },
-          },
-          permisosEspeciales: [],
         });
       }
     } catch (error) {
@@ -244,30 +197,9 @@ export default function FormularioUsuario({
       password: '',
       email: '',
       nombre: '',
-      rol: 'usuario',
+      rol: Roles.Usuario,
       estado: 'activo',
-      departamento: '',
       cargo: '',
-      informacionContacto: {
-        telefono: '',
-        direccion: {
-          calle: '',
-          ciudad: '',
-          estado: '',
-          codigoPostal: '',
-          pais: '',
-        },
-      },
-      preferencias: {
-        tema: 'claro',
-        idioma: 'es',
-        notificaciones: {
-          email: true,
-          push: false,
-          sms: false,
-        },
-      },
-      permisosEspeciales: [],
     });
     setErrors({});
     setSuccessMessage('');
@@ -419,12 +351,21 @@ export default function FormularioUsuario({
                     <Grid size={{ xs: 12 }}>
                       <TextField
                         fullWidth
-                        label="Contraseña"
+                        label={
+                          usuarioExistente
+                            ? 'Nueva Contraseña (opcional)'
+                            : 'Contraseña'
+                        }
                         type={showPassword ? 'text' : 'password'}
                         value={formData.password || ''}
                         onChange={handleChange('password')}
                         error={!!errors.password}
-                        helperText={errors.password || 'Mínimo 6 caracteres'}
+                        helperText={
+                          usuarioExistente
+                            ? 'Dejar vacío para mantener la contraseña actual'
+                            : errors.password || 'Mínimo 6 caracteres'
+                        }
+                        required={!usuarioExistente}
                         disabled={loading}
                         InputProps={{
                           endAdornment: (
@@ -487,9 +428,11 @@ export default function FormularioUsuario({
                           disabled={loading}
                           sx={{ borderRadius: 2 }}
                         >
-                          <MenuItem value="usuario">Usuario</MenuItem>
-                          <MenuItem value="supervisor">Supervisor</MenuItem>
-                          <MenuItem value="admin">Administrador</MenuItem>
+                          {roleValues.map(role => (
+                            <MenuItem key={role} value={role}>
+                              {role}
+                            </MenuItem>
+                          ))}
                         </Select>
                         {errors.rol && (
                           <FormHelperText>{errors.rol}</FormHelperText>
@@ -508,26 +451,8 @@ export default function FormularioUsuario({
                         >
                           <MenuItem value="activo">Activo</MenuItem>
                           <MenuItem value="inactivo">Inactivo</MenuItem>
-                          <MenuItem value="bloqueado">Bloqueado</MenuItem>
-                          <MenuItem value="pendiente">Pendiente</MenuItem>
                         </Select>
                       </FormControl>
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 6 }}>
-                      <TextField
-                        fullWidth
-                        label="Departamento"
-                        value={formData.departamento || ''}
-                        onChange={handleChange('departamento')}
-                        disabled={loading}
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            borderRadius: 2,
-                            '&:hover fieldset': { borderColor: azulClaro },
-                            '&.Mui-focused fieldset': { borderColor: azulBase },
-                          },
-                        }}
-                      />
                     </Grid>
                     <Grid size={{ xs: 12, md: 6 }}>
                       <TextField
@@ -535,225 +460,6 @@ export default function FormularioUsuario({
                         label="Cargo"
                         value={formData.cargo || ''}
                         onChange={handleChange('cargo')}
-                        disabled={loading}
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            borderRadius: 2,
-                            '&:hover fieldset': { borderColor: azulClaro },
-                            '&.Mui-focused fieldset': { borderColor: azulBase },
-                          },
-                        }}
-                      />
-                    </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
-
-              {/* Preferencias de Notificaciones */}
-              <Card
-                sx={{
-                  background: grisClaro,
-                  border: `1px solid ${grisMedio}`,
-                  mt: 2,
-                }}
-              >
-                <CardContent>
-                  <Typography
-                    variant="h6"
-                    gutterBottom
-                    sx={{ color: azulBase }}
-                  >
-                    Preferencias de Notificaciones
-                  </Typography>
-
-                  <Box
-                    sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}
-                  >
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={
-                            formData.preferencias?.notificaciones?.email ||
-                            false
-                          }
-                          onChange={handleSwitchChange(
-                            'preferencias.notificaciones.email'
-                          )}
-                          sx={{
-                            color: turquesa,
-                            '&.Mui-checked': { color: turquesa },
-                          }}
-                        />
-                      }
-                      label="Notificaciones por Email"
-                    />
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={
-                            formData.preferencias?.notificaciones?.push || false
-                          }
-                          onChange={handleSwitchChange(
-                            'preferencias.notificaciones.push'
-                          )}
-                          sx={{
-                            color: turquesa,
-                            '&.Mui-checked': { color: turquesa },
-                          }}
-                        />
-                      }
-                      label="Notificaciones Push"
-                    />
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={
-                            formData.preferencias?.notificaciones?.sms || false
-                          }
-                          onChange={handleSwitchChange(
-                            'preferencias.notificaciones.sms'
-                          )}
-                          sx={{
-                            color: turquesa,
-                            '&.Mui-checked': { color: turquesa },
-                          }}
-                        />
-                      }
-                      label="Notificaciones SMS"
-                    />
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            {/* Información de Contacto */}
-            <Grid size={{ xs: 12 }}>
-              <Card
-                sx={{ background: grisClaro, border: `1px solid ${grisMedio}` }}
-              >
-                <CardContent>
-                  <Typography
-                    variant="h6"
-                    gutterBottom
-                    sx={{
-                      color: azulBase,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
-                    }}
-                  >
-                    <PhoneIcon /> Información de Contacto
-                  </Typography>
-
-                  <Grid container spacing={2}>
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <TextField
-                        fullWidth
-                        label="Teléfono"
-                        value={formData.informacionContacto?.telefono || ''}
-                        onChange={handleChange('informacionContacto.telefono')}
-                        disabled={loading}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <PhoneIcon sx={{ color: grisTexto }} />
-                            </InputAdornment>
-                          ),
-                        }}
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            borderRadius: 2,
-                            '&:hover fieldset': { borderColor: azulClaro },
-                            '&.Mui-focused fieldset': { borderColor: azulBase },
-                          },
-                        }}
-                      />
-                    </Grid>
-                  </Grid>
-
-                  <Divider sx={{ my: 2 }} />
-
-                  <Typography
-                    variant="subtitle1"
-                    gutterBottom
-                    sx={{ color: azulClaro }}
-                  >
-                    Dirección
-                  </Typography>
-
-                  <Grid container spacing={2}>
-                    <Grid size={{ xs: 12 }}>
-                      <TextField
-                        fullWidth
-                        label="Calle"
-                        value={
-                          formData.informacionContacto?.direccion?.calle || ''
-                        }
-                        onChange={handleChange(
-                          'informacionContacto.direccion.calle'
-                        )}
-                        disabled={loading}
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            borderRadius: 2,
-                            '&:hover fieldset': { borderColor: azulClaro },
-                            '&.Mui-focused fieldset': { borderColor: azulBase },
-                          },
-                        }}
-                      />
-                    </Grid>
-
-                    <Grid size={{ xs: 12, sm: 4 }}>
-                      <TextField
-                        fullWidth
-                        label="Ciudad"
-                        value={
-                          formData.informacionContacto?.direccion?.ciudad || ''
-                        }
-                        onChange={handleChange(
-                          'informacionContacto.direccion.ciudad'
-                        )}
-                        disabled={loading}
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            borderRadius: 2,
-                            '&:hover fieldset': { borderColor: azulClaro },
-                            '&.Mui-focused fieldset': { borderColor: azulBase },
-                          },
-                        }}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 4 }}>
-                      <TextField
-                        fullWidth
-                        label="Estado/Provincia"
-                        value={
-                          formData.informacionContacto?.direccion?.estado || ''
-                        }
-                        onChange={handleChange(
-                          'informacionContacto.direccion.estado'
-                        )}
-                        disabled={loading}
-                        sx={{
-                          '& .MuiOutlinedInput-root': {
-                            borderRadius: 2,
-                            '&:hover fieldset': { borderColor: azulClaro },
-                            '&.Mui-focused fieldset': { borderColor: azulBase },
-                          },
-                        }}
-                      />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 4 }}>
-                      <TextField
-                        fullWidth
-                        label="Código Postal"
-                        value={
-                          formData.informacionContacto?.direccion
-                            ?.codigoPostal || ''
-                        }
-                        onChange={handleChange(
-                          'informacionContacto.direccion.codigoPostal'
-                        )}
                         disabled={loading}
                         sx={{
                           '& .MuiOutlinedInput-root': {

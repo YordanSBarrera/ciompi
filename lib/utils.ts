@@ -62,3 +62,18 @@ export const handleCedulaInput = (
   // Si no, retornar solo números
   return limitedValue;
 };
+
+export enum Roles {
+  admin = 'admin',
+  user = 'user',
+  Administrativo = 'Administrativo',
+  Usuario = 'Usuario',
+}
+
+export const isAdmin = (role: string): boolean => {
+  return role === Roles.admin || role === Roles.Administrativo;
+};
+
+export const isUser = (role: string): boolean => {
+  return role === Roles.user || role === Roles.Usuario;
+};
