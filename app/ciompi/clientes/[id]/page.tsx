@@ -57,7 +57,7 @@ export default function ClienteDetailPage() {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`/ciompi/api/clientes/${id}`);
+        const response = await fetch(`/api/clientes/${id}`);
 
         if (!response.ok) {
           if (response.status === 404) {

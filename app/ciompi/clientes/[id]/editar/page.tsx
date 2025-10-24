@@ -48,7 +48,7 @@ export default function EditarClientePage() {
         setLoading(true);
         setError(null);
 
-        const response = await fetch(`/ciompi/api/clientes/${id}`);
+        const response = await fetch(`/api/clientes/${id}`);
 
         if (!response.ok) {
           if (response.status === 404) {
@@ -159,7 +159,7 @@ export default function EditarClientePage() {
           : formData.cedula,
       };
 
-      const response = await fetch(`/ciompi/api/clientes/${id}`, {
+      const response = await fetch(`/api/clientes/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

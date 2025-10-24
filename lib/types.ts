@@ -135,3 +135,48 @@ export interface VehiculoFormType {
   Año?: number;
   Color?: string;
 }
+
+// Tipos para Financiamiento
+export interface FinanciamientoType {
+  _id?: string;
+  cliente: string | ClienteType; // Puede ser ID o objeto completo
+  vehiculo: string | VehiculoType; // Puede ser ID o objeto completo
+  costoVehiculo: number;
+  cuotas: number;
+  valorCuota: number;
+  interesTotal: number;
+  montoTotal: number;
+  fechaVenta: Date;
+  estadoFinanciamiento: 'activo' | 'finalizado' | 'cancelado' | 'en_mora';
+  usuarioRegistro: string | Usuario; // Puede ser ID o objeto completo
+  observaciones?: string;
+  fechaPrimeraCuota: Date;
+  fechaUltimaCuota: Date;
+  cuotasPagadas: number;
+  cuotasPendientes: number;
+  montoPagado: number;
+  saldoPendiente: number;
+  progresoFinanciamiento?: number; // Virtual
+  estaAlDia?: boolean; // Virtual
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface FinanciamientoFormType {
+  cliente: string; // ID del cliente
+  vehiculo: string; // ID del vehículo
+  costoVehiculo: number;
+  cuotas: number;
+  valorCuota: number;
+  interesTotal: number;
+  montoTotal: number;
+  fechaPrimeraCuota: Date;
+  observaciones?: string;
+}
+
+// Tipo para selección de cliente/vehículo en el formulario
+export interface SelectOption {
+  value: string;
+  label: string;
+  additionalInfo?: string;
+}
