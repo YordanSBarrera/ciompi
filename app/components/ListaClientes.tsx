@@ -34,6 +34,7 @@ import {
   Edit as EditIcon,
   Search as SearchIcon,
   Delete as DeleteIcon,
+  Add as AddIcon,
 } from '@mui/icons-material';
 import { ClienteType } from '@/lib/types';
 import { formatCedula } from '@/lib/utils';
@@ -56,6 +57,7 @@ import { useRouter } from 'next/navigation';
 interface ListaClientesProps {
   clientes: ClienteType[];
   onClienteEliminado?: () => void;
+  onAgregarCliente?: () => void;
 }
 
 interface MenuState {
@@ -66,6 +68,7 @@ interface MenuState {
 export default function ListaClientes({
   clientes,
   onClienteEliminado,
+  onAgregarCliente,
 }: ListaClientesProps) {
   const [filter, setFilter] = React.useState('');
   const [menuState, setMenuState] = React.useState<MenuState>({
@@ -132,13 +135,27 @@ export default function ListaClientes({
     handleClickEliminar(id, nombre);
   };
 
-  const filteredClientes = clientes.filter(
-    cliente =>
-      cliente.NOMBRE.toLowerCase().includes(filter.toLowerCase()) ||
-      cliente.CODCLI.toLowerCase().includes(filter.toLowerCase()) ||
-      cliente.DIRECCION?.toLowerCase().includes(filter.toLowerCase()) ||
-      cliente.TELEFONO?.includes(filter)
-  );
+  const filteredClientes = clientes.filter(cliente => {
+    const searchTerm = filter.toLowerCase().trim();
+
+    if (!searchTerm) return true;
+
+    // Función helper para buscar en campos de texto
+    const searchInField = (field: string | undefined | null): boolean => {
+      if (!field) return false;
+      return field.toString().toLowerCase().includes(searchTerm);
+    };
+
+    return (
+      searchInField(cliente.NOMBRE) ||
+      searchInField(cliente.CODCLI) ||
+      searchInField(cliente.DIRECCION) ||
+      searchInField(cliente.TELEFONO) ||
+      searchInField(cliente.correo) ||
+      searchInField(cliente.profesion) ||
+      searchInField(cliente.cedula)
+    );
+  });
 
   const getStatusColor = (index: number) => {
     return index % 2 === 0 ? blanco : grisClaro;
@@ -151,6 +168,8 @@ export default function ListaClientes({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 2,
         }}
       >
         <Typography
@@ -164,38 +183,82 @@ export default function ListaClientes({
           Lista de Clientes
         </Typography>
 
-        <Chip
-          label={`${filteredClientes.length} clientes`}
-          variant="outlined"
-          sx={{
-            borderColor: turquesa,
-            color: azulOscuro,
-            fontWeight: 600,
-          }}
-        />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Chip
+            label={`${filteredClientes.length} clientes`}
+            variant="outlined"
+            sx={{
+              borderColor: turquesa,
+              color: azulOscuro,
+              fontWeight: 600,
+            }}
+          />
+
+          {onAgregarCliente && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={onAgregarCliente}
+              sx={{
+                backgroundColor: azulBase,
+                background: `linear-gradient(135deg, ${azulBase} 0%, ${azulOscuro} 100%)`,
+                borderRadius: 2,
+                px: 3,
+                py: 1.5,
+                fontWeight: 600,
+                textTransform: 'none',
+                fontSize: '0.95rem',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+                '&:hover': {
+                  backgroundColor: azulOscuro,
+                  background: `linear-gradient(135deg, ${azulOscuro} 0%, ${azulBase} 100%)`,
+                  boxShadow: '0 6px 20px rgba(0,0,0,0.2)',
+                  transform: 'translateY(-2px)',
+                  transition: 'all 0.2s ease-in-out',
+                },
+                '&:active': {
+                  transform: 'translateY(0px)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                },
+              }}
+            >
+              Agregar Cliente
+            </Button>
+          )}
+        </Box>
       </Box>
 
       {/* Barra de búsqueda */}
       <TextField
-        placeholder="Buscar cliente por nombre, código, dirección o teléfono..."
+        placeholder="Buscar por nombre, código, dirección, teléfono, correo, profesión o cédula..."
         value={filter}
         onChange={e => setFilter(e.target.value)}
         sx={{
           maxWidth: 500,
           '& .MuiOutlinedInput-root': {
             borderRadius: 2,
-            '&:hover fieldset': {
-              borderColor: azulClaro,
+            backgroundColor: 'rgba(255,255,255,0.8)',
+            transition: 'all 0.2s ease-in-out',
+            '&:hover': {
+              backgroundColor: 'rgba(255,255,255,1)',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              '& fieldset': {
+                borderColor: azulClaro,
+              },
             },
-            '&.Mui-focused fieldset': {
-              borderColor: azulBase,
+            '&.Mui-focused': {
+              backgroundColor: 'rgba(255,255,255,1)',
+              boxShadow: `0 0 0 2px ${azulBase}20`,
+              '& fieldset': {
+                borderColor: azulBase,
+              },
             },
           },
         }}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
-              <SearchIcon sx={{ color: grisTexto }} />
+              <SearchIcon sx={{ color: azulBase }} />
             </InputAdornment>
           ),
         }}
