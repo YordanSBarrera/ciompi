@@ -180,3 +180,31 @@ export interface SelectOption {
   label: string;
   additionalInfo?: string;
 }
+
+// Tipos para Pagos de Cuotas
+export interface PagoCuotaType {
+  _id?: string;
+  financiamiento: string | FinanciamientoType;
+  numeroCuota: number;
+  montoPago: number;
+  fechaPago: Date;
+  metodoPago: 'efectivo' | 'transferencia' | 'cheque' | 'tarjeta' | 'otro';
+  usuarioRegistro: string | Usuario;
+  observaciones?: string;
+  estadoPago: 'confirmado' | 'pendiente' | 'cancelado';
+  numeroComprobante?: string;
+  banco?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface PagoCuotaFormType {
+  financiamiento: string;
+  numeroCuota: number;
+  montoPago: number;
+  fechaPago: Date;
+  metodoPago: 'efectivo' | 'transferencia' | 'cheque' | 'tarjeta' | 'otro';
+  observaciones?: string;
+  numeroComprobante?: string;
+  banco?: string;
+}

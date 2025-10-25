@@ -17,6 +17,7 @@ import {
   Business as BusinessIcon,
   Settings as SettingsIcon,
   Assessment as AssessmentIcon,
+  DirectionsCar as CarIcon,
 } from '@mui/icons-material';
 import { azulBase, azulClaro, naranja, turquesa } from '@/lib/color';
 import { routes } from '@/lib/rutas';
@@ -41,18 +42,25 @@ export default function CiompiHomePage() {
       color: azulClaro,
     },
     {
+      title: 'Financiamiento',
+      description: 'Gestionar ventas financiadas',
+      icon: <CarIcon sx={{ fontSize: 40 }} />,
+      href: `/${routes.financiamiento}`,
+      color: naranja,
+    },
+    {
       title: 'Operaciones',
       description: 'Gestionar operaciones',
       icon: <AssessmentIcon sx={{ fontSize: 40 }} />,
       href: `/${routes.operaciones}`,
-      color: naranja,
+      color: turquesa,
     },
     {
       title: 'Configuración',
       description: 'Configuración del sistema',
       icon: <SettingsIcon sx={{ fontSize: 40 }} />,
       href: `/${routes.datosGenerales}`,
-      color: turquesa,
+      color: '#666666',
     },
   ];
 

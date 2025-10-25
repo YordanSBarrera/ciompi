@@ -8,6 +8,7 @@ export const routes = {
   utilitarios: 'ciompi/utilitarios',
   nuevoUsuario: 'usuarios/nuevo',
   vehiculos: 'ciompi/vehiculos',
+  financiamiento: 'ciompi/financiamiento',
 } as const;
 
 // Helper para rutas dinámicas
@@ -16,6 +17,9 @@ export const dynamicRoutes = {
   clienteEditar: (id: string) => `ciompi/clientes/${id}/editar`,
   clienteEliminar: (id: string) => `ciompi/clientes/${id}/eliminar`,
   empresa: (id: string) => `ciompi/empresas/${id}`,
+  financiamiento: (id: string) => `ciompi/financiamiento/${id}`,
+  financiamientoEditar: (id: string) => `ciompi/financiamiento/${id}/editar`,
+  financiamientoNuevo: () => `ciompi/financiamiento/nuevo`,
 };
 
 export type AppRoute = keyof typeof routes;

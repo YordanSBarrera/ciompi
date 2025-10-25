@@ -16,9 +16,32 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Card,
+  CardContent,
+  Divider,
+  Chip,
+  Avatar,
+  Fade,
+  Slide,
+  Paper,
+  InputAdornment,
+  Tooltip,
+  IconButton,
 } from '@mui/material';
+import {
+  DirectionsCar as CarIcon,
+  Palette as ColorIcon,
+  CalendarToday as YearIcon,
+  Description as DescriptionIcon,
+  ConfirmationNumber as LicenseIcon,
+  Build as BuildIcon,
+  Close as CloseIcon,
+  Save as SaveIcon,
+  Add as AddIcon,
+  Edit as EditIcon,
+} from '@mui/icons-material';
 import { VehiculoType, VehiculoFormType } from '@/lib/types';
-import { azulBase, azulOscuro, blanco } from '@/lib/color';
+import { azulBase, azulOscuro, azulClaro, blanco, grisClaro, grisMedio, verde, naranja } from '@/lib/color';
 
 interface FormularioVehiculoProps {
   open: boolean;
@@ -280,107 +303,241 @@ export default function FormularioVehiculo({
       <Dialog
         open={open}
         onClose={onClose}
-        maxWidth="md"
+        maxWidth="lg"
         fullWidth
+        TransitionComponent={Slide}
+        TransitionProps={{ direction: 'up' }}
         PaperProps={{
           sx: {
-            borderRadius: 2,
+            borderRadius: 3,
+            boxShadow: '0 20px 40px rgba(0,0,0,0.15)',
+            overflow: 'hidden',
+            minHeight: '600px',
           },
         }}
       >
+        {/* Header mejorado */}
         <DialogTitle
           sx={{
-            backgroundColor: azulBase,
+            background: `linear-gradient(135deg, ${azulBase} 0%, ${azulOscuro} 100%)`,
             color: blanco,
-            fontWeight: 'bold',
-            fontSize: '1.2rem',
+            fontWeight: 600,
+            fontSize: '1.5rem',
+            py: 3,
+            px: 4,
+            position: 'relative',
+            overflow: 'hidden',
           }}
         >
-          {title}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Avatar
+              sx={{
+                backgroundColor: 'rgba(255,255,255,0.2)',
+                width: 48,
+                height: 48,
+              }}
+            >
+              {vehiculo ? <EditIcon /> : <AddIcon />}
+            </Avatar>
+            <Box>
+              <Typography variant="h5" component="div" sx={{ fontWeight: 600 }}>
+                {title}
+              </Typography>
+              <Typography variant="body2" sx={{ opacity: 0.9, mt: 0.5 }}>
+                {vehiculo ? 'Modifica los datos del vehículo' : 'Completa la información del nuevo vehículo'}
+              </Typography>
+            </Box>
+          </Box>
+          
+          {/* Decoración de fondo */}
+          <Box
+            sx={{
+              position: 'absolute',
+              top: -20,
+              right: -20,
+              width: 100,
+              height: 100,
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.1)',
+            }}
+          />
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: -30,
+              left: -30,
+              width: 80,
+              height: 80,
+              borderRadius: '50%',
+              background: 'rgba(255,255,255,0.05)',
+            }}
+          />
+          
+          <IconButton
+            onClick={onClose}
+            sx={{
+              position: 'absolute',
+              top: 16,
+              right: 16,
+              color: blanco,
+              backgroundColor: 'rgba(255,255,255,0.1)',
+              '&:hover': {
+                backgroundColor: 'rgba(255,255,255,0.2)',
+              },
+            }}
+          >
+            <CloseIcon />
+          </IconButton>
         </DialogTitle>
-        <DialogContent sx={{ p: 3 }}>
-          <Grid container spacing={3}>
-            {/* Marca */}
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth error={!!errors.Marca}>
-                <InputLabel>Marca *</InputLabel>
-                <Select
-                  value={formData.Marca}
-                  onChange={e => handleInputChange('Marca', e.target.value)}
-                  label="Marca *"
-                >
-                  {marcasComunes.map(marca => (
-                    <MenuItem key={marca} value={marca}>
-                      {marca}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              {errors.Marca && (
-                <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
-                  {errors.Marca}
-                </Typography>
-              )}
-            </Grid>
+        <DialogContent sx={{ p: 0, backgroundColor: grisClaro }}>
+          <Box sx={{ p: 4 }}>
+            {/* Información Básica */}
+            <Card sx={{ mb: 4, borderRadius: 2, boxShadow: 2 }}>
+              <CardContent sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                  <Avatar sx={{ backgroundColor: azulBase, mr: 2 }}>
+                    <CarIcon />
+                  </Avatar>
+                  <Typography variant="h6" sx={{ fontWeight: 600, color: azulOscuro }}>
+                    Información Básica
+                  </Typography>
+                </Box>
+                <Divider sx={{ mb: 3 }} />
+                
+                <Grid container spacing={3}>
+                  {/* Marca */}
+                  <Grid item xs={12} sm={6}>
+                    <FormControl fullWidth error={!!errors.Marca}>
+                      <InputLabel>Marca *</InputLabel>
+                      <Select
+                        value={formData.Marca}
+                        onChange={e => handleInputChange('Marca', e.target.value)}
+                        label="Marca *"
+                        startAdornment={
+                          <InputAdornment position="start">
+                            <BuildIcon color="action" />
+                          </InputAdornment>
+                        }
+                      >
+                        {marcasComunes.map(marca => (
+                          <MenuItem key={marca} value={marca}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Chip label={marca.charAt(0)} size="small" color="primary" />
+                              {marca}
+                            </Box>
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    {errors.Marca && (
+                      <Typography variant="caption" color="error" sx={{ mt: 0.5, display: 'flex', alignItems: 'center' }}>
+                        {errors.Marca}
+                      </Typography>
+                    )}
+                  </Grid>
 
-            {/* Modelo */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Modelo *"
-                value={formData.Modelo}
-                onChange={e => handleInputChange('Modelo', e.target.value)}
-                error={!!errors.Modelo}
-                helperText={errors.Modelo || `${formData.Modelo.length}/50`}
-                inputProps={{ maxLength: 50 }}
-              />
-            </Grid>
+                  {/* Modelo */}
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Modelo *"
+                      value={formData.Modelo}
+                      onChange={e => handleInputChange('Modelo', e.target.value)}
+                      error={!!errors.Modelo}
+                      helperText={errors.Modelo || `${formData.Modelo.length}/50`}
+                      inputProps={{ maxLength: 50 }}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <CarIcon color="action" />
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                  </Grid>
 
-            {/* Matrícula */}
-            <Grid item xs={12} sm={6}>
-              <TextField
-                fullWidth
-                label="Matrícula *"
-                value={formData.Matricula}
-                onChange={e =>
-                  handleInputChange('Matricula', e.target.value.toUpperCase())
-                }
-                error={!!errors.Matricula}
-                helperText={
-                  errors.Matricula || `${formData.Matricula.length}/10`
-                }
-                placeholder="ABC-1234"
-                inputProps={{ maxLength: 10 }}
-              />
-            </Grid>
+                  {/* Matrícula */}
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      label="Matrícula *"
+                      value={formData.Matricula}
+                      onChange={e =>
+                        handleInputChange('Matricula', e.target.value.toUpperCase())
+                      }
+                      error={!!errors.Matricula}
+                      helperText={
+                        errors.Matricula || `${formData.Matricula.length}/10`
+                      }
+                      placeholder="ABC-1234"
+                      inputProps={{ maxLength: 10 }}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <LicenseIcon color="action" />
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                  </Grid>
 
-            {/* Año */}
-            <Grid item xs={12} sm={6}>
-              <FormControl fullWidth error={!!errors.Año}>
-                <InputLabel>Año</InputLabel>
-                <Select
-                  value={formData.Año || ''}
-                  onChange={e =>
-                    handleInputChange(
-                      'Año',
-                      e.target.value ? Number(e.target.value) : undefined
-                    )
-                  }
-                  label="Año"
-                >
-                  {years.map(year => (
-                    <MenuItem key={year} value={year}>
-                      {year}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              {errors.Año && (
-                <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
-                  {errors.Año}
-                </Typography>
-              )}
-            </Grid>
+                  {/* Año */}
+                  <Grid item xs={12} sm={6}>
+                    <FormControl fullWidth error={!!errors.Año}>
+                      <InputLabel>Año</InputLabel>
+                      <Select
+                        value={formData.Año || ''}
+                        onChange={e =>
+                          handleInputChange(
+                            'Año',
+                            e.target.value ? Number(e.target.value) : undefined
+                          )
+                        }
+                        label="Año"
+                        startAdornment={
+                          <InputAdornment position="start">
+                            <YearIcon color="action" />
+                          </InputAdornment>
+                        }
+                      >
+                        {years.map(year => (
+                          <MenuItem key={year} value={year}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Chip 
+                                label={year} 
+                                size="small" 
+                                color={year >= currentYear - 5 ? 'success' : 'default'} 
+                              />
+                              {year}
+                            </Box>
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                    {errors.Año && (
+                      <Typography variant="caption" color="error" sx={{ mt: 0.5 }}>
+                        {errors.Año}
+                      </Typography>
+                    )}
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+
+            {/* Información Adicional */}
+            <Card sx={{ mb: 4, borderRadius: 2, boxShadow: 2 }}>
+              <CardContent sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                  <Avatar sx={{ backgroundColor: verde, mr: 2 }}>
+                    <ColorIcon />
+                  </Avatar>
+                  <Typography variant="h6" sx={{ fontWeight: 600, color: azulOscuro }}>
+                    Información Adicional
+                  </Typography>
+                </Box>
+                <Divider sx={{ mb: 3 }} />
+                
+                <Grid container spacing={3}>
 
             {/* Color */}
             <Grid item xs={12} sm={6}>

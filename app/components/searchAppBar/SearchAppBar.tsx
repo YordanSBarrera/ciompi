@@ -272,6 +272,28 @@ export default function SearchAppBar() {
                 Vehículos
               </MenuItem>
             </Link>
+            <Link
+              href={`/${routes.financiamiento}`}
+              style={{ textDecoration: 'none', color: 'inherit' }}
+            >
+              <MenuItem
+                onClick={handleClose}
+                sx={{
+                  color: '#ffffff',
+                  '&:hover': {
+                    backgroundColor: '#333333',
+                    color: '#ffffff',
+                  },
+                  '&:focus': {
+                    backgroundColor: '#444444',
+                  },
+                  py: 1.5,
+                  px: 2,
+                }}
+              >
+                Financiamiento
+              </MenuItem>
+            </Link>
 
             <Divider sx={{ backgroundColor: '#444444', my: 1 }} />
             <Link
