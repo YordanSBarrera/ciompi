@@ -5,7 +5,6 @@ import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import LogoApp from '../LogoApp';
 import { azulBase } from '@/lib/color';
-// import { AccountMenu } from '../accountMenu';
 import {
   Divider,
   IconButton,
@@ -51,7 +50,6 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   width: '100%',
   '& .MuiInputBase-input': {
     padding: theme.spacing(1, 1, 1, 0),
-    // vertical padding + font size from searchIcon
     paddingLeft: `calc(1em + ${theme.spacing(4)})`,
     transition: theme.transitions.create('width'),
     [theme.breakpoints.up('sm')]: {
@@ -103,50 +101,244 @@ export default function SearchAppBar() {
               vertical: 'top',
               horizontal: 'left',
             }}
+            PaperProps={{
+              sx: {
+                backgroundColor: '#1a1a1a',
+                color: '#ffffff',
+                border: '1px solid #333333',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                borderRadius: '8px',
+                mt: 1,
+                minWidth: 200,
+              },
+            }}
+            MenuListProps={{
+              sx: {
+                py: 1,
+              },
+            }}
           >
             <Link
-              href={routes.clientes}
+              href={`/${routes.clientes}`}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
-              <MenuItem onClick={handleClose}>Clientes</MenuItem>
+              <MenuItem
+                onClick={handleClose}
+                sx={{
+                  color: '#ffffff',
+                  '&:hover': {
+                    backgroundColor: '#333333',
+                    color: '#ffffff',
+                  },
+                  '&:focus': {
+                    backgroundColor: '#444444',
+                  },
+                  py: 1.5,
+                  px: 2,
+                }}
+              >
+                Clientes
+              </MenuItem>
             </Link>
             <Link
-              href={routes.empresas}
+              href={`/${routes.empresas}`}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
-              <MenuItem onClick={handleClose}>Empresas</MenuItem>
+              <MenuItem
+                onClick={handleClose}
+                sx={{
+                  color: '#ffffff',
+                  '&:hover': {
+                    backgroundColor: '#333333',
+                    color: '#ffffff',
+                  },
+                  '&:focus': {
+                    backgroundColor: '#444444',
+                  },
+                  py: 1.5,
+                  px: 2,
+                }}
+              >
+                Empresas
+              </MenuItem>
             </Link>
             <Link
-              href={routes.operaciones}
+              href={`/${routes.vehiculos}`}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
-              <MenuItem onClick={handleClose}>Operaciones</MenuItem>
+              <MenuItem
+                onClick={handleClose}
+                sx={{
+                  color: '#ffffff',
+                  '&:hover': {
+                    backgroundColor: '#333333',
+                    color: '#ffffff',
+                  },
+                  '&:focus': {
+                    backgroundColor: '#444444',
+                  },
+                  py: 1.5,
+                  px: 2,
+                }}
+              >
+                Vehículos
+              </MenuItem>
             </Link>
             <Link
-              href={routes.datosGenerales}
+              href={`/${routes.operaciones}`}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
-              <MenuItem onClick={handleClose}>Datos Generales</MenuItem>
+              <MenuItem
+                onClick={handleClose}
+                sx={{
+                  color: '#ffffff',
+                  '&:hover': {
+                    backgroundColor: '#333333',
+                    color: '#ffffff',
+                  },
+                  '&:focus': {
+                    backgroundColor: '#444444',
+                  },
+                  py: 1.5,
+                  px: 2,
+                }}
+              >
+                Operaciones
+              </MenuItem>
             </Link>
             <Link
-              href={routes.utilitarios}
+              href={`/${routes.datosGenerales}`}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
-              <MenuItem onClick={handleClose}>Utilitarios</MenuItem>
+              <MenuItem
+                onClick={handleClose}
+                sx={{
+                  color: '#ffffff',
+                  '&:hover': {
+                    backgroundColor: '#333333',
+                    color: '#ffffff',
+                  },
+                  '&:focus': {
+                    backgroundColor: '#444444',
+                  },
+                  py: 1.5,
+                  px: 2,
+                }}
+              >
+                Datos Generales
+              </MenuItem>
+            </Link>
+            <Link
+              href={`/${routes.utilitarios}`}
+              style={{ textDecoration: 'none', color: 'inherit' }}
+            >
+              <MenuItem
+                onClick={handleClose}
+                sx={{
+                  color: '#ffffff',
+                  '&:hover': {
+                    backgroundColor: '#333333',
+                    color: '#ffffff',
+                  },
+                  '&:focus': {
+                    backgroundColor: '#444444',
+                  },
+                  py: 1.5,
+                  px: 2,
+                }}
+              >
+                Utilitarios
+              </MenuItem>
+            </Link>
+            <Link
+              href={`/${routes.vehiculos}`}
+              style={{ textDecoration: 'none', color: 'inherit' }}
+            >
+              <MenuItem
+                onClick={handleClose}
+                sx={{
+                  color: '#ffffff',
+                  '&:hover': {
+                    backgroundColor: '#333333',
+                    color: '#ffffff',
+                  },
+                  '&:focus': {
+                    backgroundColor: '#444444',
+                  },
+                  py: 1.5,
+                  px: 2,
+                }}
+              >
+                Vehículos
+              </MenuItem>
+            </Link>
+            <Link
+              href={`/${routes.financiamiento}`}
+              style={{ textDecoration: 'none', color: 'inherit' }}
+            >
+              <MenuItem
+                onClick={handleClose}
+                sx={{
+                  color: '#ffffff',
+                  '&:hover': {
+                    backgroundColor: '#333333',
+                    color: '#ffffff',
+                  },
+                  '&:focus': {
+                    backgroundColor: '#444444',
+                  },
+                  py: 1.5,
+                  px: 2,
+                }}
+              >
+                Financiamiento
+              </MenuItem>
             </Link>
 
-            <Divider />
+            <Divider sx={{ backgroundColor: '#444444', my: 1 }} />
             <Link
-              href={routes.usuario}
+              href={`/${routes.usuario}`}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
-              <MenuItem onClick={handleClose}>Usuario</MenuItem>
+              <MenuItem
+                onClick={handleClose}
+                sx={{
+                  color: '#ffffff',
+                  '&:hover': {
+                    backgroundColor: '#333333',
+                    color: '#ffffff',
+                  },
+                  '&:focus': {
+                    backgroundColor: '#444444',
+                  },
+                  py: 1.5,
+                  px: 2,
+                }}
+              >
+                Usuario
+              </MenuItem>
             </Link>
             <Link
-              href={routes.nuevoUsuario}
+              href={`/${routes.nuevoUsuario}`}
               style={{ textDecoration: 'none', color: 'inherit' }}
             >
-              <MenuItem onClick={handleClose}>Nuevo Usuario</MenuItem>
+              <MenuItem
+                onClick={handleClose}
+                sx={{
+                  color: '#ffffff',
+                  '&:hover': {
+                    backgroundColor: '#333333',
+                    color: '#ffffff',
+                  },
+                  '&:focus': {
+                    backgroundColor: '#444444',
+                  },
+                  py: 1.5,
+                  px: 2,
+                }}
+              >
+                Nuevo Usuario
+              </MenuItem>
             </Link>
           </Menu>
           <Typography

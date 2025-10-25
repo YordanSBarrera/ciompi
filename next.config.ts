@@ -1,9 +1,5 @@
 import type { NextConfig } from 'next';
 
-const basePath = '/ciompi';
-const nextConfig: NextConfig = {
-  basePath,
-};
+const nextConfig: NextConfig = {};
 
 export default nextConfig;
-export { basePath };

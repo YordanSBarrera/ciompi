@@ -5,14 +5,20 @@
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
-    "start": "next start"
+    "start": "next start",
+    "create-admin": "node scripts/createAdminUser.js",
+    "test-db": "node scripts/testConnection.js",
+    "reset-usuarios": "node scripts/resetUsuarios.js"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.2",
     "@mui/material": "^7.3.2",
+    "@types/bcryptjs": "^3.0.0",
+    "@types/jsonwebtoken": "^9.0.10",
     "bcryptjs": "^3.0.2",
+    "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.18.1",
     "next": "15.5.3",
     "react": "19.1.0",
@@ -24,5 +30,6 @@
     "@types/react-dom": "^19",
     "prettier": "^3.6.2",
     "typescript": "^5"
-  }
+  },
+  "packageManager": "pnpm@10.18.3+sha512.bbd16e6d7286fd7e01f6b3c0b3c932cda2965c06a908328f74663f10a9aea51f1129eea615134bf992831b009eabe167ecb7008b597f40ff9bc75946aadfb08d"
 }

@@ -4,7 +4,6 @@ import Link from 'next/link';
 import ciompiLogo from '@/public/ciompiLogo.webp';
 import Image from 'next/image';
 import { routes } from '@/lib/rutas';
-import { Url } from 'url';
 
 const AnimatedLogo = styled(Image)`
   transition:
@@ -21,7 +20,10 @@ type MyLogoProps = {
   linkTo?: string;
 };
 
-const LogoApp = ({ widthProps = 150, linkTo = routes.home }: MyLogoProps) => {
+const LogoApp = ({
+  widthProps = 150,
+  linkTo = `/${routes.home}`,
+}: MyLogoProps) => {
   return (
     <Link href={linkTo}>
       <Box component="span">

@@ -1,3 +1,5 @@
+import { Roles } from './utils';
+
 export interface ClienteType {
   NOMBRE: string;
   cedula?: string;
@@ -86,17 +88,13 @@ export interface Usuario {
   email: string;
   nombre: string;
   avatar?: Avatar | string; // Puede ser objeto o string simple
-  rol: 'admin' | 'supervisor' | 'usuario';
-  estado: 'activo' | 'inactivo' | 'bloqueado' | 'pendiente';
+  rol: Roles;
+  estado: 'activo' | 'inactivo';
   ultimoAcceso?: Date;
   fechaCreacion: Date;
   fechaActualizacion: Date;
-  preferencias?: PreferenciasUsuario;
   informacionContacto?: InformacionContacto;
-  metadata?: MetadataUsuario;
-  departamento?: string;
   cargo?: string;
-  permisosEspeciales?: string[];
 }
 
 export interface Avatar {
@@ -105,38 +103,108 @@ export interface Avatar {
   thumbnail?: string; // URL de miniatura
 }
 
-export interface PreferenciasUsuario {
-  tema: 'claro' | 'oscuro' | 'sistema';
-  idioma: string;
-  notificaciones: {
-    email: boolean;
-    push: boolean;
-    sms: boolean;
-  };
-}
-
 export interface InformacionContacto {
   telefono?: string;
-  direccion?: {
-    calle: string;
-    ciudad: string;
-    estado: string;
-    codigoPostal: string;
-    pais: string;
-  };
-}
-
-export interface MetadataUsuario {
-  intentosLogin: number;
-  bloqueadoHasta?: Date;
-  fechaExpiracionPassword: Date;
-  sesionesActivas: number;
-  ipUltimoAcceso?: string;
-  dispositivoUltimoAcceso?: string;
 }
 
 export interface LoginCredentials {
   usuario: string;
   password: string;
   rememberMe?: boolean;
+}
+
+export interface VehiculoType {
+  _id?: string;
+  Marca: string;
+  Modelo: string;
+  Matricula: string;
+  Padron?: number;
+  Descripcion?: string;
+  Año?: number;
+  Color?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface VehiculoFormType {
+  Marca: string;
+  Modelo: string;
+  Matricula: string;
+  Padron?: number;
+  Descripcion?: string;
+  Año?: number;
+  Color?: string;
+}
+
+// Tipos para Financiamiento
+export interface FinanciamientoType {
+  _id?: string;
+  cliente: string | ClienteType; // Puede ser ID o objeto completo
+  vehiculo: string | VehiculoType; // Puede ser ID o objeto completo
+  costoVehiculo: number;
+  cuotas: number;
+  valorCuota: number;
+  interesTotal: number;
+  montoTotal: number;
+  fechaVenta: Date;
+  estadoFinanciamiento: 'activo' | 'finalizado' | 'cancelado' | 'en_mora';
+  usuarioRegistro: string | Usuario; // Puede ser ID o objeto completo
+  observaciones?: string;
+  fechaPrimeraCuota: Date;
+  fechaUltimaCuota: Date;
+  cuotasPagadas: number;
+  cuotasPendientes: number;
+  montoPagado: number;
+  saldoPendiente: number;
+  progresoFinanciamiento?: number; // Virtual
+  estaAlDia?: boolean; // Virtual
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface FinanciamientoFormType {
+  cliente: string; // ID del cliente
+  vehiculo: string; // ID del vehículo
+  costoVehiculo: number;
+  cuotas: number;
+  valorCuota: number;
+  interesTotal: number;
+  montoTotal: number;
+  fechaPrimeraCuota: Date;
+  observaciones?: string;
+}
+
+// Tipo para selección de cliente/vehículo en el formulario
+export interface SelectOption {
+  value: string;
+  label: string;
+  additionalInfo?: string;
+}
+
+// Tipos para Pagos de Cuotas
+export interface PagoCuotaType {
+  _id?: string;
+  financiamiento: string | FinanciamientoType;
+  numeroCuota: number;
+  montoPago: number;
+  fechaPago: Date;
+  metodoPago: 'efectivo' | 'transferencia' | 'cheque' | 'tarjeta' | 'otro';
+  usuarioRegistro: string | Usuario;
+  observaciones?: string;
+  estadoPago: 'confirmado' | 'pendiente' | 'cancelado';
+  numeroComprobante?: string;
+  banco?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface PagoCuotaFormType {
+  financiamiento: string;
+  numeroCuota: number;
+  montoPago: number;
+  fechaPago: Date;
+  metodoPago: 'efectivo' | 'transferencia' | 'cheque' | 'tarjeta' | 'otro';
+  observaciones?: string;
+  numeroComprobante?: string;
+  banco?: string;
 }

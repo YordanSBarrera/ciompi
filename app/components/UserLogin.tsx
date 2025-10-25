@@ -1,5 +1,6 @@
 'use client';
 import React, { useState } from 'react';
+import { useAuth } from '@/app/hook/useAuth';
 import {
   Box,
   Paper,
@@ -44,6 +45,7 @@ interface UserLoginProps {
 }
 
 export default function UserLogin({ onLoginSuccess }: UserLoginProps) {
+  const { login } = useAuth();
   const [formData, setFormData] = useState<LoginForm>({
     usuario: '',
     password: '',
@@ -84,20 +86,29 @@ export default function UserLogin({ onLoginSuccess }: UserLoginProps) {
       return;
     }
 
+    if (formData.password.length < 6) {
+      setError('La contraseña debe tener al menos 6 caracteres');
+      setLoading(false);
+      return;
+    }
+
     try {
-      // Simular llamada a API
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      console.log('Intentando login para usuario:', formData.usuario);
 
-      // Aquí iría tu lógica real de autenticación
-      console.log('Login attempt:', {
-        usuario: formData.usuario,
-        password: '***',
-      });
+      // Llamada real a la API de login
+      const userData = await login(formData.usuario, formData.password);
 
-      // Simular éxito
+      console.log('Login exitoso:', userData);
+
+      // Éxito - llamar callback
       onLoginSuccess?.();
     } catch (err) {
-      setError('Error al iniciar sesión. Verifica tus credenciales.');
+      console.error('Error en login:', err);
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Error al iniciar sesión. Verifica tus credenciales.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
