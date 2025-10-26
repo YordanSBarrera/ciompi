@@ -54,6 +54,8 @@ import {
   grisMedio,
   verde,
   grisTexto,
+  coloresComunes,
+  colorMap,
 } from '@/lib/color';
 
 interface FormularioVehiculoProps {
@@ -87,26 +89,6 @@ const marcasComunes = [
   'Fiat',
   'Volvo',
   'Jeep',
-];
-
-const coloresComunes = [
-  'Blanco',
-  'Negro',
-  'Gris',
-  'Plateado',
-  'Azul',
-  'Rojo',
-  'Verde',
-  'Amarillo',
-  'Naranja',
-  'Marrón',
-  'Beige',
-  'Dorado',
-  'Violeta',
-  'Rojo Oscuro',
-  'Verde Oscuro',
-  'Azul Oscuro',
-  'Gris Oscuro',
 ];
 
 export default function FormularioVehiculo({
@@ -1071,31 +1053,6 @@ export default function FormularioVehiculo({
                             }
                           >
                             {coloresComunes.map(color => {
-                              const getColorValue = (colorName: string) => {
-                                const colorMap: { [key: string]: string } = {
-                                  Blanco: '#FFFFFF',
-                                  Negro: '#000000',
-                                  Gris: '#808080',
-                                  Plateado: '#C0C0C0',
-                                  Azul: '#0000FF',
-                                  Rojo: '#FF0000',
-                                  Verde: '#00FF00',
-                                  Amarillo: '#FFFF00',
-                                  Naranja: '#FFA500',
-                                  Marrón: '#8B4513',
-                                  Beige: '#F5F5DC',
-                                  Dorado: '#FFD700',
-                                  Violeta: '#8A2BE2',
-                                  'Rojo Oscuro': '#8B0000',
-                                  'Verde Oscuro': '#006400',
-                                  'Azul Oscuro': '#000080',
-                                  'Gris Oscuro': '#696969',
-                                };
-                                return (
-                                  colorMap[colorName] || colorName.toLowerCase()
-                                );
-                              };
-
                               return (
                                 <MenuItem
                                   key={color}
@@ -1112,7 +1069,9 @@ export default function FormularioVehiculo({
                                       height={24}
                                       borderRadius="50%"
                                       sx={{
-                                        backgroundColor: getColorValue(color),
+                                        backgroundColor:
+                                          colorMap[color] ||
+                                          color.toLowerCase(),
                                         border:
                                           color === 'Blanco'
                                             ? '2px solid #ccc'

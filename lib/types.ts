@@ -208,3 +208,21 @@ export interface PagoCuotaFormType {
   numeroComprobante?: string;
   banco?: string;
 }
+
+// Tipos para Empresas
+export interface EmpresaType {
+  _id?: string;
+  nombre: string;
+  descripcion?: string;
+  telefono?: string;
+  usuarioRegistro: string | Usuario; // Puede ser ID o objeto completo
+  estado: 'activa' | 'inactiva';
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface EmpresaFormType {
+  nombre: string;
+  descripcion?: string;
+  telefono?: string;
+}
