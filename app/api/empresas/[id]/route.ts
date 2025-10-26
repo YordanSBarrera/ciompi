@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/db/dbConnection';
 import Empresa from '@/models/empresa';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
 // GET - Obtener empresa por ID
 export async function GET(
@@ -44,14 +42,6 @@ export async function PUT(
 ) {
   try {
     await connectDB();
-
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { success: false, error: 'No autorizado' },
-        { status: 401 }
-      );
-    }
 
     const body = await request.json();
     const { nombre, descripcion, telefono, estado } = body;
@@ -118,14 +108,6 @@ export async function DELETE(
 ) {
   try {
     await connectDB();
-
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { success: false, error: 'No autorizado' },
-        { status: 401 }
-      );
-    }
 
     const empresa = await Empresa.findById(params.id);
     if (!empresa) {
