@@ -148,7 +148,6 @@ export default function ListaClientes({
 
     return (
       searchInField(cliente.NOMBRE) ||
-      searchInField(cliente.CODCLI) ||
       searchInField(cliente.DIRECCION) ||
       searchInField(cliente.TELEFONO) ||
       searchInField(cliente.correo) ||

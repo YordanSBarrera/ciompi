@@ -64,16 +64,87 @@ export const handleCedulaInput = (
 };
 
 export enum Roles {
-  admin = 'admin',
-  user = 'user',
   Administrativo = 'Administrativo',
   Usuario = 'Usuario',
 }
 
 export const isAdmin = (role: string): boolean => {
-  return role === Roles.admin || role === Roles.Administrativo;
+  return role === Roles.Administrativo;
 };
 
 export const isUser = (role: string): boolean => {
-  return role === Roles.user || role === Roles.Usuario;
+  return role === Roles.Usuario;
+};
+
+/**
+ * Obtiene los datos del usuario logueado desde localStorage
+ * @returns Datos del usuario o null si no está autenticado
+ */
+export const getCurrentUser = (): {
+  id: string;
+  usuario: string;
+  nombre: string;
+  email: string;
+  avatar: string;
+  rol: string;
+  estado: string;
+} | null => {
+  // Verificar si hay un usuario en localStorage
+  const savedUser = localStorage.getItem('user');
+
+  if (!savedUser) {
+    return null;
+  }
+
+  try {
+    const user = JSON.parse(savedUser);
+    return user;
+  } catch (error) {
+    console.error('Error parseando datos del usuario:', error);
+    return null;
+  }
+};
+
+/**
+ * Obtiene el ID del usuario logueado
+ * @returns ID del usuario o null si no está autenticado
+ */
+export const getCurrentUserId = (): string | null => {
+  const user = getCurrentUser();
+  return user?.id || null;
+};
+
+/**
+ * Verifica si hay un usuario autenticado
+ * @returns true si hay un usuario autenticado, false si no
+ */
+export const isAuthenticated = (): boolean => {
+  const token = localStorage.getItem('token');
+  const user = localStorage.getItem('user');
+  return !!(token && user);
+};
+
+/**
+ * Obtiene el token de autenticación
+ * @returns Token JWT o null si no está autenticado
+ */
+export const getAuthToken = (): string | null => {
+  return localStorage.getItem('token');
+};
+
+/**
+ * Crea headers con autenticación para fetch
+ * @returns Headers con el token de autenticación
+ */
+export const getAuthHeaders = (): HeadersInit => {
+  const token = getAuthToken();
+
+  if (!token) {
+    return {};
+  }
+
+  return {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`,
+  };
 };

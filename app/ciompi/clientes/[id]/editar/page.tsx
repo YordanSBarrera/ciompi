@@ -32,7 +32,6 @@ export default function EditarClientePage() {
     correo: '',
     profesion: '',
     DIRECCION: '',
-    CODCLI: '',
     TELEFONO: '',
   });
   const [loading, setLoading] = useState(true);
@@ -65,7 +64,6 @@ export default function EditarClientePage() {
           correo: data.correo || '',
           profesion: data.profesion || '',
           DIRECCION: data.DIRECCION || '',
-          CODCLI: data.CODCLI || '',
           TELEFONO: data.TELEFONO || '',
         });
       } catch (err) {
@@ -121,10 +119,6 @@ export default function EditarClientePage() {
   const validateForm = (): boolean => {
     if (!formData.NOMBRE.trim()) {
       setError('El nombre es obligatorio');
-      return false;
-    }
-    if (!formData.CODCLI.trim()) {
-      setError('El código de cliente es obligatorio');
       return false;
     }
 
@@ -267,18 +261,6 @@ export default function EditarClientePage() {
                   label="Nombre *"
                   name="NOMBRE"
                   value={formData.NOMBRE}
-                  onChange={handleChange}
-                  required
-                  sx={{ mb: 2 }}
-                />
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
-                  fullWidth
-                  label="Código de Cliente *"
-                  name="CODCLI"
-                  value={formData.CODCLI}
                   onChange={handleChange}
                   required
                   sx={{ mb: 2 }}

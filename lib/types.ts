@@ -6,9 +6,12 @@ export interface ClienteType {
   correo?: string;
   profesion?: string;
   DIRECCION?: string;
-  CODCLI: string;
   TELEFONO?: string;
+  usuarioCreacion?: Usuario;
+  usuarioModificacion?: Usuario;
   _id: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface ClienteFormType {
@@ -17,7 +20,6 @@ export interface ClienteFormType {
   correo?: string;
   profesion?: string;
   DIRECCION?: string;
-  CODCLI: string;
   TELEFONO?: string;
 }
 

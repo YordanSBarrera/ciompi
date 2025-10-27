@@ -160,12 +160,6 @@ export default function ClienteDetailPage() {
                 ID: {cliente._id}
               </Typography>
             </Box>
-            <Chip
-              label={`Código: ${cliente.CODCLI}`}
-              color="primary"
-              variant="filled"
-              sx={{ fontSize: '1rem', padding: '8px 16px' }}
-            />
           </Box>
 
           <Divider sx={{ my: 3 }} />
@@ -281,25 +275,7 @@ export default function ClienteDetailPage() {
               </Typography>
 
               <Grid container spacing={3}>
-                <Grid size={{ xs: 12, md: 4 }}>
-                  <Box>
-                    <Typography
-                      variant="body2"
-                      color="textSecondary"
-                      gutterBottom
-                    >
-                      Código de Cliente
-                    </Typography>
-                    <Chip
-                      label={cliente.CODCLI}
-                      variant="outlined"
-                      color="primary"
-                      sx={{ fontFamily: 'monospace', fontWeight: 600 }}
-                    />
-                  </Box>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 4 }}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Box>
                     <Typography
                       variant="body2"
@@ -313,6 +289,42 @@ export default function ClienteDetailPage() {
                       sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}
                     >
                       {cliente._id}
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
+                    >
+                      Creado por
+                    </Typography>
+                    <Typography variant="body2">
+                      {typeof cliente.usuarioCreacion === 'object' &&
+                      cliente.usuarioCreacion?.nombre
+                        ? cliente.usuarioCreacion.nombre
+                        : '-'}
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
+                    >
+                      Modificado por
+                    </Typography>
+                    <Typography variant="body2">
+                      {typeof cliente.usuarioModificacion === 'object' &&
+                      cliente.usuarioModificacion?.nombre
+                        ? cliente.usuarioModificacion.nombre
+                        : '-'}
                     </Typography>
                   </Box>
                 </Grid>

@@ -1,11 +1,14 @@
 import { connectDB } from '@/db/dbConnection';
+import { getUserIdFromToken } from '@/lib/server-utils';
 import Cliente from '@/models/cliente';
 import { NextResponse } from 'next/server';
 
 export async function GET() {
   try {
     await connectDB();
-    const cliente = await Cliente.find();
+    const cliente = await Cliente.find()
+      .populate('usuarioCreacion', 'nombre usuario email')
+      .populate('usuarioModificacion', 'nombre usuario email');
     return NextResponse.json(cliente);
   } catch (error) {
     console.error('Error obteniendo clientes:', error);
@@ -19,9 +22,17 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     await connectDB();
+
+    // Obtener ID del usuario desde el token
+    const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb'; // Fallback al admin
     const body = await request.json();
-    const newCliente = new Cliente(body);
+    const newCliente = new Cliente({
+      ...body,
+      usuarioCreacion: userId,
+      usuarioModificacion: userId,
+    });
     const savedCliente = await newCliente.save();
+    await savedCliente.populate('usuarioCreacion', 'nombre usuario email');
     return NextResponse.json(savedCliente);
   } catch (error: unknown) {
     console.error('Error creando cliente:', error);
