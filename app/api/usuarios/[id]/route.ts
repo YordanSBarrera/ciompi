@@ -1,4 +1,5 @@
 import { connectDB } from '@/db/dbConnection';
+import { getUserIdFromToken } from '@/lib/server-utils';
 import Usuario from '@/models/Usuario';
 import { NextResponse } from 'next/server';
 
@@ -18,7 +19,24 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(usuario);
+    // Obtener información de usuarios de creación y modificación por separado
+    let usuarioConInfo = usuario.toObject();
+
+    if (usuario.usuarioCreacion) {
+      const usuarioCreacionData = await Usuario.findById(
+        usuario.usuarioCreacion
+      ).select('nombre usuario email');
+      usuarioConInfo.usuarioCreacion = usuarioCreacionData;
+    }
+
+    if (usuario.usuarioModificacion) {
+      const usuarioModificacionData = await Usuario.findById(
+        usuario.usuarioModificacion
+      ).select('nombre usuario email');
+      usuarioConInfo.usuarioModificacion = usuarioModificacionData;
+    }
+
+    return NextResponse.json(usuarioConInfo);
   } catch (error) {
     console.error('Error obteniendo usuario:', error);
     return NextResponse.json(
@@ -35,6 +53,9 @@ export async function PUT(
 ) {
   try {
     await connectDB();
+
+    // Obtener ID del usuario desde el token con fallback
+    const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb';
     const body = await request.json();
 
     // Validar campos requeridos
@@ -67,14 +88,31 @@ export async function PUT(
       );
     }
 
-    // Actualizar usuario
+    // Actualizar usuario con usuarioModificacion
     const usuarioActualizado = await Usuario.findByIdAndUpdate(
       params.id,
-      { ...body, fechaActualizacion: new Date() },
+      { ...body, usuarioModificacion: userId, fechaActualizacion: new Date() },
       { new: true, runValidators: true }
     ).select('-password');
 
-    return NextResponse.json(usuarioActualizado);
+    // Obtener información de usuarios de creación y modificación
+    let usuarioConInfo = usuarioActualizado!.toObject();
+
+    if (usuarioActualizado!.usuarioCreacion) {
+      const usuarioCreacionData = await Usuario.findById(
+        usuarioActualizado!.usuarioCreacion
+      ).select('nombre usuario email');
+      usuarioConInfo.usuarioCreacion = usuarioCreacionData;
+    }
+
+    if (usuarioActualizado!.usuarioModificacion) {
+      const usuarioModificacionData = await Usuario.findById(
+        usuarioActualizado!.usuarioModificacion
+      ).select('nombre usuario email');
+      usuarioConInfo.usuarioModificacion = usuarioModificacionData;
+    }
+
+    return NextResponse.json(usuarioConInfo);
   } catch (error) {
     console.error('Error actualizando usuario:', error);
     if (error instanceof Error) {

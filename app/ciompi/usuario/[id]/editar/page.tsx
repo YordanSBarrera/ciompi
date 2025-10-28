@@ -54,10 +54,14 @@ export default function EditarUsuarioPage() {
     try {
       console.log('Actualizando usuario:', usuarioData);
 
+      const { getAuthHeaders } = await import('@/lib/utils');
+      const authHeaders = getAuthHeaders();
+
       const response = await fetch(`/api/usuarios/${usuarioId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...authHeaders,
         },
         body: JSON.stringify(usuarioData),
       });

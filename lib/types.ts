@@ -92,6 +92,8 @@ export interface Usuario {
   avatar?: Avatar | string; // Puede ser objeto o string simple
   rol: Roles;
   estado: 'activo' | 'inactivo';
+  usuarioCreacion?: string | Usuario;
+  usuarioModificacion?: string | Usuario;
   ultimoAcceso?: Date;
   fechaCreacion: Date;
   fechaActualizacion: Date;
@@ -172,7 +174,7 @@ export interface FinanciamientoFormType {
   valorCuota: number;
   interesTotal: number;
   montoTotal: number;
-  fechaPrimeraCuota: Date;
+  fechaPrimeraCuota: string;
   observaciones?: string;
 }
 

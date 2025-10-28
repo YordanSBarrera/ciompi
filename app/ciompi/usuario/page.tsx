@@ -50,7 +50,8 @@ export default function UsuariosPage() {
     cargarListaUsuarios();
   };
 
-  const handleNuevoUsuario = () => {
+  const handleAgregarUsuario = () => {
+    // Redirigir a la página de crear nuevo usuario
     router.push('/usuarios/nuevo');
   };
 
@@ -82,27 +83,11 @@ export default function UsuariosPage() {
 
   return (
     <AuthGuard>
-      <Box sx={{ position: 'relative', minHeight: '100vh' }}>
-        <ListaUsuarios
-          usuarios={usuarios}
-          onUsuarioEliminado={handleUsuarioEliminado}
-        />
-
-        {/* Botón flotante para agregar usuario */}
-        <Fab
-          color="primary"
-          aria-label="add"
-          onClick={handleNuevoUsuario}
-          sx={{
-            position: 'fixed',
-            bottom: 16,
-            right: 16,
-            zIndex: 1000,
-          }}
-        >
-          <AddIcon />
-        </Fab>
-      </Box>
+      <ListaUsuarios
+        usuarios={usuarios}
+        onUsuarioEliminado={handleUsuarioEliminado}
+        onAgregarUsuario={handleAgregarUsuario}
+      />
     </AuthGuard>
   );
 }

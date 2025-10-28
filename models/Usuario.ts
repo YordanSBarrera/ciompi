@@ -52,12 +52,12 @@ const usuarioSchema = new Schema(
     usuarioCreacion: {
       type: Schema.Types.ObjectId,
       ref: 'Usuario',
-      require: false,
+      required: false,
     },
     usuarioModificacion: {
       type: Schema.Types.ObjectId,
       ref: 'Usuario',
-      require: false,
+      required: false,
     },
     fechaCreacion: {
       type: Date,

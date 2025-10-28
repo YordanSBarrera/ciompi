@@ -2,6 +2,7 @@
 import { useRouter } from 'next/navigation';
 import FormularioUsuario from '@/app/components/FormularioUsuario';
 import { Usuario } from '@/lib/types';
+import { getAuthHeaders } from '@/lib/utils';
 
 export default function NuevoUsuarioPage() {
   const router = useRouter();
@@ -14,6 +15,7 @@ export default function NuevoUsuarioPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders(),
         },
         body: JSON.stringify(usuarioData),
       });
