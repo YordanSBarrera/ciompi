@@ -1,78 +1,70 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Typography,
-  Paper,
-  Grid,
-  Card,
-  CardContent,
-  Button,
-  Chip,
-  Stack,
-  Alert,
-  CircularProgress,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Snackbar,
-} from '@mui/material';
-import {
-  ArrowBack as ArrowBackIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-} from '@mui/icons-material';
-import { useRouter } from 'next/navigation';
+import { grisClaro, grisMedio, azulBase } from '@/lib/color';
 import { VehiculoType, VehiculoFormType } from '@/lib/types';
-import { useVehiculos } from '@/app/hook/useVehiculos';
-import FormularioVehiculo from '@/app/components/FormularioVehiculo';
+import AuthGuard from '@/app/components/AuthGuard';
 import {
-  azulBase,
-  azulClaro,
-  azulOscuro,
-  blanco,
-  grisClaro,
-  verde,
-  rojo,
-  naranja,
-} from '@/lib/color';
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  Grid,
+  Paper,
+  Snackbar,
+  Typography,
+} from '@mui/material';
+import Link from 'next/link';
 
 interface VehiculoDetallePageProps {
   params: Promise<{ id: string }>;
 }
 
+async function cargarVehiculo(id: string): Promise<VehiculoType> {
+  try {
+    const response = await fetch(`/api/vehiculos/${id}`);
+    if (!response.ok) {
+      throw new Error('Error al cargar vehículo');
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error cargando vehículo:', error);
+    throw error;
+  }
+}
+
 export default function VehiculoDetallePage({
   params,
 }: VehiculoDetallePageProps) {
-  const router = useRouter();
-  const { vehiculos, updateVehiculo, deleteVehiculo } = useVehiculos();
   const [vehiculo, setVehiculo] = useState<VehiculoType | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [snackbar, setSnackbar] = useState<{
-    open: boolean;
-    message: string;
-    severity: 'success' | 'error' | 'info' | 'warning';
-  }>({ open: false, message: '', severity: 'info' });
+  const [confirmDialog, setConfirmDialog] = useState({
+    open: false,
+    vehiculoId: null as string | null,
+  });
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'success' as 'success' | 'error' | 'info' | 'warning',
+  });
 
   useEffect(() => {
     const loadVehiculo = async () => {
       try {
         const { id } = await params;
-        const response = await fetch(`/api/vehiculos/${id}`);
-
-        if (response.ok) {
-          const vehiculoData = await response.json();
-          setVehiculo(vehiculoData);
-        } else {
-          setError('Vehículo no encontrado');
-        }
+        setLoading(true);
+        setError(null);
+        const datosVehiculo = await cargarVehiculo(id);
+        setVehiculo(datosVehiculo);
       } catch (err) {
-        setError('Error al cargar el vehículo');
+        setError(err instanceof Error ? err.message : 'Error desconocido');
       } finally {
         setLoading(false);
       }
@@ -81,382 +73,451 @@ export default function VehiculoDetallePage({
     loadVehiculo();
   }, [params]);
 
-  const handleEdit = () => {
-    setEditDialogOpen(true);
-  };
+  const handleEliminar = async () => {
+    if (!confirmDialog.vehiculoId) return;
 
-  const handleDelete = () => {
-    setDeleteDialogOpen(true);
-  };
+    try {
+      const response = await fetch(
+        `/api/vehiculos/${confirmDialog.vehiculoId}`,
+        {
+          method: 'DELETE',
+        }
+      );
 
-  const handleSaveEdit = async (vehiculoData: VehiculoFormType) => {
-    if (!vehiculo) return { success: false, error: 'Vehículo no encontrado' };
-
-    const result = await updateVehiculo(vehiculo._id!, vehiculoData);
-    if (result.success) {
-      setVehiculo(result.vehiculo);
+      if (response.ok) {
+        setSnackbar({
+          open: true,
+          message: 'Vehículo eliminado exitosamente',
+          severity: 'success',
+        });
+        setTimeout(() => {
+          window.location.href = '/ciompi/vehiculos';
+        }, 2000);
+      } else {
+        setSnackbar({
+          open: true,
+          message: 'Error al eliminar vehículo',
+          severity: 'error',
+        });
+      }
+    } catch (error) {
       setSnackbar({
         open: true,
-        message: 'Vehículo actualizado exitosamente',
-        severity: 'success',
-      });
-      setEditDialogOpen(false);
-    }
-    return result;
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!vehiculo) return;
-
-    const result = await deleteVehiculo(vehiculo._id!);
-    if (result.success) {
-      setSnackbar({
-        open: true,
-        message: 'Vehículo eliminado exitosamente',
-        severity: 'success',
-      });
-      setTimeout(() => {
-        router.push('/ciompi/vehiculos');
-      }, 1500);
-    } else {
-      setSnackbar({
-        open: true,
-        message: result.error || 'Error al eliminar vehículo',
+        message: 'Error de conexión',
         severity: 'error',
       });
+    } finally {
+      setConfirmDialog({ open: false, vehiculoId: null });
     }
-    setDeleteDialogOpen(false);
-  };
-
-  const handleSnackbarClose = () => {
-    setSnackbar({ ...snackbar, open: false });
   };
 
   if (loading) {
     return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="400px"
-      >
-        <CircularProgress />
-      </Box>
+      <Container maxWidth="md" sx={{ mt: 4 }}>
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          minHeight="50vh"
+        >
+          <CircularProgress />
+        </Box>
+      </Container>
     );
   }
 
-  if (error || !vehiculo) {
+  if (error) {
     return (
-      <Box sx={{ p: 3 }}>
+      <Container maxWidth="md" sx={{ mt: 4 }}>
         <Alert severity="error" sx={{ mb: 2 }}>
-          {error || 'Vehículo no encontrado'}
+          {error}
         </Alert>
-        <Button
-          variant="contained"
-          startIcon={<ArrowBackIcon />}
-          onClick={() => router.push('/ciompi/vehiculos')}
-        >
-          Volver a Vehículos
-        </Button>
-      </Box>
+        <Link href="/ciompi/vehiculos">
+          <Button variant="contained">Volver a la lista</Button>
+        </Link>
+      </Container>
+    );
+  }
+
+  if (!vehiculo) {
+    return (
+      <Container maxWidth="md" sx={{ mt: 4 }}>
+        <Alert severity="warning">
+          No se encontró información del vehículo
+        </Alert>
+      </Container>
     );
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      {/* Header */}
-      <Paper
-        elevation={2}
-        sx={{
-          p: 3,
-          mb: 3,
-          background: `linear-gradient(135deg, ${azulBase} 0%, #1976d2 100%)`,
-          color: blanco,
-          borderRadius: 2,
-        }}
-      >
-        <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 2 }}>
-          <IconButton
-            onClick={() => router.push('/ciompi/vehiculos')}
-            sx={{ color: blanco }}
+    <AuthGuard>
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Box sx={{ mb: 3 }}>
+          <Button
+            component={Link}
+            href="/ciompi/vehiculos"
+            variant="outlined"
+            sx={{ mb: 2 }}
           >
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography variant="h4" component="h1">
+            ← Volver al listado de vehículos
+          </Button>
+
+          <Typography variant="h4" component="h1" gutterBottom>
             Detalles del Vehículo
           </Typography>
-        </Stack>
-        <Typography variant="h5" sx={{ opacity: 0.9 }}>
-          {vehiculo.Marca} {vehiculo.Modelo}
-        </Typography>
-      </Paper>
+        </Box>
 
-      {/* Información del vehículo */}
-      <Grid container spacing={3}>
-        <Grid size={{ xs: 12, md: 8 }}>
-          <Card sx={{ boxShadow: 2 }}>
-            <CardContent>
+        <Paper
+          elevation={3}
+          sx={{ p: 4, bgcolor: grisClaro, border: `1px solid ${grisMedio}` }}
+        >
+          {/* Header con información principal */}
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              mb: 3,
+            }}
+          >
+            <Box>
+              <Typography
+                variant="h4"
+                component="h2"
+                gutterBottom
+                sx={{ fontWeight: 600 }}
+              >
+                {vehiculo.Marca} {vehiculo.Modelo}
+              </Typography>
+              <Typography variant="body1" color="textSecondary">
+                Matrícula: {vehiculo.Matricula} | ID: {vehiculo._id}
+              </Typography>
+            </Box>
+          </Box>
+
+          <Divider sx={{ my: 3 }} />
+
+          <Grid container spacing={4}>
+            {/* Información del Vehículo */}
+            <Grid size={{ xs: 12 }}>
               <Typography
                 variant="h6"
                 gutterBottom
-                sx={{ color: azulBase, mb: 2 }}
+                sx={{ color: 'primary.main', fontWeight: 600 }}
               >
-                Información General
+                Información del Vehículo
               </Typography>
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body2" color="textSecondary">
-                    Marca
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                    {vehiculo.Marca}
-                  </Typography>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body2" color="textSecondary">
-                    Modelo
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                    {vehiculo.Modelo}
-                  </Typography>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body2" color="textSecondary">
-                    Matrícula
-                  </Typography>
-                  <Chip
-                    label={vehiculo.Matricula}
-                    sx={{
-                      backgroundColor: azulBase,
-                      color: blanco,
-                      fontWeight: 'bold',
-                      mt: 0.5,
-                    }}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body2" color="textSecondary">
-                    Año
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                    {vehiculo.Año || 'No especificado'}
-                  </Typography>
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body2" color="textSecondary">
-                    Color
-                  </Typography>
-                  {vehiculo.Color ? (
-                    <Box
-                      display="flex"
-                      alignItems="center"
-                      gap={1}
-                      sx={{ mt: 0.5 }}
+
+              <Grid container spacing={3}>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Box sx={{ mb: 3 }}>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
                     >
-                      <Box
-                        width={20}
-                        height={20}
-                        borderRadius="50%"
-                        sx={{ backgroundColor: vehiculo.Color }}
-                        border="1px solid #ccc"
-                      />
-                      <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                        {vehiculo.Color}
-                      </Typography>
-                    </Box>
-                  ) : (
-                    <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                      No especificado
-                    </Typography>
-                  )}
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Typography variant="body2" color="textSecondary">
-                    Padrón
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                    {vehiculo.Padron || 'No especificado'}
-                  </Typography>
-                </Grid>
-                {vehiculo.Descripcion && (
-                  <Grid size={{ xs: 12 }}>
-                    <Typography variant="body2" color="textSecondary">
-                      Descripción
+                      Marca
                     </Typography>
                     <Typography
                       variant="body1"
-                      sx={{ fontWeight: 'bold', mt: 0.5 }}
+                      gutterBottom
+                      sx={{ fontWeight: 500 }}
                     >
-                      {vehiculo.Descripcion}
+                      {vehiculo.Marca}
                     </Typography>
+                  </Box>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Box sx={{ mb: 3 }}>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
+                    >
+                      Modelo
+                    </Typography>
+                    <Typography
+                      variant="body1"
+                      gutterBottom
+                      sx={{ fontWeight: 500 }}
+                    >
+                      {vehiculo.Modelo}
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Box sx={{ mb: 3 }}>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
+                    >
+                      Matrícula
+                    </Typography>
+                    <Typography variant="body1" gutterBottom>
+                      {vehiculo.Matricula}
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Box sx={{ mb: 3 }}>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
+                    >
+                      Año
+                    </Typography>
+                    <Typography variant="body1">
+                      {vehiculo.Año || 'No especificado'}
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Box sx={{ mb: 3 }}>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
+                    >
+                      Color
+                    </Typography>
+                    <Typography variant="body1">
+                      {vehiculo.Color || 'No especificado'}
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Box sx={{ mb: 3 }}>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
+                    >
+                      Padrón
+                    </Typography>
+                    <Typography variant="body1">
+                      {vehiculo.Padron || 'No especificado'}
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                {vehiculo.Descripcion && (
+                  <Grid size={{ xs: 12 }}>
+                    <Box sx={{ mb: 3 }}>
+                      <Typography
+                        variant="body2"
+                        color="textSecondary"
+                        gutterBottom
+                      >
+                        Descripción
+                      </Typography>
+                      <Typography variant="body1">
+                        {vehiculo.Descripcion}
+                      </Typography>
+                    </Box>
                   </Grid>
                 )}
               </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
+            </Grid>
 
-        <Grid size={{ xs: 12, md: 4 }}>
-          <Card sx={{ boxShadow: 2 }}>
-            <CardContent>
+            {/* Información del Sistema */}
+            <Grid size={{ xs: 12 }}>
+              <Divider sx={{ my: 2 }} />
               <Typography
                 variant="h6"
                 gutterBottom
-                sx={{ color: azulBase, mb: 2 }}
-              >
-                Acciones
-              </Typography>
-              <Stack spacing={2}>
-                <Button
-                  variant="contained"
-                  startIcon={<EditIcon />}
-                  onClick={handleEdit}
-                  sx={{
-                    backgroundColor: naranja,
-                    '&:hover': {
-                      backgroundColor: '#e65100',
-                    },
-                  }}
-                >
-                  Editar Vehículo
-                </Button>
-                <Button
-                  variant="contained"
-                  startIcon={<DeleteIcon />}
-                  onClick={handleDelete}
-                  sx={{
-                    backgroundColor: rojo,
-                    '&:hover': {
-                      backgroundColor: '#c62828',
-                    },
-                  }}
-                >
-                  Eliminar Vehículo
-                </Button>
-              </Stack>
-            </CardContent>
-          </Card>
-
-          {/* Información adicional */}
-          <Card sx={{ boxShadow: 2, mt: 2 }}>
-            <CardContent>
-              <Typography
-                variant="h6"
-                gutterBottom
-                sx={{ color: azulBase, mb: 2 }}
+                sx={{ color: 'primary.main', fontWeight: 600 }}
               >
                 Información del Sistema
               </Typography>
-              <Grid container spacing={1}>
-                <Grid size={{ xs: 12 }}>
-                  <Typography variant="body2" color="textSecondary">
-                    ID del Vehículo
-                  </Typography>
-                  <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
-                    {vehiculo._id}
-                  </Typography>
+
+              <Grid container spacing={3}>
+                {/* Fila 1: Creado por y Fecha de Creación */}
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
+                    >
+                      Creado por
+                    </Typography>
+                    <Typography variant="body2">
+                      {typeof vehiculo.usuarioCreacion === 'object' &&
+                      vehiculo.usuarioCreacion?.nombre
+                        ? vehiculo.usuarioCreacion.nombre
+                        : '-'}
+                    </Typography>
+                  </Box>
                 </Grid>
-                {vehiculo.createdAt && (
-                  <Grid size={{ xs: 12 }}>
-                    <Typography variant="body2" color="textSecondary">
+
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
+                    >
                       Fecha de Creación
                     </Typography>
                     <Typography variant="body2">
-                      {new Date(vehiculo.createdAt).toLocaleDateString(
-                        'es-ES',
-                        {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        }
-                      )}
+                      {vehiculo.createdAt
+                        ? new Date(vehiculo.createdAt).toLocaleString('es-ES', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : 'No disponible'}
                     </Typography>
-                  </Grid>
-                )}
-                {vehiculo.updatedAt && (
-                  <Grid size={{ xs: 12 }}>
-                    <Typography variant="body2" color="textSecondary">
+                  </Box>
+                </Grid>
+
+                {/* Fila 2: Modificado por y Última Actualización */}
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
+                    >
+                      Modificado por
+                    </Typography>
+                    <Typography variant="body2">
+                      {typeof vehiculo.usuarioModificacion === 'object' &&
+                      vehiculo.usuarioModificacion?.nombre
+                        ? vehiculo.usuarioModificacion.nombre
+                        : '-'}
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
+                    >
                       Última Actualización
                     </Typography>
                     <Typography variant="body2">
-                      {new Date(vehiculo.updatedAt).toLocaleDateString(
-                        'es-ES',
-                        {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        }
-                      )}
+                      {vehiculo.updatedAt
+                        ? new Date(vehiculo.updatedAt).toLocaleString('es-ES', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : 'No disponible'}
                     </Typography>
-                  </Grid>
-                )}
+                  </Box>
+                </Grid>
+
+                {/* Fila 3: ID de Base de Datos */}
+                <Grid size={{ xs: 12 }}>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
+                    >
+                      ID de Base de Datos
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}
+                    >
+                      {vehiculo._id}
+                    </Typography>
+                  </Box>
+                </Grid>
               </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+            </Grid>
+          </Grid>
 
-      {/* Dialog de edición */}
-      <FormularioVehiculo
-        open={editDialogOpen}
-        onClose={() => setEditDialogOpen(false)}
-        onSave={handleSaveEdit}
-        vehiculo={vehiculo}
-        title="Editar Vehículo"
-      />
-
-      {/* Dialog de confirmación de eliminación */}
-      <Dialog
-        open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
-        aria-labelledby="delete-dialog-title"
-        aria-describedby="delete-dialog-description"
-      >
-        <DialogTitle id="delete-dialog-title">
-          Confirmar eliminación
-        </DialogTitle>
-        <DialogContent>
-          <Typography>
-            ¿Estás seguro de que deseas eliminar el vehículo{' '}
-            <strong>
-              {vehiculo.Marca} {vehiculo.Modelo} - {vehiculo.Matricula}
-            </strong>
-            ? Esta acción no se puede deshacer.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)} color="primary">
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleConfirmDelete}
-            color="error"
-            variant="contained"
+          {/* Botones de acción */}
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 2,
+              justifyContent: 'space-between',
+              mt: 4,
+              pt: 3,
+              borderTop: `1px solid ${grisMedio}`,
+            }}
           >
-            Eliminar
-          </Button>
-        </DialogActions>
-      </Dialog>
+            <Link href={`/ciompi/vehiculos/${vehiculo._id}/editar`}>
+              <Button variant="contained" color="primary">
+                Editar Vehículo
+              </Button>
+            </Link>
 
-      {/* Snackbar para notificaciones */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={handleSnackbarClose}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
+            <Button
+              variant="contained"
+              color="error"
+              onClick={() =>
+                setConfirmDialog({ open: true, vehiculoId: vehiculo._id! })
+              }
+            >
+              Eliminar Vehículo
+            </Button>
+          </Box>
+        </Paper>
+
+        {/* Dialog de confirmación de eliminación */}
+        <Dialog
+          open={confirmDialog.open}
+          onClose={() => setConfirmDialog({ open: false, vehiculoId: null })}
         >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
-    </Box>
+          <DialogTitle>Confirmar eliminación</DialogTitle>
+          <DialogContent>
+            <Typography>
+              ¿Estás seguro de que deseas eliminar el vehículo{' '}
+              <strong>
+                {vehiculo.Marca} {vehiculo.Modelo} - {vehiculo.Matricula}
+              </strong>
+              ? Esta acción no se puede deshacer.
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={() =>
+                setConfirmDialog({ open: false, vehiculoId: null })
+              }
+            >
+              Cancelar
+            </Button>
+            <Button onClick={handleEliminar} color="error" variant="contained">
+              Eliminar
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Snackbar */}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert
+            onClose={() => setSnackbar({ ...snackbar, open: false })}
+            severity={snackbar.severity}
+            sx={{ width: '100%' }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+      </Container>
+    </AuthGuard>
   );
 }

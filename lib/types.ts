@@ -126,6 +126,8 @@ export interface VehiculoType {
   Descripcion?: string;
   Año?: number;
   Color?: string;
+  usuarioCreacion?: Usuario | string;
+  usuarioModificacion?: Usuario | string;
   createdAt?: Date;
   updatedAt?: Date;
 }
