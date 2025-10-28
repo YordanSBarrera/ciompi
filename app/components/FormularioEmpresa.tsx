@@ -17,7 +17,6 @@ import {
   Slide,
   Paper,
   InputAdornment,
-  Tooltip,
   IconButton,
   LinearProgress,
   Collapse,
@@ -41,10 +40,7 @@ import {
   azulOscuro,
   azulClaro,
   blanco,
-  grisClaro,
   grisMedio,
-  verde,
-  naranja,
 } from '@/lib/color';
 
 interface FormularioEmpresaProps {
@@ -266,61 +262,33 @@ export default function FormularioEmpresa({
             </Grow>
           </Box>
 
-          {/* Decoración de fondo mejorada */}
           <Box
+            onClick={onClose}
             sx={{
               position: 'absolute',
-              top: -40,
-              right: -40,
-              width: 120,
-              height: 120,
+              top: 20,
+              right: 20,
+              width: 48,
+              height: 48,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: blanco,
+              backgroundColor: 'rgba(255,255,255,0.15)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255,255,255,0.2)',
               borderRadius: '50%',
-              background:
-                'radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%)',
-              animation: 'float 6s ease-in-out infinite',
-              '@keyframes float': {
-                '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
-                '50%': { transform: 'translateY(-20px) rotate(180deg)' },
+              cursor: 'pointer',
+              '&:hover': {
+                backgroundColor: 'rgba(255,255,255,0.25)',
+                transform: 'scale(1.05)',
+                transition: 'all 0.2s ease-in-out',
               },
+              zIndex: 10,
             }}
-          />
-          <Box
-            sx={{
-              position: 'absolute',
-              bottom: -50,
-              left: -50,
-              width: 100,
-              height: 100,
-              borderRadius: '50%',
-              background:
-                'radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%)',
-              animation: 'float 8s ease-in-out infinite reverse',
-            }}
-          />
-
-          <Zoom in={open} timeout={1000}>
-            <IconButton
-              onClick={onClose}
-              sx={{
-                position: 'absolute',
-                top: 20,
-                right: 20,
-                color: blanco,
-                backgroundColor: 'rgba(255,255,255,0.15)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255,255,255,0.2)',
-                width: 48,
-                height: 48,
-                '&:hover': {
-                  backgroundColor: 'rgba(255,255,255,0.25)',
-                  transform: 'scale(1.05)',
-                  transition: 'all 0.2s ease-in-out',
-                },
-              }}
-            >
-              <CloseIcon sx={{ fontSize: 24 }} />
-            </IconButton>
-          </Zoom>
+          >
+            <CloseIcon sx={{ fontSize: 24 }} />
+          </Box>
         </DialogTitle>
 
         <DialogContent

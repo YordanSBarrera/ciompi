@@ -98,7 +98,6 @@ export default function ListaVehiculos({
     severity: 'success' | 'error' | 'info' | 'warning';
   }>({ open: false, message: '', severity: 'info' });
 
-  const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -320,7 +319,6 @@ export default function ListaVehiculos({
         }}
       />
 
-      {/* Tabla de vehículos moderna */}
       <TableContainer
         component={Paper}
         elevation={2}

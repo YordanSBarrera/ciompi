@@ -186,8 +186,8 @@ export default function FormularioVehiculo({
     if (formData.Padron !== undefined && formData.Padron !== null) {
       if (formData.Padron < 0) {
         newErrors.Padron = 'El padrón debe ser un número positivo' as any;
-      } else if (formData.Padron > 999999999) {
-        newErrors.Padron = 'El padrón no puede exceder 999,999,999' as any;
+      } else if (formData.Padron > 9999999999) {
+        newErrors.Padron = 'El padrón no puede exceder 9,999,999,999' as any;
       }
     }
 
@@ -241,10 +241,10 @@ export default function FormularioVehiculo({
           ...prev,
           Padron: 'El padrón debe ser un número positivo' as any,
         }));
-      } else if (value > 999999999) {
+      } else if (value > 9999999999) {
         setErrors(prev => ({
           ...prev,
-          Padron: 'El padrón no puede exceder 999,999,999' as any,
+          Padron: 'El padrón no puede exceder 9,999,999,999' as any,
         }));
       }
     }
@@ -388,59 +388,32 @@ export default function FormularioVehiculo({
           </Box>
 
           <Box
+            onClick={onClose}
             sx={{
               position: 'absolute',
-              top: -40,
-              right: -40,
-              width: 120,
-              height: 120,
+              top: 20,
+              right: 20,
+              width: 48,
+              height: 48,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: blanco,
+              backgroundColor: 'rgba(255,255,255,0.15)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255,255,255,0.2)',
               borderRadius: '50%',
-              background:
-                'radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%)',
-              animation: 'float 6s ease-in-out infinite',
-              '@keyframes float': {
-                '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
-                '50%': { transform: 'translateY(-20px) rotate(180deg)' },
+              cursor: 'pointer',
+              '&:hover': {
+                backgroundColor: 'rgba(255,255,255,0.25)',
+                transform: 'scale(1.05)',
+                transition: 'all 0.2s ease-in-out',
               },
+              zIndex: 10,
             }}
-          />
-          <Box
-            sx={{
-              position: 'absolute',
-              bottom: -50,
-              left: -50,
-              width: 100,
-              height: 100,
-              borderRadius: '50%',
-              background:
-                'radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%)',
-              animation: 'float 8s ease-in-out infinite reverse',
-            }}
-          />
-
-          <Zoom in={open} timeout={1000}>
-            <IconButton
-              onClick={onClose}
-              sx={{
-                position: 'absolute',
-                top: 20,
-                right: 20,
-                color: blanco,
-                backgroundColor: 'rgba(255,255,255,0.15)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255,255,255,0.2)',
-                width: 48,
-                height: 48,
-                '&:hover': {
-                  backgroundColor: 'rgba(255,255,255,0.25)',
-                  transform: 'scale(1.05)',
-                  transition: 'all 0.2s ease-in-out',
-                },
-              }}
-            >
-              <CloseIcon sx={{ fontSize: 24 }} />
-            </IconButton>
-          </Zoom>
+          >
+            <CloseIcon sx={{ fontSize: 24 }} />
+          </Box>
         </DialogTitle>
         <DialogContent
           sx={{

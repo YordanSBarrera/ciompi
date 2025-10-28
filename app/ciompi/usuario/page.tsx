@@ -6,6 +6,7 @@ import AuthGuard from '@/app/components/AuthGuard';
 import { Box, CircularProgress, Alert, Button, Fab } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
+import { routes } from '@/lib/rutas';
 
 async function cargarUsuarios(): Promise<Usuario[]> {
   try {
@@ -52,7 +53,7 @@ export default function UsuariosPage() {
 
   const handleAgregarUsuario = () => {
     // Redirigir a la página de crear nuevo usuario
-    router.push('/usuarios/nuevo');
+    router.push(`/${routes.newUsuario}`);
   };
 
   if (loading) {

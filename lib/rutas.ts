@@ -5,6 +5,7 @@ export const routes = {
   operaciones: 'ciompi/operaciones',
   datosGenerales: 'ciompi/datosGenerales',
   usuarios: 'ciompi/usuario',
+  newUsuario: 'ciompi/usuario/nuevo',
   vehiculos: 'ciompi/vehiculos',
   financiamiento: 'ciompi/financiamiento',
 } as const;
