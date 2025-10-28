@@ -1,14 +1,14 @@
 'use client';
-import { MouseEvent, useState } from 'react';
-import { styled, alpha } from '@mui/material/styles';
+import { MouseEvent, useState, useEffect } from 'react';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import LogoApp from '../LogoApp';
 import { azulBase } from '@/lib/color';
 import {
+  Avatar,
   Divider,
   IconButton,
-  InputBase,
+  ListItemIcon,
   Menu,
   MenuItem,
   Toolbar,
@@ -16,83 +16,45 @@ import {
   Typography,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
-import SearchIcon from '@mui/icons-material/Search';
-import Link from 'next/link';
+import PersonIcon from '@mui/icons-material/Person';
+import LogoutIcon from '@mui/icons-material/Logout';
+import { useRouter } from 'next/navigation';
 import { routes } from '@/lib/rutas';
 import MenuItemFormatted from './MenuItemFormatted';
-
-const Search = styled('div')(({ theme }) => ({
-  position: 'relative',
-  borderRadius: theme.shape.borderRadius,
-  backgroundColor: alpha(theme.palette.common.white, 0.15),
-  '&:hover': {
-    backgroundColor: alpha(theme.palette.common.white, 0.25),
-  },
-  marginLeft: 0,
-  width: '100%',
-  [theme.breakpoints.up('sm')]: {
-    marginLeft: theme.spacing(1),
-    width: 'auto',
-  },
-}));
-
-const SearchIconWrapper = styled('div')(({ theme }) => ({
-  padding: theme.spacing(0, 2),
-  height: '100%',
-  position: 'absolute',
-  pointerEvents: 'none',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-}));
-
-const StyledInputBase = styled(InputBase)(({ theme }) => ({
-  color: 'inherit',
-  width: '100%',
-  '& .MuiInputBase-input': {
-    padding: theme.spacing(1, 1, 1, 0),
-    paddingLeft: `calc(1em + ${theme.spacing(4)})`,
-    transition: theme.transitions.create('width'),
-    [theme.breakpoints.up('sm')]: {
-      width: '12ch',
-      '&:focus': {
-        width: '20ch',
-      },
-    },
-  },
-}));
-
-// const MenuItemFormatted = (
-//   title: string,
-//   href: string,
-//   onHandleClose: () => void
-// ) => {
-//   return (
-//     <Link href={href} style={{ textDecoration: 'none', color: 'inherit' }}>
-//       <MenuItem
-//         onClick={onHandleClose}
-//         sx={{
-//           color: '#ffffff',
-//           '&:hover': {
-//             backgroundColor: '#333333',
-//             color: '#ffffff',
-//           },
-//           '&:focus': {
-//             backgroundColor: '#444444',
-//           },
-//           py: 1.5,
-//           px: 2,
-//         }}
-//       >
-//         {title}
-//       </MenuItem>
-//     </Link>
-//   );
-// };
+import { getCurrentUser } from '@/lib/utils';
 
 export default function SearchAppBar() {
+  const router = useRouter();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [accountAnchorEl, setAccountAnchorEl] = useState<null | HTMLElement>(
+    null
+  );
+  const [user, setUser] = useState<any>(null);
   const open = Boolean(anchorEl);
+  const accountMenuOpen = Boolean(accountAnchorEl);
+
+  useEffect(() => {
+    const currentUser = getCurrentUser();
+    setUser(currentUser);
+
+    // Escuchar cambios en localStorage
+    const handleStorageChange = () => {
+      const updatedUser = getCurrentUser();
+      setUser(updatedUser);
+    };
+
+    // Escuchar evento personalizado de cambio de usuario
+    window.addEventListener('storage', handleStorageChange);
+
+    // Escuchar eventos personalizados para cambios internos
+    window.addEventListener('userChange', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('userChange', handleStorageChange);
+    };
+  }, []);
+
   const handleClick = (event: MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -100,6 +62,32 @@ export default function SearchAppBar() {
     setAnchorEl(null);
   };
 
+  const handleAccountClick = (event: MouseEvent<HTMLElement>) => {
+    setAccountAnchorEl(event.currentTarget);
+  };
+  const handleAccountClose = () => {
+    setAccountAnchorEl(null);
+  };
+
+  const handleDetalles = () => {
+    if (user?.id) {
+      router.push(`/ciompi/usuario/${user.id}`);
+    }
+    handleAccountClose();
+  };
+
+  const handleLogout = () => {
+    // Limpiar localStorage
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    // Actualizar estado local
+    setUser(null);
+    // Disparar evento personalizado para notificar a otros componentes
+    window.dispatchEvent(new Event('userChange'));
+    // Redirigir al login
+    router.push('/login');
+    handleAccountClose();
+  };
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static" sx={{ backgroundColor: azulBase }}>
@@ -192,16 +180,62 @@ export default function SearchAppBar() {
           >
             <LogoApp widthProps={120} />
           </Typography>
-          <Search>
-            <SearchIconWrapper>
-              <SearchIcon />
-            </SearchIconWrapper>
-            <StyledInputBase
-              placeholder="Search…"
-              inputProps={{ 'aria-label': 'search' }}
-            />
-          </Search>
-          {/* <AccountMenu /> */}
+
+          {/* Account Menu */}
+          {user && (
+            <>
+              <Tooltip title="Mi cuenta">
+                <IconButton
+                  onClick={handleAccountClick}
+                  size="small"
+                  sx={{ ml: 2 }}
+                  aria-controls={accountMenuOpen ? 'account-menu' : undefined}
+                  aria-haspopup="true"
+                  aria-expanded={accountMenuOpen ? 'true' : undefined}
+                >
+                  <Avatar sx={{ width: 32, height: 32 }}>
+                    {user.nombre
+                      ? user.nombre.charAt(0).toUpperCase()
+                      : user.usuario.charAt(0).toUpperCase()}
+                  </Avatar>
+                </IconButton>
+              </Tooltip>
+              <Menu
+                anchorEl={accountAnchorEl}
+                id="account-menu"
+                open={accountMenuOpen}
+                onClose={handleAccountClose}
+                onClick={handleAccountClose}
+                PaperProps={{
+                  sx: {
+                    backgroundColor: '#1a1a1a',
+                    color: '#ffffff',
+                    border: '1px solid #333333',
+                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+                    borderRadius: '8px',
+                    mt: 1,
+                    minWidth: 200,
+                  },
+                }}
+                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+              >
+                <MenuItem onClick={handleDetalles}>
+                  <ListItemIcon>
+                    <PersonIcon fontSize="small" sx={{ color: '#ffffff' }} />
+                  </ListItemIcon>
+                  Detalles
+                </MenuItem>
+                <Divider sx={{ backgroundColor: '#444444', my: 1 }} />
+                <MenuItem onClick={handleLogout}>
+                  <ListItemIcon>
+                    <LogoutIcon fontSize="small" sx={{ color: '#ffffff' }} />
+                  </ListItemIcon>
+                  Cerrar Sesión
+                </MenuItem>
+              </Menu>
+            </>
+          )}
         </Toolbar>
       </AppBar>
     </Box>

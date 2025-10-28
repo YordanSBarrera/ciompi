@@ -89,6 +89,8 @@ export function useAuth() {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.usuario));
         setUser(data.usuario);
+        // Disparar evento personalizado para notificar cambios
+        window.dispatchEvent(new Event('userChange'));
         return data.usuario;
       } else {
         throw new Error(data.error || 'Error al iniciar sesión');
@@ -103,6 +105,8 @@ export function useAuth() {
     setUser(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    // Disparar evento personalizado para notificar cambios
+    window.dispatchEvent(new Event('userChange'));
   };
 
   return {
