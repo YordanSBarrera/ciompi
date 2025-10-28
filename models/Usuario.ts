@@ -19,7 +19,7 @@ const usuarioSchema = new Schema(
     },
     email: {
       type: String,
-      required: true,
+      required: false,
       unique: true,
       trim: true,
       lowercase: true,
@@ -28,7 +28,7 @@ const usuarioSchema = new Schema(
       type: String,
       required: true,
       trim: true,
-      maxlength: 100,
+      maxlength: 50,
     },
     avatar: {
       type: String,
@@ -36,8 +36,8 @@ const usuarioSchema = new Schema(
     },
     rol: {
       type: String,
-      enum: [Roles.admin, Roles.user, Roles.Administrativo, Roles.Usuario],
-      default: 'user',
+      enum: [Roles.Administrativo, Roles.Usuario],
+      default: Roles.Usuario,
     },
     estado: {
       type: String,
@@ -49,7 +49,16 @@ const usuarioSchema = new Schema(
       trim: true,
       maxlength: 100,
     },
-
+    usuarioCreacion: {
+      type: Schema.Types.ObjectId,
+      ref: 'Usuario',
+      required: false,
+    },
+    usuarioModificacion: {
+      type: Schema.Types.ObjectId,
+      ref: 'Usuario',
+      required: false,
+    },
     fechaCreacion: {
       type: Date,
       default: Date.now,

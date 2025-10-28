@@ -4,11 +4,20 @@ const clientSchema = new Schema(
   {
     NOMBRE: { type: String, require: true, unique: false, trim: true },
     DIRECCION: { type: String, require: false, unique: false, trim: true },
-    CODCLI: { type: String, require: false, unique: true, trim: false }, //dato en BD vieja, eliminar luego de actualizada
     TELEFONO: { type: Number, require: false, unique: false, trim: true },
     cedula: { type: String, require: false, unique: false, trim: true },
     correo: { type: String, require: false, unique: false, trim: true },
     profesion: { type: String, require: false, unique: false, trim: true },
+    usuarioCreacion: {
+      type: Schema.Types.ObjectId,
+      ref: 'Usuario',
+      require: false,
+    },
+    usuarioModificacion: {
+      type: Schema.Types.ObjectId,
+      ref: 'Usuario',
+      require: false,
+    },
   },
   { timestamps: true }
 );

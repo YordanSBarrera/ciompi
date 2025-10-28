@@ -36,6 +36,7 @@ import {
   Search as SearchIcon,
   Delete as DeleteIcon,
   Person as PersonIcon,
+  Add as AddIcon,
 } from '@mui/icons-material';
 import { Usuario } from '@/lib/types';
 import { useEliminarUsuario } from '@/app/hook/useEliminarUsuario';
@@ -57,6 +58,7 @@ import { useRouter } from 'next/navigation';
 interface ListaUsuariosProps {
   usuarios: Usuario[];
   onUsuarioEliminado?: () => void;
+  onAgregarUsuario?: () => void;
 }
 
 interface MenuState {
@@ -67,6 +69,7 @@ interface MenuState {
 export default function ListaUsuarios({
   usuarios,
   onUsuarioEliminado,
+  onAgregarUsuario,
 }: ListaUsuariosProps) {
   const [filter, setFilter] = React.useState('');
   const [menuState, setMenuState] = React.useState<MenuState>({
@@ -171,6 +174,8 @@ export default function ListaUsuarios({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 2,
         }}
       >
         <Typography
@@ -184,15 +189,49 @@ export default function ListaUsuarios({
           Gestión de Usuarios
         </Typography>
 
-        <Chip
-          label={`${filteredUsuarios.length} usuarios`}
-          variant="outlined"
-          sx={{
-            borderColor: turquesa,
-            color: azulOscuro,
-            fontWeight: 600,
-          }}
-        />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Chip
+            label={`${filteredUsuarios.length} usuarios`}
+            variant="outlined"
+            sx={{
+              borderColor: turquesa,
+              color: azulOscuro,
+              fontWeight: 600,
+            }}
+          />
+
+          {onAgregarUsuario && (
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={onAgregarUsuario}
+              sx={{
+                backgroundColor: azulBase,
+                background: `linear-gradient(135deg, ${azulBase} 0%, ${azulOscuro} 100%)`,
+                borderRadius: 2,
+                px: 3,
+                py: 1.5,
+                fontWeight: 600,
+                textTransform: 'none',
+                fontSize: '0.95rem',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+                '&:hover': {
+                  backgroundColor: azulOscuro,
+                  background: `linear-gradient(135deg, ${azulOscuro} 0%, ${azulBase} 100%)`,
+                  boxShadow: '0 6px 20px rgba(0,0,0,0.2)',
+                  transform: 'translateY(-2px)',
+                  transition: 'all 0.2s ease-in-out',
+                },
+                '&:active': {
+                  transform: 'translateY(0px)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                },
+              }}
+            >
+              Agregar Usuario
+            </Button>
+          )}
+        </Box>
       </Box>
 
       {/* Barra de búsqueda */}
@@ -267,6 +306,17 @@ export default function ListaUsuarios({
                 }}
               >
                 #
+              </TableCell>
+              <TableCell
+                sx={{
+                  color: blanco,
+                  fontWeight: 500,
+                  fontSize: '0.875rem',
+                  minWidth: 50,
+                  width: 50,
+                }}
+              >
+                Avatar
               </TableCell>
               <TableCell
                 sx={{
@@ -363,6 +413,7 @@ export default function ListaUsuarios({
                   },
                 }}
               >
+                <TableCell>{index + 1}</TableCell>
                 <TableCell>
                   <Avatar
                     sx={{
@@ -375,7 +426,6 @@ export default function ListaUsuarios({
                     {usuario.nombre?.charAt(0) || <PersonIcon />}
                   </Avatar>
                 </TableCell>
-
                 <TableCell>
                   <Tooltip title={usuario.usuario} placement="top" arrow>
                     <Typography
@@ -396,7 +446,6 @@ export default function ListaUsuarios({
                     </Typography>
                   </Tooltip>
                 </TableCell>
-
                 <TableCell>
                   <Tooltip title={usuario.nombre} placement="top" arrow>
                     <Typography
@@ -415,7 +464,6 @@ export default function ListaUsuarios({
                     </Typography>
                   </Tooltip>
                 </TableCell>
-
                 <TableCell>
                   <Tooltip title={usuario.email} placement="top" arrow>
                     <Typography
@@ -436,7 +484,6 @@ export default function ListaUsuarios({
                     </Typography>
                   </Tooltip>
                 </TableCell>
-
                 <TableCell>
                   <Chip
                     label={usuario.rol}
@@ -445,7 +492,6 @@ export default function ListaUsuarios({
                     sx={{ fontWeight: 500 }}
                   />
                 </TableCell>
-
                 <TableCell>
                   <Chip
                     label={usuario.estado}
@@ -454,7 +500,6 @@ export default function ListaUsuarios({
                     sx={{ fontWeight: 500 }}
                   />
                 </TableCell>
-
                 <TableCell>
                   <Tooltip
                     title={usuario.cargo || 'Sin cargo'}
@@ -481,7 +526,6 @@ export default function ListaUsuarios({
                     </Typography>
                   </Tooltip>
                 </TableCell>
-
                 <TableCell
                   className="sticky-actions-cell"
                   sx={{

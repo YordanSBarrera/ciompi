@@ -35,10 +35,10 @@ import {
   Search as SearchIcon,
   Delete as DeleteIcon,
   Add as AddIcon,
+  Business as BusinessIcon,
 } from '@mui/icons-material';
-import { ClienteType } from '@/lib/types';
-import { formatCedula } from '@/lib/utils';
-import { useEliminarCliente } from '@/app/hook/useEliminarCliente';
+import { EmpresaType } from '@/lib/types';
+import { useEliminarEmpresa } from '@/app/hook/useEliminarEmpresa';
 import {
   azulBase,
   azulClaro,
@@ -50,32 +50,34 @@ import {
   grisTexto,
   naranja,
   turquesa,
+  verde,
 } from '@/lib/color';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { useRouter } from 'next/navigation';
 
-interface ListaClientesProps {
-  clientes: ClienteType[];
-  onClienteEliminado?: () => void;
-  onAgregarCliente?: () => void;
+interface ListaEmpresasProps {
+  empresas: EmpresaType[];
+  onEmpresaEliminada?: () => void;
+  onAgregarEmpresa?: () => void;
 }
 
 interface MenuState {
   anchorEl: HTMLElement | null;
-  clienteId: string | null;
+  empresaId: string | null;
 }
 
-export default function ListaClientes({
-  clientes,
-  onClienteEliminado,
-  onAgregarCliente,
-}: ListaClientesProps) {
+export default function ListaEmpresas({
+  empresas,
+  onEmpresaEliminada,
+  onAgregarEmpresa,
+}: ListaEmpresasProps) {
   const [filter, setFilter] = React.useState('');
   const [menuState, setMenuState] = React.useState<MenuState>({
     anchorEl: null,
-    clienteId: null,
+    empresaId: null,
   });
-  // Hook personalizado para eliminar cliente
+
+  // Hook personalizado para eliminar empresa
   const {
     confirmDialog,
     loading,
@@ -84,7 +86,8 @@ export default function ListaClientes({
     handleConfirmEliminar,
     handleCancelEliminar,
     handleCloseSnackbar,
-  } = useEliminarCliente({ onClienteEliminado });
+  } = useEliminarEmpresa({ onEmpresaEliminada });
+
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -104,29 +107,29 @@ export default function ListaClientes({
 
   const handleMenuOpen = (
     event: React.MouseEvent<HTMLButtonElement>,
-    clienteId: string
+    empresaId: string
   ) => {
     setMenuState({
       anchorEl: event.currentTarget,
-      clienteId,
+      empresaId,
     });
   };
 
   const handleMenuClose = () => {
     setMenuState({
       anchorEl: null,
-      clienteId: null,
+      empresaId: null,
     });
   };
 
   const handleClickVerDetalles = (id: string) => {
     handleMenuClose();
-    router.push(`/ciompi/clientes/${id}`);
+    router.push(`/ciompi/empresas/${id}`);
   };
 
   const handleClickEditar = (id: string) => {
     handleMenuClose();
-    router.push(`/ciompi/clientes/${id}/editar`);
+    router.push(`/ciompi/empresas/${id}/editar`);
   };
 
   // Wrapper para handleClickEliminar que también cierra el menú
@@ -135,7 +138,7 @@ export default function ListaClientes({
     handleClickEliminar(id, nombre);
   };
 
-  const filteredClientes = clientes.filter(cliente => {
+  const filteredEmpresas = empresas.filter(empresa => {
     const searchTerm = filter.toLowerCase().trim();
 
     if (!searchTerm) return true;
@@ -147,17 +150,23 @@ export default function ListaClientes({
     };
 
     return (
-      searchInField(cliente.NOMBRE) ||
-      searchInField(cliente.DIRECCION) ||
-      searchInField(cliente.TELEFONO) ||
-      searchInField(cliente.correo) ||
-      searchInField(cliente.profesion) ||
-      searchInField(cliente.cedula)
+      searchInField(empresa.nombre) ||
+      searchInField(empresa.descripcion) ||
+      searchInField(empresa.telefono) ||
+      searchInField(empresa.estado)
     );
   });
 
   const getStatusColor = (index: number) => {
     return index % 2 === 0 ? blanco : grisClaro;
+  };
+
+  const getEstadoColor = (estado: string) => {
+    return estado === 'activa' ? verde : naranja;
+  };
+
+  const getEstadoLabel = (estado: string) => {
+    return estado === 'activa' ? 'Activa' : 'Inactiva';
   };
 
   return (
@@ -179,12 +188,12 @@ export default function ListaClientes({
             fontWeight: 600,
           }}
         >
-          Lista de Clientes
+          Lista de Empresas
         </Typography>
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Chip
-            label={`${filteredClientes.length} clientes`}
+            label={`${filteredEmpresas.length} empresas`}
             variant="outlined"
             sx={{
               borderColor: turquesa,
@@ -193,11 +202,11 @@ export default function ListaClientes({
             }}
           />
 
-          {onAgregarCliente && (
+          {onAgregarEmpresa && (
             <Button
               variant="contained"
               startIcon={<AddIcon />}
-              onClick={onAgregarCliente}
+              onClick={onAgregarEmpresa}
               sx={{
                 backgroundColor: azulBase,
                 background: `linear-gradient(135deg, ${azulBase} 0%, ${azulOscuro} 100%)`,
@@ -221,7 +230,7 @@ export default function ListaClientes({
                 },
               }}
             >
-              Agregar Cliente
+              Agregar Empresa
             </Button>
           )}
         </Box>
@@ -229,7 +238,7 @@ export default function ListaClientes({
 
       {/* Barra de búsqueda */}
       <TextField
-        placeholder="Buscar por nombre, código, dirección, teléfono, correo, profesión o cédula..."
+        placeholder="Buscar por nombre, descripción, teléfono o estado..."
         value={filter}
         onChange={e => setFilter(e.target.value)}
         sx={{
@@ -263,7 +272,7 @@ export default function ListaClientes({
         }}
       />
 
-      {/* Tabla de clientes */}
+      {/* Tabla de empresas */}
       <TableContainer
         component={Paper}
         elevation={2}
@@ -315,7 +324,7 @@ export default function ListaClientes({
                   color: blanco,
                   fontWeight: 600,
                   fontSize: '0.875rem',
-                  minWidth: isMobile ? 120 : 150,
+                  minWidth: isMobile ? 150 : 200,
                 }}
               >
                 Nombre
@@ -325,10 +334,10 @@ export default function ListaClientes({
                   color: blanco,
                   fontWeight: 600,
                   fontSize: '0.875rem',
-                  minWidth: 120,
+                  minWidth: isMobile ? 120 : 150,
                 }}
               >
-                Cédula
+                Descripción
               </TableCell>
               <TableCell
                 sx={{
@@ -345,30 +354,10 @@ export default function ListaClientes({
                   color: blanco,
                   fontWeight: 600,
                   fontSize: '0.875rem',
-                  minWidth: isMobile ? 120 : 150,
-                }}
-              >
-                Correo
-              </TableCell>
-              <TableCell
-                sx={{
-                  color: blanco,
-                  fontWeight: 600,
-                  fontSize: '0.875rem',
-                  minWidth: isMobile ? 120 : 150,
-                }}
-              >
-                Dirección
-              </TableCell>
-              <TableCell
-                sx={{
-                  color: blanco,
-                  fontWeight: 600,
-                  fontSize: '0.875rem',
                   minWidth: isMobile ? 100 : 120,
                 }}
               >
-                Profesión
+                Estado
               </TableCell>
               <TableCell
                 sx={{
@@ -389,9 +378,9 @@ export default function ListaClientes({
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredClientes.map((cliente, index) => (
+            {filteredEmpresas.map((empresa, index) => (
               <TableRow
-                key={cliente._id}
+                key={empresa._id}
                 sx={{
                   backgroundColor: getStatusColor(index),
                   transition: 'all 0.2s ease-in-out',
@@ -418,142 +407,94 @@ export default function ListaClientes({
                 </TableCell>
 
                 <TableCell>
-                  <Tooltip title={cliente.NOMBRE} placement="top" arrow>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <BusinessIcon sx={{ color: azulBase, fontSize: 20 }} />
+                    <Tooltip title={empresa.nombre} placement="top" arrow>
+                      <Typography
+                        sx={{
+                          fontWeight: 600,
+                          color: grisOscuro,
+                          fontSize: '0.875rem',
+                          cursor: 'help',
+                          opacity:
+                            isMobile && isTruncated(empresa.nombre, 15)
+                              ? 0.8
+                              : 1,
+                        }}
+                      >
+                        {isMobile
+                          ? truncateText(empresa.nombre, 15)
+                          : empresa.nombre}
+                      </Typography>
+                    </Tooltip>
+                  </Box>
+                </TableCell>
+
+                <TableCell>
+                  <Tooltip
+                    title={empresa.descripcion || 'Sin descripción'}
+                    placement="top"
+                    arrow
+                  >
                     <Typography
                       sx={{
-                        fontWeight: 600,
-                        color: grisOscuro,
+                        color: empresa.descripcion
+                          ? grisOscuro
+                          : 'text.secondary',
+                        fontStyle: empresa.descripcion ? 'normal' : 'italic',
                         fontSize: '0.875rem',
                         cursor: 'help',
                         opacity:
-                          isMobile && isTruncated(cliente.NOMBRE, 15) ? 0.8 : 1,
+                          empresa.descripcion &&
+                          isTruncated(empresa.descripcion, 20)
+                            ? 0.8
+                            : 1,
                       }}
                     >
-                      {isMobile
-                        ? truncateText(cliente.NOMBRE, 15)
-                        : cliente.NOMBRE}
+                      {empresa.descripcion
+                        ? truncateText(empresa.descripcion, 20)
+                        : emptyData}
                     </Typography>
                   </Tooltip>
                 </TableCell>
 
                 <TableCell>
-                  <Typography
+                  <Tooltip
+                    title={empresa.telefono || 'Sin teléfono'}
+                    placement="top"
+                    arrow
+                  >
+                    <Typography
+                      sx={{
+                        fontFamily: 'monospace',
+                        color: empresa.telefono ? grisOscuro : 'text.secondary',
+                        fontStyle: empresa.telefono ? 'normal' : 'italic',
+                        fontSize: '0.875rem',
+                        cursor: 'help',
+                        opacity:
+                          empresa.telefono && isTruncated(empresa.telefono, 10)
+                            ? 0.8
+                            : 1,
+                      }}
+                    >
+                      {empresa.telefono
+                        ? truncateText(empresa.telefono, 10)
+                        : emptyData}
+                    </Typography>
+                  </Tooltip>
+                </TableCell>
+
+                <TableCell>
+                  <Chip
+                    label={getEstadoLabel(empresa.estado)}
+                    size="small"
                     sx={{
-                      color: cliente.cedula ? grisOscuro : azulClaro,
-                      fontFamily: 'monospace',
-                      fontSize: '0.875rem',
+                      backgroundColor: getEstadoColor(empresa.estado),
+                      color: blanco,
+                      fontWeight: 600,
+                      fontSize: '0.75rem',
                     }}
-                  >
-                    {cliente.cedula ? formatCedula(cliente.cedula) : '-'}
-                  </Typography>
-                </TableCell>
-
-                <TableCell>
-                  <Tooltip
-                    title={cliente.TELEFONO || 'Sin teléfono'}
-                    placement="top"
-                    arrow
-                  >
-                    <Typography
-                      sx={{
-                        fontFamily: 'monospace',
-                        color: cliente.TELEFONO ? grisOscuro : 'text.secondary',
-                        fontStyle: cliente.TELEFONO ? 'normal' : 'italic',
-                        fontSize: '0.875rem',
-                        cursor: 'help',
-                        opacity:
-                          cliente.TELEFONO && isTruncated(cliente.TELEFONO, 10)
-                            ? 0.8
-                            : 1,
-                      }}
-                    >
-                      {cliente.TELEFONO
-                        ? truncateText(cliente.TELEFONO, 10)
-                        : emptyData}
-                    </Typography>
-                  </Tooltip>
-                </TableCell>
-
-                <TableCell>
-                  <Tooltip
-                    title={cliente.correo || 'Sin correo'}
-                    placement="top"
-                    arrow
-                  >
-                    <Typography
-                      sx={{
-                        fontFamily: 'monospace',
-                        color: cliente.correo
-                          ? 'text.primary'
-                          : 'text.secondary',
-                        fontStyle: cliente.correo ? 'normal' : 'italic',
-                        fontSize: '0.875rem',
-                        cursor: 'help',
-                        opacity:
-                          cliente.correo && isTruncated(cliente.correo, 15)
-                            ? 0.8
-                            : 1,
-                      }}
-                    >
-                      {cliente.correo
-                        ? truncateText(cliente.correo, 15)
-                        : emptyData}
-                    </Typography>
-                  </Tooltip>
-                </TableCell>
-
-                <TableCell>
-                  <Tooltip
-                    title={cliente.DIRECCION || 'Sin dirección'}
-                    placement="top"
-                    arrow
-                  >
-                    <Typography
-                      sx={{
-                        color: cliente.DIRECCION
-                          ? 'text.primary'
-                          : 'text.secondary',
-                        fontStyle: cliente.DIRECCION ? 'normal' : 'italic',
-                        fontSize: '0.875rem',
-                        cursor: 'help',
-                        opacity:
-                          cliente.DIRECCION &&
-                          isTruncated(cliente.DIRECCION, 15)
-                            ? 0.8
-                            : 1,
-                      }}
-                    >
-                      {cliente.DIRECCION
-                        ? truncateText(cliente.DIRECCION, 15)
-                        : emptyData}
-                    </Typography>
-                  </Tooltip>
-                </TableCell>
-
-                <TableCell>
-                  <Tooltip
-                    title={cliente.profesion || 'Sin profesión'}
-                    placement="top"
-                    arrow
-                  >
-                    <Typography
-                      sx={{
-                        color: grisTexto,
-                        fontFamily: 'monospace',
-                        fontSize: '0.875rem',
-                        cursor: 'help',
-                        opacity:
-                          cliente.profesion &&
-                          isTruncated(cliente.profesion, 10)
-                            ? 0.8
-                            : 1,
-                      }}
-                    >
-                      {cliente.profesion
-                        ? truncateText(cliente.profesion, 10)
-                        : emptyData}
-                    </Typography>
-                  </Tooltip>
+                  />
                 </TableCell>
 
                 <TableCell
@@ -566,13 +507,13 @@ export default function ListaClientes({
                     minWidth: 100,
                     width: 100,
                     borderLeft: `2px solid ${grisMedio}`,
-                    transition: 'all 0.2s ease-in-out', // Sincronizar con la transición de la fila
+                    transition: 'all 0.2s ease-in-out',
                   }}
                 >
                   <Stack alignItems="flex-end">
                     <Tooltip title="Acciones" placement="top">
                       <IconButton
-                        onClick={event => handleMenuOpen(event, cliente._id)}
+                        onClick={event => handleMenuOpen(event, empresa._id!)}
                         size="small"
                       >
                         <MoreVertIcon fontSize="small" />
@@ -582,7 +523,7 @@ export default function ListaClientes({
                       anchorEl={menuState.anchorEl}
                       open={Boolean(
                         menuState.anchorEl &&
-                          menuState.clienteId === cliente._id
+                          menuState.empresaId === empresa._id
                       )}
                       onClose={handleMenuClose}
                       anchorOrigin={{
@@ -615,14 +556,14 @@ export default function ListaClientes({
                       }}
                     >
                       <MenuItem
-                        onClick={() => handleClickVerDetalles(cliente._id)}
+                        onClick={() => handleClickVerDetalles(empresa._id!)}
                       >
                         <ViewIcon
                           sx={{ fontSize: 18, mr: 1, color: azulBase }}
                         />
                         Ver Detalles
                       </MenuItem>
-                      <MenuItem onClick={() => handleClickEditar(cliente._id)}>
+                      <MenuItem onClick={() => handleClickEditar(empresa._id!)}>
                         <EditIcon
                           sx={{ fontSize: 18, mr: 1, color: azulBase }}
                         />
@@ -631,8 +572,8 @@ export default function ListaClientes({
                       <MenuItem
                         onClick={() =>
                           handleClickEliminarWrapper(
-                            cliente._id,
-                            cliente.NOMBRE
+                            empresa._id!,
+                            empresa.nombre
                           )
                         }
                       >
@@ -652,12 +593,12 @@ export default function ListaClientes({
         </Table>
 
         {/* Mensaje cuando no hay resultados */}
-        {filteredClientes.length === 0 && (
+        {filteredEmpresas.length === 0 && (
           <Box sx={{ p: 4, textAlign: 'center' }}>
             <Typography variant="h6" color={grisTexto}>
               {filter
-                ? 'No se encontraron clientes que coincidan con la búsqueda'
-                : 'No hay clientes registrados'}
+                ? 'No se encontraron empresas que coincidan con la búsqueda'
+                : 'No hay empresas registradas'}
             </Typography>
           </Box>
         )}
@@ -672,7 +613,7 @@ export default function ListaClientes({
         }}
       >
         <Typography variant="caption" color={grisTexto}>
-          Mostrando {filteredClientes.length} de {clientes.length} clientes
+          Mostrando {filteredEmpresas.length} de {empresas.length} empresas
         </Typography>
 
         {filter && (
@@ -692,8 +633,8 @@ export default function ListaClientes({
         <DialogTitle id="alert-dialog-title">Confirmar eliminación</DialogTitle>
         <DialogContent>
           <DialogContentText id="alert-dialog-description">
-            ¿Estás seguro de que deseas eliminar al cliente "
-            {confirmDialog.clienteNombre}"? Esta acción no se puede deshacer.
+            ¿Estás seguro de que deseas eliminar la empresa "
+            {confirmDialog.empresaNombre}"? Esta acción no se puede deshacer.
           </DialogContentText>
         </DialogContent>
         <DialogActions>

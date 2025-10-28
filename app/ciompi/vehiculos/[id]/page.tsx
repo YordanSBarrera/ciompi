@@ -193,7 +193,7 @@ export default function VehiculoDetallePage({
 
       {/* Información del vehículo */}
       <Grid container spacing={3}>
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <Card sx={{ boxShadow: 2 }}>
             <CardContent>
               <Typography
@@ -204,7 +204,7 @@ export default function VehiculoDetallePage({
                 Información General
               </Typography>
               <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography variant="body2" color="textSecondary">
                     Marca
                   </Typography>
@@ -212,7 +212,7 @@ export default function VehiculoDetallePage({
                     {vehiculo.Marca}
                   </Typography>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography variant="body2" color="textSecondary">
                     Modelo
                   </Typography>
@@ -220,7 +220,7 @@ export default function VehiculoDetallePage({
                     {vehiculo.Modelo}
                   </Typography>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography variant="body2" color="textSecondary">
                     Matrícula
                   </Typography>
@@ -234,7 +234,7 @@ export default function VehiculoDetallePage({
                     }}
                   />
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography variant="body2" color="textSecondary">
                     Año
                   </Typography>
@@ -242,7 +242,7 @@ export default function VehiculoDetallePage({
                     {vehiculo.Año || 'No especificado'}
                   </Typography>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography variant="body2" color="textSecondary">
                     Color
                   </Typography>
@@ -270,7 +270,7 @@ export default function VehiculoDetallePage({
                     </Typography>
                   )}
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography variant="body2" color="textSecondary">
                     Padrón
                   </Typography>
@@ -279,7 +279,7 @@ export default function VehiculoDetallePage({
                   </Typography>
                 </Grid>
                 {vehiculo.Descripcion && (
-                  <Grid item xs={12}>
+                  <Grid size={{ xs: 12 }}>
                     <Typography variant="body2" color="textSecondary">
                       Descripción
                     </Typography>
@@ -296,7 +296,7 @@ export default function VehiculoDetallePage({
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card sx={{ boxShadow: 2 }}>
             <CardContent>
               <Typography
@@ -348,7 +348,7 @@ export default function VehiculoDetallePage({
                 Información del Sistema
               </Typography>
               <Grid container spacing={1}>
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                   <Typography variant="body2" color="textSecondary">
                     ID del Vehículo
                   </Typography>
@@ -357,7 +357,7 @@ export default function VehiculoDetallePage({
                   </Typography>
                 </Grid>
                 {vehiculo.createdAt && (
-                  <Grid item xs={12}>
+                  <Grid size={{ xs: 12 }}>
                     <Typography variant="body2" color="textSecondary">
                       Fecha de Creación
                     </Typography>
@@ -376,7 +376,7 @@ export default function VehiculoDetallePage({
                   </Grid>
                 )}
                 {vehiculo.updatedAt && (
-                  <Grid item xs={12}>
+                  <Grid size={{ xs: 12 }}>
                     <Typography variant="body2" color="textSecondary">
                       Última Actualización
                     </Typography>

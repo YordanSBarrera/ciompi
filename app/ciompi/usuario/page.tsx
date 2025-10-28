@@ -6,6 +6,7 @@ import AuthGuard from '@/app/components/AuthGuard';
 import { Box, CircularProgress, Alert, Button, Fab } from '@mui/material';
 import { Add as AddIcon } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
+import { routes } from '@/lib/rutas';
 
 async function cargarUsuarios(): Promise<Usuario[]> {
   try {
@@ -50,8 +51,9 @@ export default function UsuariosPage() {
     cargarListaUsuarios();
   };
 
-  const handleNuevoUsuario = () => {
-    router.push('/usuarios/nuevo');
+  const handleAgregarUsuario = () => {
+    // Redirigir a la página de crear nuevo usuario
+    router.push(`/${routes.newUsuario}`);
   };
 
   if (loading) {
@@ -82,27 +84,11 @@ export default function UsuariosPage() {
 
   return (
     <AuthGuard>
-      <Box sx={{ position: 'relative', minHeight: '100vh' }}>
-        <ListaUsuarios
-          usuarios={usuarios}
-          onUsuarioEliminado={handleUsuarioEliminado}
-        />
-
-        {/* Botón flotante para agregar usuario */}
-        <Fab
-          color="primary"
-          aria-label="add"
-          onClick={handleNuevoUsuario}
-          sx={{
-            position: 'fixed',
-            bottom: 16,
-            right: 16,
-            zIndex: 1000,
-          }}
-        >
-          <AddIcon />
-        </Fab>
-      </Box>
+      <ListaUsuarios
+        usuarios={usuarios}
+        onUsuarioEliminado={handleUsuarioEliminado}
+        onAgregarUsuario={handleAgregarUsuario}
+      />
     </AuthGuard>
   );
 }

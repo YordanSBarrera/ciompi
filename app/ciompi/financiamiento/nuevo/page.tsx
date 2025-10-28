@@ -294,7 +294,7 @@ export default function NuevoFinanciamientoPage() {
                             {cliente.NOMBRE}
                           </Typography>
                           <Typography variant="caption" color="textSecondary">
-                            {cliente.CODCLI} - {cliente.TELEFONO}
+                            {cliente.cedula}
                           </Typography>
                         </Box>
                       </MenuItem>

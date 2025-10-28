@@ -26,3 +26,61 @@ export const rojoOscuro = '#B71C1C'; // Rojo oscuro para hover y estados activos
 export const verde = '#388E3C'; // Verde principal para éxito y confirmaciones
 export const verdeClaro = '#C8E6C9'; // Verde claro para fondos
 export const verdeOscuro = '#1B5E20'; // Verde oscuro para hover y estados activos
+
+// Colores comunes para vehículos
+export const coloresComunes = [
+  'Blanco',
+  'Negro',
+  'Gris',
+  'Plateado',
+  'Azul',
+  'Rojo',
+  'Verde',
+  'Amarillo',
+  'Naranja',
+  'Marrón',
+  'Beige',
+  'Dorado',
+  'Violeta',
+  'Rojo Oscuro',
+  'Verde Oscuro',
+  'Azul Oscuro',
+  'Gris Oscuro',
+];
+
+// Mapa de valores hexadecimales para los colores
+export const colorMap: { [key: string]: string } = {
+  Blanco: '#FFFFFF',
+  Negro: '#000000',
+  Gris: '#808080',
+  Plateado: '#C0C0C0',
+  Azul: '#0000FF',
+  Rojo: '#FF0000',
+  Verde: '#00FF00',
+  Amarillo: '#FFFF00',
+  Naranja: '#FFA500',
+  Marrón: '#8B4513',
+  Beige: '#F5F5DC',
+  Dorado: '#FFD700',
+  Violeta: '#8A2BE2',
+  'Rojo Oscuro': '#8B0000',
+  'Verde Oscuro': '#006400',
+  'Azul Oscuro': '#000080',
+  'Gris Oscuro': '#696969',
+};
+
+// export enum coloresComunes=[
+//     "Blanco"	: '#FFFFFF',
+//     "Negro" : '#000000',
+//     "Gris" : '#808080',
+//     "Plateado" : '#C0C0C0',
+//     "Azul" : '#0000FF',
+//     "Rojo" : '#FF0000',
+//     "Verde" : '#00FF00',
+//     "Amarillo" : '#FFFF00',
+//     "Naranja" : '#FFA500',
+//     "Marrón" : '#8B4513',
+//     "Beige" : '#F5F5DC',
+//     "Dorado" : '#FFD700',
+//     "Violeta" : '#8A2BE2',
+// ]

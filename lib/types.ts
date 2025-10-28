@@ -6,9 +6,12 @@ export interface ClienteType {
   correo?: string;
   profesion?: string;
   DIRECCION?: string;
-  CODCLI: string;
   TELEFONO?: string;
+  usuarioCreacion?: Usuario;
+  usuarioModificacion?: Usuario;
   _id: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export interface ClienteFormType {
@@ -17,7 +20,6 @@ export interface ClienteFormType {
   correo?: string;
   profesion?: string;
   DIRECCION?: string;
-  CODCLI: string;
   TELEFONO?: string;
 }
 
@@ -90,6 +92,8 @@ export interface Usuario {
   avatar?: Avatar | string; // Puede ser objeto o string simple
   rol: Roles;
   estado: 'activo' | 'inactivo';
+  usuarioCreacion?: string | Usuario;
+  usuarioModificacion?: string | Usuario;
   ultimoAcceso?: Date;
   fechaCreacion: Date;
   fechaActualizacion: Date;
@@ -170,7 +174,7 @@ export interface FinanciamientoFormType {
   valorCuota: number;
   interesTotal: number;
   montoTotal: number;
-  fechaPrimeraCuota: Date;
+  fechaPrimeraCuota: string;
   observaciones?: string;
 }
 
@@ -207,4 +211,22 @@ export interface PagoCuotaFormType {
   observaciones?: string;
   numeroComprobante?: string;
   banco?: string;
+}
+
+// Tipos para Empresas
+export interface EmpresaType {
+  _id?: string;
+  nombre: string;
+  descripcion?: string;
+  telefono?: string;
+  usuarioRegistro: string | Usuario; // Puede ser ID o objeto completo
+  estado: 'activa' | 'inactiva';
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface EmpresaFormType {
+  nombre: string;
+  descripcion?: string;
+  telefono?: string;
 }

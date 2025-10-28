@@ -1,4 +1,5 @@
 import { connectDB } from '@/db/dbConnection';
+import { getUserIdFromToken } from '@/lib/server-utils';
 import Usuario from '@/models/Usuario';
 import { NextResponse } from 'next/server';
 
@@ -6,7 +7,31 @@ export async function GET() {
   try {
     await connectDB();
     const usuarios = await Usuario.find().select('-password');
-    return NextResponse.json(usuarios);
+
+    // Obtener información de usuarios de creación y modificación por separado
+    const usuariosConInfo = await Promise.all(
+      usuarios.map(async usuario => {
+        const usuarioObj = usuario.toObject();
+
+        if (usuario.usuarioCreacion) {
+          const usuarioCreacionData = await Usuario.findById(
+            usuario.usuarioCreacion
+          ).select('nombre usuario email');
+          usuarioObj.usuarioCreacion = usuarioCreacionData;
+        }
+
+        if (usuario.usuarioModificacion) {
+          const usuarioModificacionData = await Usuario.findById(
+            usuario.usuarioModificacion
+          ).select('nombre usuario email');
+          usuarioObj.usuarioModificacion = usuarioModificacionData;
+        }
+
+        return usuarioObj;
+      })
+    );
+
+    return NextResponse.json(usuariosConInfo);
   } catch (error) {
     console.error('Error obteniendo usuarios:', error);
     return NextResponse.json(
@@ -19,6 +44,10 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     await connectDB();
+
+    // Obtener ID del usuario desde el token
+    const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb'; // Fallback al admin
+
     const body = await request.json();
 
     // Validar campos requeridos
@@ -41,7 +70,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const nuevoUsuario = new Usuario(body);
+    const nuevoUsuario = new Usuario({
+      ...body,
+      usuarioCreacion: userId,
+      usuarioModificacion: userId,
+    });
     const usuarioGuardado = await nuevoUsuario.save();
 
     // Devolver usuario sin password

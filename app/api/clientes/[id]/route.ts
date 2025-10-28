@@ -1,5 +1,6 @@
 import { connectDB } from '@/db/dbConnection';
 import { RouteParams } from '@/lib/types';
+import { getUserIdFromToken } from '@/lib/server-utils';
 import Cliente from '@/models/cliente';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -8,9 +9,11 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    connectDB();
+    await connectDB();
     const { id } = await params;
-    const clienteEncontrado = await Cliente.findById(id);
+    const clienteEncontrado = await Cliente.findById(id)
+      .populate('usuarioCreacion', 'nombre usuario email')
+      .populate('usuarioModificacion', 'nombre usuario email');
 
     if (!clienteEncontrado) {
       return NextResponse.json(
@@ -71,9 +74,19 @@ export async function PUT(
   try {
     await connectDB();
     const data = await request.json();
-
     const { id } = await params;
-    const clienteUpdated = await Cliente.findByIdAndUpdate(id, data, {
+
+    // Obtener ID del usuario desde el token con fallback
+    console.log('getUserIdFromToken', getUserIdFromToken(request));
+    const userId = getUserIdFromToken(request);
+
+    // Agregar usuario de modificación
+    const updateData = {
+      ...data,
+      usuarioModificacion: userId, // ID del usuario que modifica el cliente
+    };
+
+    const clienteUpdated = await Cliente.findByIdAndUpdate(id, updateData, {
       new: true,
       runValidators: true,
     });
@@ -84,6 +97,12 @@ export async function PUT(
         { status: 404 }
       );
     }
+
+    await clienteUpdated.populate('usuarioCreacion', 'nombre usuario email');
+    await clienteUpdated.populate(
+      'usuarioModificacion',
+      'nombre usuario email'
+    );
 
     return NextResponse.json(clienteUpdated);
   } catch (error: any) {

@@ -27,6 +27,8 @@ import {
   useMediaQuery,
   Chip,
   CircularProgress,
+  MenuItem,
+  Menu,
 } from '@mui/material';
 import {
   Visibility as ViewIcon,
@@ -34,11 +36,12 @@ import {
   Search as SearchIcon,
   Delete as DeleteIcon,
   Add as AddIcon,
-  FilterList as FilterIcon,
+  DirectionsCar as CarIcon,
+  Person as PersonIcon,
 } from '@mui/icons-material';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import { useRouter } from 'next/navigation';
 import { VehiculoType } from '@/lib/types';
-import { useVehiculos } from '@/app/hook/useVehiculos';
-import FiltrosAvanzadosVehiculos from './FiltrosAvanzadosVehiculos';
 import {
   azulBase,
   azulClaro,
@@ -49,48 +52,42 @@ import {
   grisOscuro,
   grisTexto,
   naranja,
-  rojo,
-  rojoOscuro,
-  verde,
-  verdeOscuro,
+  colorMap,
 } from '@/lib/color';
 
 interface ListaVehiculosProps {
+  vehiculos: VehiculoType[];
+  loading: boolean;
+  error: string | null;
+  refreshing: boolean;
   onAddVehiculo: () => void;
   onEditVehiculo: (vehiculo: VehiculoType) => void;
   onViewVehiculo: (vehiculo: VehiculoType) => void;
+  onDeleteVehiculo: (
+    id: string
+  ) => Promise<{ success: boolean; error?: string }>;
 }
 
-interface FiltrosVehiculos {
-  marca: string;
-  modelo: string;
-  matricula: string;
-  color: string;
-  añoMin: number | '';
-  añoMax: number | '';
-  padronMin: number | '';
-  padronMax: number | '';
+interface MenuState {
+  anchorEl: HTMLElement | null;
+  vehiculoId: string | null;
 }
 
 export default function ListaVehiculos({
+  vehiculos,
+  loading,
+  error,
+  refreshing,
   onAddVehiculo,
   onEditVehiculo,
   onViewVehiculo,
+  onDeleteVehiculo,
 }: ListaVehiculosProps) {
-  const { vehiculos, loading, error, deleteVehiculo, refreshing } =
-    useVehiculos();
   const [searchTerm, setSearchTerm] = useState('');
-  const [filtrosAvanzados, setFiltrosAvanzados] = useState<FiltrosVehiculos>({
-    marca: '',
-    modelo: '',
-    matricula: '',
-    color: '',
-    añoMin: '',
-    añoMax: '',
-    padronMin: '',
-    padronMax: '',
+  const [menuState, setMenuState] = useState<MenuState>({
+    anchorEl: null,
+    vehiculoId: null,
   });
-  const [filtrosDialogOpen, setFiltrosDialogOpen] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean;
     vehiculo: VehiculoType | null;
@@ -105,7 +102,7 @@ export default function ListaVehiculos({
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const filteredVehiculos = vehiculos.filter(vehiculo => {
-    // Filtro de búsqueda general
+    // Solo filtro de búsqueda general
     const matchesSearch =
       !searchTerm ||
       vehiculo.Marca.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -114,58 +111,7 @@ export default function ListaVehiculos({
       vehiculo.Color?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       vehiculo.Descripcion?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    // Filtros avanzados
-    const matchesMarca =
-      !filtrosAvanzados.marca ||
-      vehiculo.Marca.toLowerCase().includes(
-        filtrosAvanzados.marca.toLowerCase()
-      );
-
-    const matchesModelo =
-      !filtrosAvanzados.modelo ||
-      vehiculo.Modelo.toLowerCase().includes(
-        filtrosAvanzados.modelo.toLowerCase()
-      );
-
-    const matchesMatricula =
-      !filtrosAvanzados.matricula ||
-      vehiculo.Matricula.toLowerCase().includes(
-        filtrosAvanzados.matricula.toLowerCase()
-      );
-
-    const matchesColor =
-      !filtrosAvanzados.color ||
-      vehiculo.Color?.toLowerCase().includes(
-        filtrosAvanzados.color.toLowerCase()
-      );
-
-    const matchesAñoMin =
-      !filtrosAvanzados.añoMin ||
-      (vehiculo.Año && vehiculo.Año >= filtrosAvanzados.añoMin);
-
-    const matchesAñoMax =
-      !filtrosAvanzados.añoMax ||
-      (vehiculo.Año && vehiculo.Año <= filtrosAvanzados.añoMax);
-
-    const matchesPadronMin =
-      !filtrosAvanzados.padronMin ||
-      (vehiculo.Padron && vehiculo.Padron >= filtrosAvanzados.padronMin);
-
-    const matchesPadronMax =
-      !filtrosAvanzados.padronMax ||
-      (vehiculo.Padron && vehiculo.Padron <= filtrosAvanzados.padronMax);
-
-    return (
-      matchesSearch &&
-      matchesMarca &&
-      matchesModelo &&
-      matchesMatricula &&
-      matchesColor &&
-      matchesAñoMin &&
-      matchesAñoMax &&
-      matchesPadronMin &&
-      matchesPadronMax
-    );
+    return matchesSearch;
   });
 
   const handleDeleteClick = (vehiculo: VehiculoType) => {
@@ -174,7 +120,7 @@ export default function ListaVehiculos({
 
   const handleDeleteConfirm = async () => {
     if (deleteDialog.vehiculo) {
-      const result = await deleteVehiculo(deleteDialog.vehiculo._id!);
+      const result = await onDeleteVehiculo(deleteDialog.vehiculo._id!);
       if (result.success) {
         setSnackbar({
           open: true,
@@ -200,31 +146,50 @@ export default function ListaVehiculos({
     setSnackbar({ ...snackbar, open: false });
   };
 
-  const handleApplyFilters = (filters: FiltrosVehiculos) => {
-    setFiltrosAvanzados(filters);
-  };
-
-  const handleClearFilters = () => {
-    setFiltrosAvanzados({
-      marca: '',
-      modelo: '',
-      matricula: '',
-      color: '',
-      añoMin: '',
-      añoMax: '',
-      padronMin: '',
-      padronMax: '',
+  const handleMenuOpen = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    vehiculoId: string
+  ) => {
+    setMenuState({
+      anchorEl: event.currentTarget,
+      vehiculoId,
     });
   };
 
-  const contarFiltrosActivos = () => {
-    let count = 0;
-    Object.values(filtrosAvanzados).forEach(value => {
-      if (value !== '' && value !== null && value !== undefined) {
-        count++;
-      }
+  const handleMenuClose = () => {
+    setMenuState({
+      anchorEl: null,
+      vehiculoId: null,
     });
-    return count;
+  };
+
+  const handleClickVerDetalles = (vehiculo: VehiculoType) => {
+    handleMenuClose();
+    onViewVehiculo(vehiculo);
+  };
+
+  const handleClickEditar = (vehiculo: VehiculoType) => {
+    handleMenuClose();
+    onEditVehiculo(vehiculo);
+  };
+
+  const handleClickEliminar = (vehiculo: VehiculoType) => {
+    handleMenuClose();
+    handleDeleteClick(vehiculo);
+  };
+
+  const truncateText = (text: string, maxLength: number = 10): string => {
+    if (!text || text.length <= maxLength) return text;
+    if (typeof text !== 'string') return text;
+    return text.substring(0, maxLength) + '...';
+  };
+
+  const isTruncated = (text: string, maxLength: number = 10): boolean => {
+    return Boolean(text && text.length > maxLength);
+  };
+
+  const getStatusColor = (index: number) => {
+    return index % 2 === 0 ? blanco : grisClaro;
   };
 
   if (loading) {
@@ -252,61 +217,39 @@ export default function ListaVehiculos({
   }
 
   return (
-    <Box>
-      {/* Header con búsqueda y botones */}
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        spacing={2}
-        justifyContent="space-between"
-        alignItems={{ xs: 'stretch', sm: 'center' }}
-        sx={{ mb: 3 }}
+    <Stack spacing={2} sx={{ p: 2 }}>
+      {/* Header moderno */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 2,
+        }}
       >
-        <TextField
-          placeholder="Buscar vehículos..."
-          value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-          size="small"
+        <Typography
+          variant="h4"
+          component="h1"
           sx={{
-            flexGrow: 1,
-            maxWidth: { xs: '100%', sm: '400px' },
+            color: azulOscuro,
+            fontWeight: 600,
           }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-          }}
-        />
-        <Stack direction="row" spacing={1}>
-          <Button
+        >
+          Lista de Vehículos
+        </Typography>
+
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Chip
+            label={`${filteredVehiculos.length} vehículos`}
             variant="outlined"
-            startIcon={<FilterIcon />}
-            onClick={() => setFiltrosDialogOpen(true)}
             sx={{
               borderColor: azulBase,
-              color: azulBase,
-              '&:hover': {
-                borderColor: azulOscuro,
-                backgroundColor: azulBase + '10',
-              },
+              color: azulOscuro,
+              fontWeight: 600,
             }}
-          >
-            Filtros
-            {contarFiltrosActivos() > 0 && (
-              <Chip
-                label={contarFiltrosActivos()}
-                size="small"
-                sx={{
-                  ml: 1,
-                  backgroundColor: azulBase,
-                  color: blanco,
-                  height: 20,
-                  fontSize: '0.75rem',
-                }}
-              />
-            )}
-          </Button>
+          />
+
           <Button
             variant="contained"
             startIcon={<AddIcon />}
@@ -314,40 +257,188 @@ export default function ListaVehiculos({
             disabled={refreshing}
             sx={{
               backgroundColor: azulBase,
+              background: `linear-gradient(135deg, ${azulBase} 0%, ${azulOscuro} 100%)`,
+              borderRadius: 2,
+              px: 3,
+              py: 1.5,
+              fontWeight: 600,
+              textTransform: 'none',
+              fontSize: '0.95rem',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
               '&:hover': {
                 backgroundColor: azulOscuro,
+                background: `linear-gradient(135deg, ${azulOscuro} 0%, ${azulBase} 100%)`,
+                boxShadow: '0 6px 20px rgba(0,0,0,0.2)',
+                transform: 'translateY(-2px)',
+                transition: 'all 0.2s ease-in-out',
+              },
+              '&:active': {
+                transform: 'translateY(0px)',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
               },
             }}
           >
             {refreshing ? 'Actualizando...' : 'Agregar Vehículo'}
           </Button>
-        </Stack>
-      </Stack>
+        </Box>
+      </Box>
 
-      {/* Tabla de vehículos */}
-      <TableContainer component={Paper} sx={{ boxShadow: 2 }}>
-        <Table>
+      {/* Búsqueda mejorada */}
+      <TextField
+        placeholder="Buscar por marca, modelo, matrícula, color o descripción..."
+        value={searchTerm}
+        onChange={e => setSearchTerm(e.target.value)}
+        sx={{
+          maxWidth: 500,
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 2,
+            backgroundColor: 'rgba(255,255,255,0.8)',
+            transition: 'all 0.2s ease-in-out',
+            '&:hover': {
+              backgroundColor: 'rgba(255,255,255,1)',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              '& fieldset': {
+                borderColor: azulClaro,
+              },
+            },
+            '&.Mui-focused': {
+              backgroundColor: 'rgba(255,255,255,1)',
+              boxShadow: `0 0 0 2px ${azulBase}20`,
+              '& fieldset': {
+                borderColor: azulBase,
+              },
+            },
+          },
+        }}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <SearchIcon sx={{ color: azulBase }} />
+            </InputAdornment>
+          ),
+        }}
+      />
+
+      <TableContainer
+        component={Paper}
+        elevation={2}
+        sx={{
+          borderRadius: 2,
+          overflow: 'auto',
+          maxHeight: '70vh',
+          position: 'relative',
+          '&::-webkit-scrollbar': {
+            height: 8,
+            width: 8,
+          },
+          '&::-webkit-scrollbar-track': {
+            backgroundColor: grisClaro,
+            borderRadius: 4,
+          },
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: grisMedio,
+            borderRadius: 4,
+            '&:hover': {
+              backgroundColor: grisOscuro,
+            },
+          },
+        }}
+      >
+        <Table
+          sx={{
+            minWidth: isMobile ? 800 : 650,
+            '& .MuiTableCell-root': {
+              whiteSpace: 'nowrap',
+            },
+          }}
+        >
           <TableHead>
-            <TableRow sx={{ backgroundColor: azulClaro }}>
-              <TableCell sx={{ fontWeight: 'bold', color: blanco }}>
+            <TableRow sx={{ backgroundColor: azulBase }}>
+              <TableCell
+                sx={{
+                  color: blanco,
+                  fontWeight: 500,
+                  fontSize: '0.875rem',
+                  minWidth: 50,
+                  width: 50,
+                }}
+              >
+                #
+              </TableCell>
+              <TableCell
+                sx={{
+                  color: blanco,
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                  minWidth: isMobile ? 100 : 120,
+                }}
+              >
                 Marca
               </TableCell>
-              <TableCell sx={{ fontWeight: 'bold', color: blanco }}>
+              <TableCell
+                sx={{
+                  color: blanco,
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                  minWidth: isMobile ? 100 : 120,
+                }}
+              >
                 Modelo
               </TableCell>
-              <TableCell sx={{ fontWeight: 'bold', color: blanco }}>
+              <TableCell
+                sx={{
+                  color: blanco,
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                  minWidth: isMobile ? 100 : 120,
+                }}
+              >
                 Matrícula
               </TableCell>
-              <TableCell sx={{ fontWeight: 'bold', color: blanco }}>
+              <TableCell
+                sx={{
+                  color: blanco,
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                  minWidth: 80,
+                }}
+              >
                 Año
               </TableCell>
-              <TableCell sx={{ fontWeight: 'bold', color: blanco }}>
+              <TableCell
+                sx={{
+                  color: blanco,
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                  minWidth: isMobile ? 100 : 120,
+                }}
+              >
                 Color
               </TableCell>
-              <TableCell sx={{ fontWeight: 'bold', color: blanco }}>
+              <TableCell
+                sx={{
+                  color: blanco,
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                  minWidth: 100,
+                }}
+              >
                 Padrón
               </TableCell>
-              <TableCell sx={{ fontWeight: 'bold', color: blanco }}>
+              <TableCell
+                sx={{
+                  color: blanco,
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                  minWidth: 100,
+                  width: 100,
+                  position: 'sticky',
+                  right: 0,
+                  backgroundColor: azulBase,
+                  zIndex: 10,
+                  borderLeft: `2px solid ${azulClaro}`,
+                }}
+              >
                 Acciones
               </TableCell>
             </TableRow>
@@ -355,10 +446,10 @@ export default function ListaVehiculos({
           <TableBody>
             {filteredVehiculos.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
                   <Typography color="textSecondary">
                     {searchTerm
-                      ? 'No se encontraron vehículos'
+                      ? 'No se encontraron vehículos que coincidan con la búsqueda'
                       : 'No hay vehículos registrados'}
                   </Typography>
                 </TableCell>
@@ -368,14 +459,60 @@ export default function ListaVehiculos({
                 <TableRow
                   key={vehiculo._id}
                   sx={{
-                    backgroundColor: index % 2 === 0 ? grisClaro : blanco,
+                    backgroundColor: getStatusColor(index),
+                    transition: 'all 0.2s ease-in-out',
                     '&:hover': {
-                      backgroundColor: azulClaro + '20',
+                      backgroundColor: grisMedio,
+                      transform: 'translateY(-1px)',
+                      boxShadow: 1,
+                      '& .sticky-actions-cell': {
+                        backgroundColor: grisMedio,
+                      },
                     },
                   }}
                 >
-                  <TableCell>{vehiculo.Marca}</TableCell>
-                  <TableCell>{vehiculo.Modelo}</TableCell>
+                  <TableCell>
+                    <Typography
+                      sx={{
+                        fontWeight: 500,
+                        color: grisOscuro,
+                        fontSize: '0.875rem',
+                      }}
+                    >
+                      {index + 1}
+                    </Typography>
+                  </TableCell>
+
+                  <TableCell>
+                    <Tooltip title={vehiculo.Marca} placement="top" arrow>
+                      <Typography
+                        sx={{
+                          fontWeight: 600,
+                          color: grisOscuro,
+                          fontSize: '0.875rem',
+                          cursor: 'help',
+                        }}
+                      >
+                        {truncateText(vehiculo.Marca, 15)}
+                      </Typography>
+                    </Tooltip>
+                  </TableCell>
+
+                  <TableCell>
+                    <Tooltip title={vehiculo.Modelo} placement="top" arrow>
+                      <Typography
+                        sx={{
+                          fontWeight: 500,
+                          color: grisOscuro,
+                          fontSize: '0.875rem',
+                          cursor: 'help',
+                        }}
+                      >
+                        {truncateText(vehiculo.Modelo, 15)}
+                      </Typography>
+                    </Tooltip>
+                  </TableCell>
+
                   <TableCell>
                     <Chip
                       label={vehiculo.Matricula}
@@ -384,10 +521,23 @@ export default function ListaVehiculos({
                         backgroundColor: azulBase,
                         color: blanco,
                         fontWeight: 'bold',
+                        fontSize: '0.75rem',
                       }}
                     />
                   </TableCell>
-                  <TableCell>{vehiculo.Año || '-'}</TableCell>
+
+                  <TableCell>
+                    <Typography
+                      sx={{
+                        fontFamily: 'monospace',
+                        color: vehiculo.Año ? grisOscuro : 'text.secondary',
+                        fontSize: '0.875rem',
+                      }}
+                    >
+                      {vehiculo.Año || '-'}
+                    </Typography>
+                  </TableCell>
+
                   <TableCell>
                     {vehiculo.Color ? (
                       <Box display="flex" alignItems="center" gap={1}>
@@ -395,59 +545,134 @@ export default function ListaVehiculos({
                           width={16}
                           height={16}
                           borderRadius="50%"
-                          sx={{ backgroundColor: vehiculo.Color }}
-                          border="1px solid #ccc"
+                          sx={{
+                            backgroundColor:
+                              colorMap[vehiculo.Color] ||
+                              vehiculo.Color.toLowerCase(),
+
+                            border: '2px solid rgba(0,0,0,0.1)',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                          }}
                         />
-                        <Typography variant="body2">
-                          {vehiculo.Color}
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontSize: '0.875rem',
+                            color: grisOscuro,
+                          }}
+                        >
+                          {truncateText(vehiculo.Color, 10)}
                         </Typography>
                       </Box>
                     ) : (
-                      '-'
+                      <Typography
+                        sx={{
+                          color: 'text.secondary',
+                          fontStyle: 'italic',
+                          fontSize: '0.875rem',
+                        }}
+                      >
+                        -
+                      </Typography>
                     )}
                   </TableCell>
-                  <TableCell>{vehiculo.Padron || '-'}</TableCell>
+
                   <TableCell>
-                    <Stack direction="row" spacing={1}>
-                      <Tooltip title="Ver detalles">
+                    <Typography
+                      sx={{
+                        fontFamily: 'monospace',
+                        color: vehiculo.Padron ? grisOscuro : 'text.secondary',
+                        fontSize: '0.875rem',
+                      }}
+                    >
+                      {vehiculo.Padron || '-'}
+                    </Typography>
+                  </TableCell>
+
+                  <TableCell
+                    className="sticky-actions-cell"
+                    sx={{
+                      position: 'sticky',
+                      right: 0,
+                      backgroundColor: getStatusColor(index),
+                      zIndex: 10,
+                      minWidth: 100,
+                      width: 100,
+                      borderLeft: `2px solid ${grisMedio}`,
+                      transition: 'all 0.2s ease-in-out',
+                    }}
+                  >
+                    <Stack alignItems="flex-end">
+                      <Tooltip title="Acciones" placement="top">
                         <IconButton
+                          onClick={event =>
+                            handleMenuOpen(event, vehiculo._id!)
+                          }
                           size="small"
-                          onClick={() => onViewVehiculo(vehiculo)}
-                          sx={{
-                            color: verde,
+                        >
+                          <MoreVertIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Menu
+                        anchorEl={menuState.anchorEl}
+                        open={Boolean(
+                          menuState.anchorEl &&
+                            menuState.vehiculoId === vehiculo._id
+                        )}
+                        onClose={handleMenuClose}
+                        anchorOrigin={{
+                          vertical: 'bottom',
+                          horizontal: 'right',
+                        }}
+                        transformOrigin={{
+                          vertical: 'top',
+                          horizontal: 'right',
+                        }}
+                        sx={{
+                          '& .MuiPaper-root': {
+                            borderRadius: '8px !important',
+                            border: `1px solid ${grisClaro} !important`,
+                            boxShadow:
+                              '0px 4px 12px rgba(0,0,0,0.15) !important',
+                            minWidth: '140px !important',
+                            outline: 'none !important',
+                            zIndex: 1300,
+                          },
+                          '& .MuiMenu-list': {
+                            padding: '4px 0 !important',
+                          },
+                          '& .MuiMenuItem-root': {
+                            fontSize: '0.875rem',
+                            minHeight: '36px',
                             '&:hover': {
-                              color: verdeOscuro,
-                              backgroundColor: verde + '10',
+                              backgroundColor: grisClaro,
                             },
-                          }}
+                          },
+                        }}
+                      >
+                        <MenuItem
+                          onClick={() => handleClickVerDetalles(vehiculo)}
                         >
-                          <ViewIcon />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Editar">
-                        <IconButton
-                          size="small"
-                          onClick={() => onEditVehiculo(vehiculo)}
-                          sx={{ color: naranja }}
-                        >
-                          <EditIcon />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Eliminar">
-                        <IconButton
-                          size="small"
-                          onClick={() => handleDeleteClick(vehiculo)}
-                          sx={{
-                            color: rojo,
-                            '&:hover': {
-                              color: rojoOscuro,
-                              backgroundColor: rojo + '10',
-                            },
-                          }}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
-                      </Tooltip>
+                          <ViewIcon
+                            sx={{ fontSize: 18, mr: 1, color: azulBase }}
+                          />
+                          Ver Detalles
+                        </MenuItem>
+                        <MenuItem onClick={() => handleClickEditar(vehiculo)}>
+                          <EditIcon
+                            sx={{ fontSize: 18, mr: 1, color: azulBase }}
+                          />
+                          Editar
+                        </MenuItem>
+                        <MenuItem onClick={() => handleClickEliminar(vehiculo)}>
+                          <DeleteIcon
+                            sx={{ fontSize: 18, mr: 1, color: 'error.main' }}
+                          />
+                          <Typography variant="body2" color="error.main">
+                            Eliminar
+                          </Typography>
+                        </MenuItem>
+                      </Menu>
                     </Stack>
                   </TableCell>
                 </TableRow>
@@ -455,7 +680,36 @@ export default function ListaVehiculos({
             )}
           </TableBody>
         </Table>
+
+        {filteredVehiculos.length === 0 && (
+          <Box sx={{ p: 4, textAlign: 'center' }}>
+            <Typography variant="h6" color={grisTexto}>
+              {searchTerm
+                ? 'No se encontraron vehículos que coincidan con la búsqueda'
+                : 'No hay vehículos registrados'}
+            </Typography>
+          </Box>
+        )}
       </TableContainer>
+
+      {/* Footer con estadísticas */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+      >
+        <Typography variant="caption" color={grisTexto}>
+          Mostrando {filteredVehiculos.length} de {vehiculos.length} vehículos
+        </Typography>
+
+        {searchTerm && (
+          <Typography variant="caption" color={naranja}>
+            Filtro activo: "{searchTerm}"
+          </Typography>
+        )}
+      </Box>
 
       {/* Dialog de confirmación de eliminación */}
       <Dialog
@@ -491,15 +745,6 @@ export default function ListaVehiculos({
         </DialogActions>
       </Dialog>
 
-      {/* Filtros avanzados */}
-      <FiltrosAvanzadosVehiculos
-        open={filtrosDialogOpen}
-        onClose={() => setFiltrosDialogOpen(false)}
-        onApplyFilters={handleApplyFilters}
-        onClearFilters={handleClearFilters}
-        initialFilters={filtrosAvanzados}
-      />
-
       {/* Snackbar para notificaciones */}
       <Snackbar
         open={snackbar.open}
@@ -515,6 +760,6 @@ export default function ListaVehiculos({
           {snackbar.message}
         </Alert>
       </Snackbar>
-    </Box>
+    </Stack>
   );
 }

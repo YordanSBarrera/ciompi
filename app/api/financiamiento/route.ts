@@ -8,7 +8,7 @@ export async function GET() {
 
     // Obtener todos los financiamientos con información de cliente, vehículo y usuario
     const financiamientos = await Financiamiento.find()
-      .populate('cliente', 'NOMBRE CODCLI TELEFONO cedula')
+      .populate('cliente', 'NOMBRE TELEFONO cedula')
       .populate('vehiculo', 'Marca Modelo Matricula Año Color')
       .populate('usuarioRegistro', 'nombre usuario')
       .sort({ fechaVenta: -1 }); // Ordenar por fecha de venta descendente
@@ -72,7 +72,7 @@ export async function POST(request: Request) {
     const financiamientoCompleto = await Financiamiento.findById(
       financiamientoGuardado._id
     )
-      .populate('cliente', 'NOMBRE CODCLI TELEFONO cedula')
+      .populate('cliente', 'NOMBRE TELEFONO cedula')
       .populate('vehiculo', 'Marca Modelo Matricula Año Color')
       .populate('usuarioRegistro', 'nombre usuario');
 
