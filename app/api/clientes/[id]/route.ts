@@ -77,8 +77,7 @@ export async function PUT(
     const { id } = await params;
 
     // Obtener ID del usuario desde el token con fallback
-    console.log('getUserIdFromToken', getUserIdFromToken(request));
-    const userId = getUserIdFromToken(request);
+    const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb'; // Fallback al admin
 
     // Agregar usuario de modificación
     const updateData = {
