@@ -455,21 +455,39 @@ export default function VehiculoDetallePage({
               borderTop: `1px solid ${grisMedio}`,
             }}
           >
-            <Link href={`/ciompi/vehiculos/${vehiculo._id}/editar`}>
-              <Button variant="contained" color="primary">
+            <Box>
+              <Button
+                onClick={() =>
+                  setConfirmDialog({ open: true, vehiculoId: vehiculo._id! })
+                }
+                variant="contained"
+                color="error"
+                size="large"
+              >
+                Eliminar Vehículo
+              </Button>
+            </Box>
+
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button
+                component={Link}
+                href={`/ciompi/vehiculos/${vehiculo._id}/editar`}
+                variant="contained"
+                color="primary"
+                size="large"
+              >
                 Editar Vehículo
               </Button>
-            </Link>
 
-            <Button
-              variant="contained"
-              color="error"
-              onClick={() =>
-                setConfirmDialog({ open: true, vehiculoId: vehiculo._id! })
-              }
-            >
-              Eliminar Vehículo
-            </Button>
+              <Button
+                component={Link}
+                href="/ciompi/vehiculos"
+                variant="outlined"
+                size="large"
+              >
+                Volver al Listado
+              </Button>
+            </Box>
           </Box>
         </Paper>
 
