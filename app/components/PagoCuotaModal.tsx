@@ -1,5 +1,6 @@
 'use client';
 import { PagoCuotaFormType } from '@/lib/types';
+import { getAuthHeaders } from '@/lib/utils';
 import {
   Alert,
   Box,
@@ -16,6 +17,8 @@ import {
   TextField,
   Typography,
   Grid,
+  Checkbox,
+  FormControlLabel,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 
@@ -47,6 +50,7 @@ export default function PagoCuotaModal({
     observaciones: '',
     numeroComprobante: '',
     banco: '',
+    esExtra: false,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +66,7 @@ export default function PagoCuotaModal({
         observaciones: '',
         numeroComprobante: '',
         banco: '',
+        esExtra: false,
       });
       setError(null);
     }
@@ -85,12 +90,8 @@ export default function PagoCuotaModal({
   };
 
   const validateForm = (): boolean => {
-    if (formData.numeroCuota <= cuotasPagadas) {
-      setError('El número de cuota debe ser mayor a las cuotas ya pagadas');
-      return false;
-    }
-    if (formData.numeroCuota > cuotasTotal) {
-      setError('El número de cuota no puede ser mayor al total de cuotas');
+    if (formData.numeroCuota < 1) {
+      setError('El número de cuota debe ser 1 o mayor');
       return false;
     }
     if (formData.montoPago <= 0) {
@@ -127,10 +128,13 @@ export default function PagoCuotaModal({
         usuarioRegistro,
       };
 
+      const authHeaders = getAuthHeaders();
+
       const response = await fetch('/api/pagos-cuotas', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...authHeaders,
         },
         body: JSON.stringify(dataToSend),
       });
@@ -177,11 +181,16 @@ export default function PagoCuotaModal({
                 label="Número de Cuota"
                 name="numeroCuota"
                 type="number"
-                value={formData.numeroCuota}
+                value={formData.esExtra ? 0 : formData.numeroCuota}
                 onChange={handleChange}
-                required
-                inputProps={{ min: cuotasPagadas + 1, max: cuotasTotal }}
-                helperText={`Cuotas pagadas: ${cuotasPagadas} de ${cuotasTotal}`}
+                required={!formData.esExtra}
+                disabled={formData.esExtra}
+                inputProps={{ min: 1 }}
+                helperText={
+                  formData.esExtra
+                    ? 'Pago extra: no cuenta como cuota pagada'
+                    : `Cuotas pagadas: ${cuotasPagadas} de ${cuotasTotal}. Puede registrar cuotas adicionales.`
+                }
               />
             </Grid>
 
@@ -194,7 +203,7 @@ export default function PagoCuotaModal({
                 value={formData.montoPago}
                 onChange={handleChange}
                 required
-                inputProps={{ min: 0, step: 1000 }}
+                inputProps={{ min: 0.01, step: 0.01 }}
                 helperText={`Valor de cuota: ${formatCurrency(valorCuota)}`}
               />
             </Grid>
@@ -267,6 +276,23 @@ export default function PagoCuotaModal({
                 multiline
                 rows={3}
                 placeholder="Observaciones adicionales sobre el pago..."
+              />
+            </Grid>
+
+            <Grid size={{ xs: 12 }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={!!formData.esExtra}
+                    onChange={e =>
+                      setFormData(prev => ({
+                        ...prev,
+                        esExtra: e.target.checked,
+                      }))
+                    }
+                  />
+                }
+                label="Pago fuera de cuota / extra (no incrementa cuotas pagadas)"
               />
             </Grid>
           </Grid>

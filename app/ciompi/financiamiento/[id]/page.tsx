@@ -1,5 +1,5 @@
 'use client';
-import { blanco, grisClaro, grisMedio } from '@/lib/color';
+import { grisClaro, grisMedio } from '@/lib/color';
 import { FinanciamientoType, PagoCuotaType } from '@/lib/types';
 import AuthGuard from '@/app/components/AuthGuard';
 import PagoCuotaModal from '@/app/components/PagoCuotaModal';
@@ -24,8 +24,15 @@ import {
   TableHead,
   TableRow,
   IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
-import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import {
+  Add as AddIcon,
+  Visibility as VisibilityIcon,
+} from '@mui/icons-material';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
@@ -40,6 +47,9 @@ export default function FinanciamientoDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pagoModalOpen, setPagoModalOpen] = useState(false);
+  const [pagoDetalleOpen, setPagoDetalleOpen] = useState(false);
+  const [pagoSeleccionado, setPagoSeleccionado] =
+    useState<PagoCuotaType | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -126,26 +136,9 @@ export default function FinanciamientoDetailPage() {
     }
   };
 
-  const handleEliminarPago = async (pagoId: string) => {
-    if (!confirm('¿Estás seguro de que deseas eliminar este pago?')) {
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/pagos-cuotas?id=${pagoId}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al eliminar el pago');
-      }
-
-      // Recargar los datos
-      await handlePagoRegistrado();
-    } catch (err) {
-      console.error('Error eliminando pago:', err);
-      alert('Error al eliminar el pago');
-    }
+  const handleVerDetallePago = (pago: PagoCuotaType) => {
+    setPagoSeleccionado(pago);
+    setPagoDetalleOpen(true);
   };
 
   if (loading) {
@@ -267,23 +260,6 @@ export default function FinanciamientoDetailPage() {
                   >
                     {typeof financiamiento.cliente === 'object'
                       ? financiamiento.cliente.NOMBRE
-                      : 'N/A'}
-                  </Typography>
-
-                  <Typography
-                    variant="body2"
-                    color="textSecondary"
-                    gutterBottom
-                  >
-                    Código
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    gutterBottom
-                    sx={{ fontFamily: 'monospace' }}
-                  >
-                    {typeof financiamiento.cliente === 'object'
-                      ? financiamiento.cliente.CODCLI
                       : 'N/A'}
                   </Typography>
 
@@ -663,6 +639,7 @@ export default function FinanciamientoDetailPage() {
                             <TableCell>Monto</TableCell>
                             <TableCell>Método</TableCell>
                             <TableCell>Comprobante</TableCell>
+                            <TableCell>Usuario</TableCell>
                             <TableCell>Acciones</TableCell>
                           </TableRow>
                         </TableHead>
@@ -670,9 +647,17 @@ export default function FinanciamientoDetailPage() {
                           {pagos.map(pago => (
                             <TableRow key={pago._id}>
                               <TableCell>
-                                <Typography variant="body2" fontWeight={500}>
-                                  #{pago.numeroCuota}
-                                </Typography>
+                                {pago.esExtra ? (
+                                  <Chip
+                                    label="Extra"
+                                    size="small"
+                                    color="default"
+                                  />
+                                ) : (
+                                  <Typography variant="body2" fontWeight={500}>
+                                    #{pago.numeroCuota}
+                                  </Typography>
+                                )}
                               </TableCell>
                               <TableCell>
                                 <Typography variant="body2">
@@ -697,14 +682,19 @@ export default function FinanciamientoDetailPage() {
                                 </Typography>
                               </TableCell>
                               <TableCell>
+                                {typeof pago.usuarioRegistro === 'object' &&
+                                pago.usuarioRegistro?.nombre
+                                  ? pago.usuarioRegistro.nombre
+                                  : '-'}
+                              </TableCell>
+                              <TableCell>
                                 <IconButton
                                   size="small"
-                                  color="error"
-                                  onClick={() =>
-                                    handleEliminarPago(pago._id || '')
-                                  }
+                                  color="primary"
+                                  onClick={() => handleVerDetallePago(pago)}
+                                  title="Ver detalles"
                                 >
-                                  <DeleteIcon fontSize="small" />
+                                  <VisibilityIcon fontSize="small" />
                                 </IconButton>
                               </TableCell>
                             </TableRow>
@@ -715,6 +705,132 @@ export default function FinanciamientoDetailPage() {
                   )}
                 </CardContent>
               </Card>
+            </Grid>
+
+            {/* Información del Sistema */}
+            <Grid size={{ xs: 12 }}>
+              <Divider sx={{ my: 2 }} />
+              <Typography
+                variant="h6"
+                gutterBottom
+                sx={{ color: 'primary.main', fontWeight: 600 }}
+              >
+                Información del Sistema
+              </Typography>
+
+              <Grid container spacing={3}>
+                {/* Fila 1: Creado por y Fecha de Creación */}
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
+                    >
+                      Creado por
+                    </Typography>
+                    <Typography variant="body2">
+                      {typeof financiamiento.usuarioCreacion === 'object' &&
+                      financiamiento.usuarioCreacion?.nombre
+                        ? financiamiento.usuarioCreacion.nombre
+                        : typeof financiamiento.usuarioRegistro === 'object' &&
+                            financiamiento.usuarioRegistro?.nombre
+                          ? financiamiento.usuarioRegistro.nombre
+                          : '-'}
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
+                    >
+                      Fecha de Creación
+                    </Typography>
+                    <Typography variant="body2">
+                      {financiamiento.createdAt
+                        ? new Date(financiamiento.createdAt).toLocaleString(
+                            'es-ES',
+                            {
+                              year: 'numeric',
+                              month: '2-digit',
+                              day: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            }
+                          )
+                        : 'No disponible'}
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                {/* Fila 2: Modificado por y Última Actualización */}
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
+                    >
+                      Modificado por
+                    </Typography>
+                    <Typography variant="body2">
+                      {typeof financiamiento.usuarioModificacion === 'object' &&
+                      financiamiento.usuarioModificacion?.nombre
+                        ? financiamiento.usuarioModificacion.nombre
+                        : '-'}
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
+                    >
+                      Última Actualización
+                    </Typography>
+                    <Typography variant="body2">
+                      {financiamiento.updatedAt
+                        ? new Date(financiamiento.updatedAt).toLocaleString(
+                            'es-ES',
+                            {
+                              year: 'numeric',
+                              month: '2-digit',
+                              day: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            }
+                          )
+                        : 'No disponible'}
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                {/* Fila 3: ID de Base de Datos */}
+                <Grid size={{ xs: 12 }}>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
+                    >
+                      ID de Base de Datos
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}
+                    >
+                      {financiamiento._id}
+                    </Typography>
+                  </Box>
+                </Grid>
+              </Grid>
             </Grid>
           </Grid>
 
@@ -739,17 +855,7 @@ export default function FinanciamientoDetailPage() {
                 Volver al Listado
               </Button>
             </Box>
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <Button
-                component={Link}
-                href={`/ciompi/financiamiento/${id}/editar`}
-                variant="contained"
-                color="primary"
-                size="large"
-              >
-                Editar Financiamiento
-              </Button>
-            </Box>
+            <Box />
           </Box>
         </Paper>
 
@@ -763,6 +869,134 @@ export default function FinanciamientoDetailPage() {
           cuotasTotal={financiamiento.cuotas}
           onPagoRegistrado={handlePagoRegistrado}
         />
+
+        {/* Modal para ver detalles del pago */}
+        <Dialog
+          open={pagoDetalleOpen}
+          onClose={() => {
+            setPagoDetalleOpen(false);
+            setPagoSeleccionado(null);
+          }}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>
+            <Typography variant="h6">
+              Detalles del Pago - Cuota #{pagoSeleccionado?.numeroCuota}
+            </Typography>
+          </DialogTitle>
+          <DialogContent>
+            {pagoSeleccionado && (
+              <Grid container spacing={2} sx={{ mt: 1 }}>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography variant="body2" color="textSecondary">
+                    Monto Pagado
+                  </Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                    {formatCurrency(pagoSeleccionado.montoPago)}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography variant="body2" color="textSecondary">
+                    Fecha de Pago
+                  </Typography>
+                  <Typography variant="body1">
+                    {formatDate(pagoSeleccionado.fechaPago)}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography variant="body2" color="textSecondary">
+                    Método de Pago
+                  </Typography>
+                  <Chip
+                    label={pagoSeleccionado.metodoPago}
+                    size="small"
+                    variant="outlined"
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography variant="body2" color="textSecondary">
+                    Tipo
+                  </Typography>
+                  <Chip
+                    label={
+                      pagoSeleccionado.esExtra
+                        ? 'Extra'
+                        : `Cuota #${pagoSeleccionado.numeroCuota}`
+                    }
+                    size="small"
+                    color={pagoSeleccionado.esExtra ? 'default' : 'primary'}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography variant="body2" color="textSecondary">
+                    Estado
+                  </Typography>
+                  <Chip
+                    label={pagoSeleccionado.estadoPago}
+                    size="small"
+                    color={
+                      pagoSeleccionado.estadoPago === 'confirmado'
+                        ? 'success'
+                        : 'default'
+                    }
+                  />
+                </Grid>
+                {pagoSeleccionado.numeroComprobante && (
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="body2" color="textSecondary">
+                      Número de Comprobante
+                    </Typography>
+                    <Typography variant="body1">
+                      {pagoSeleccionado.numeroComprobante}
+                    </Typography>
+                  </Grid>
+                )}
+                {pagoSeleccionado.banco && (
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Typography variant="body2" color="textSecondary">
+                      Banco
+                    </Typography>
+                    <Typography variant="body1">
+                      {pagoSeleccionado.banco}
+                    </Typography>
+                  </Grid>
+                )}
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Typography variant="body2" color="textSecondary">
+                    Registrado por
+                  </Typography>
+                  <Typography variant="body1">
+                    {typeof pagoSeleccionado.usuarioRegistro === 'object' &&
+                    pagoSeleccionado.usuarioRegistro?.nombre
+                      ? pagoSeleccionado.usuarioRegistro.nombre
+                      : '-'}
+                  </Typography>
+                </Grid>
+                {pagoSeleccionado.observaciones && (
+                  <Grid size={{ xs: 12 }}>
+                    <Typography variant="body2" color="textSecondary">
+                      Observaciones
+                    </Typography>
+                    <Typography variant="body1">
+                      {pagoSeleccionado.observaciones}
+                    </Typography>
+                  </Grid>
+                )}
+              </Grid>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={() => {
+                setPagoDetalleOpen(false);
+                setPagoSeleccionado(null);
+              }}
+            >
+              Cerrar
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Container>
     </AuthGuard>
   );

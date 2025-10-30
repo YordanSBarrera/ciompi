@@ -430,7 +430,7 @@ export default function ListaFinanciamientos({
               >
                 Cuotas
               </TableCell>
-              {/* <TableCell
+              <TableCell
                 sx={{
                   color: blanco,
                   fontWeight: 600,
@@ -438,7 +438,7 @@ export default function ListaFinanciamientos({
                 }}
               >
                 Estado
-              </TableCell> */}
+              </TableCell>
               <TableCell
                 sx={{
                   color: blanco,
@@ -531,7 +531,7 @@ export default function ListaFinanciamientos({
                     />
                   )}
                 </TableCell>
-                {/* <TableCell>
+                <TableCell>
                   <Chip
                     label={fin.estadoFinanciamiento}
                     color={getEstadoColor(fin.estadoFinanciamiento) as any}
@@ -541,7 +541,7 @@ export default function ListaFinanciamientos({
                       textTransform: 'capitalize',
                     }}
                   />
-                </TableCell> */}
+                </TableCell>
                 <TableCell>
                   <Typography variant="body2" color={grisTexto}>
                     {formatDate(fin.fechaVenta)}
