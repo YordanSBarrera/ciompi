@@ -118,11 +118,25 @@ export default function UserLogin({ onLoginSuccess }: UserLoginProps) {
     <Box
       sx={{
         minHeight: '100vh',
-        background: `linear-gradient(135deg, ${azulBase} 0%, ${azulOscuro} 100%)`,
+        backgroundImage: 'url(/ciompiLocal.webp)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        position: 'relative',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         p: 2,
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.3)',
+          zIndex: 0,
+        },
       }}
     >
       <Paper
@@ -134,6 +148,7 @@ export default function UserLogin({ onLoginSuccess }: UserLoginProps) {
           borderRadius: 3,
           background: blanco,
           position: 'relative',
+          zIndex: 1,
           overflow: 'hidden',
           '&::before': {
             content: '""',
