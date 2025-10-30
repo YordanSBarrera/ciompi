@@ -6,9 +6,7 @@ import { NextResponse } from 'next/server';
 export async function GET() {
   try {
     await connectDB();
-    const cliente = await Cliente.find()
-      .populate('usuarioCreacion', 'nombre usuario email')
-      .populate('usuarioModificacion', 'nombre usuario email');
+    const cliente = await Cliente.find();
     return NextResponse.json(cliente);
   } catch (error) {
     console.error('Error obteniendo clientes:', error);
@@ -50,7 +48,6 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   try {
     await connectDB();
-
     const { searchParams } = new URL(request.url);
     const clienteId = searchParams.get('id');
 

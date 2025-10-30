@@ -188,7 +188,7 @@ export default function SearchAppBar() {
                 <IconButton
                   onClick={handleAccountClick}
                   size="small"
-                  sx={{ ml: 2 }}
+                  sx={{ mr: 3 }}
                   aria-controls={accountMenuOpen ? 'account-menu' : undefined}
                   aria-haspopup="true"
                   aria-expanded={accountMenuOpen ? 'true' : undefined}
