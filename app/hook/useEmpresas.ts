@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { EmpresaType, EmpresaFormType } from '@/lib/types';
+import { getAuthHeaders } from '@/lib/utils';
 
 interface ApiResponse<T> {
   success: boolean;
@@ -67,6 +68,7 @@ export function useEmpresas() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders(),
         },
         body: JSON.stringify(empresaData),
       });
@@ -101,6 +103,7 @@ export function useEmpresas() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders(),
         },
         body: JSON.stringify(empresaData),
       });

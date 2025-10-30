@@ -5,6 +5,7 @@ export interface IEmpresa extends Document {
   descripcion?: string;
   telefono?: string;
   usuarioRegistro: mongoose.Types.ObjectId;
+  usuarioModificacion?: mongoose.Types.ObjectId;
   estado: 'activa' | 'inactiva';
   createdAt: Date;
   updatedAt: Date;
@@ -32,6 +33,11 @@ const EmpresaSchema = new Schema<IEmpresa>(
       type: Schema.Types.ObjectId,
       ref: 'Usuario',
       required: [true, 'El usuario que registra es requerido'],
+    },
+    usuarioModificacion: {
+      type: Schema.Types.ObjectId,
+      ref: 'Usuario',
+      required: false,
     },
     estado: {
       type: String,

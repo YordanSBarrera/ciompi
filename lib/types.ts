@@ -222,6 +222,7 @@ export interface EmpresaType {
   descripcion?: string;
   telefono?: string;
   usuarioRegistro: string | Usuario; // Puede ser ID o objeto completo
+  usuarioModificacion?: string | Usuario; // Puede ser ID o objeto completo
   estado: 'activa' | 'inactiva';
   createdAt?: Date;
   updatedAt?: Date;
