@@ -12,10 +12,7 @@ import {
   CardContent,
   Avatar,
   Chip,
-  LinearProgress,
   CircularProgress,
-  Stack,
-  Divider,
   IconButton,
 } from '@mui/material';
 import {
@@ -24,11 +21,7 @@ import {
   Settings as SettingsIcon,
   Assessment as AssessmentIcon,
   DirectionsCar as CarIcon,
-  TrendingUp as TrendingUpIcon,
   AccountBalance as AccountBalanceIcon,
-  AttachMoney as AttachMoneyIcon,
-  CheckCircle as CheckCircleIcon,
-  Schedule as ScheduleIcon,
   Refresh as RefreshIcon,
   Person as PersonIcon,
 } from '@mui/icons-material';
@@ -104,10 +97,10 @@ export default function CiompiHomePage() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-ES', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'EUR',
-      minimumFractionDigits: 0,
+      currency: 'USD',
+      minimumFractionDigits: 2,
     }).format(amount);
   };
 
@@ -407,92 +400,6 @@ export default function CiompiHomePage() {
                       </Typography>
                     </Box>
                     <BusinessIcon sx={{ fontSize: 48, opacity: 0.3 }} />
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        )}
-
-        {/* Estadísticas de Financiamientos */}
-        {stats && (
-          <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Card sx={{ height: '100%', boxShadow: 3 }}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <AttachMoneyIcon
-                      sx={{ fontSize: 32, color: verde, mr: 2 }}
-                    />
-                    <Typography variant="h6">Monto Total Financiado</Typography>
-                  </Box>
-                  <Typography
-                    variant="h4"
-                    sx={{ fontWeight: 600, color: verde }}
-                  >
-                    {formatCurrency(stats.financiamientos.montoTotal)}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Card sx={{ height: '100%', boxShadow: 3 }}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <TrendingUpIcon
-                      sx={{ fontSize: 32, color: azulBase, mr: 2 }}
-                    />
-                    <Typography variant="h6">Monto Recaudado</Typography>
-                  </Box>
-                  <Typography
-                    variant="h4"
-                    sx={{ fontWeight: 600, color: azulBase }}
-                  >
-                    {formatCurrency(stats.financiamientos.montoRecaudado)}
-                  </Typography>
-                  <LinearProgress
-                    variant="determinate"
-                    value={
-                      stats.financiamientos.montoTotal > 0
-                        ? (stats.financiamientos.montoRecaudado /
-                            stats.financiamientos.montoTotal) *
-                          100
-                        : 0
-                    }
-                    sx={{ mt: 2, height: 8, borderRadius: 1 }}
-                  />
-                </CardContent>
-              </Card>
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Card sx={{ height: '100%', boxShadow: 3 }}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <ScheduleIcon
-                      sx={{ fontSize: 32, color: naranja, mr: 2 }}
-                    />
-                    <Typography variant="h6">Saldo Pendiente</Typography>
-                  </Box>
-                  <Typography
-                    variant="h4"
-                    sx={{ fontWeight: 600, color: naranja }}
-                  >
-                    {formatCurrency(stats.financiamientos.saldoPendiente)}
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-                    <Chip
-                      icon={<CheckCircleIcon />}
-                      label={`${stats.financiamientos.completados} completados`}
-                      size="small"
-                      color="success"
-                    />
-                    <Chip
-                      label={`${stats.financiamientos.activos} activos`}
-                      size="small"
-                      color="warning"
-                    />
                   </Box>
                 </CardContent>
               </Card>
