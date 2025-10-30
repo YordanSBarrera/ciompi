@@ -2,6 +2,7 @@ import { connectDB } from '@/db/dbConnection';
 import { RouteParams } from '@/lib/types';
 import Financiamiento from '@/models/financiamiento';
 import { NextRequest, NextResponse } from 'next/server';
+import { getUserIdFromToken } from '@/lib/server-utils';
 
 export async function GET(
   request: NextRequest,
@@ -14,7 +15,10 @@ export async function GET(
     const financiamiento = await Financiamiento.findById(id)
       .populate('cliente', 'NOMBRE TELEFONO cedula correo DIRECCION')
       .populate('vehiculo', 'Marca Modelo Matricula Año Color Descripcion')
-      .populate('usuarioRegistro', 'nombre usuario email');
+      .populate('empresa', 'nombre descripcion telefono')
+      .populate('usuarioRegistro', 'nombre usuario email')
+      .populate('usuarioCreacion', 'nombre usuario email')
+      .populate('usuarioModificacion', 'nombre usuario email');
 
     if (!financiamiento) {
       return NextResponse.json(
@@ -96,6 +100,10 @@ export async function PUT(
       }
     }
 
+    // Asignar usuario de modificación
+    const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb';
+    datosActualizados.usuarioModificacion = userId;
+
     const financiamientoActualizado = await Financiamiento.findByIdAndUpdate(
       id,
       datosActualizados,
@@ -103,7 +111,10 @@ export async function PUT(
     )
       .populate('cliente', 'NOMBRE TELEFONO cedula')
       .populate('vehiculo', 'Marca Modelo Matricula Año Color')
-      .populate('usuarioRegistro', 'nombre usuario');
+      .populate('empresa', 'nombre descripcion telefono')
+      .populate('usuarioRegistro', 'nombre usuario')
+      .populate('usuarioCreacion', 'nombre usuario email')
+      .populate('usuarioModificacion', 'nombre usuario email');
 
     return NextResponse.json(financiamientoActualizado);
   } catch (error: any) {

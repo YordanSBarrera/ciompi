@@ -126,6 +126,8 @@ export interface VehiculoType {
   Descripcion?: string;
   Año?: number;
   Color?: string;
+  usuarioCreacion?: Usuario | string;
+  usuarioModificacion?: Usuario | string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -144,7 +146,8 @@ export interface VehiculoFormType {
 export interface FinanciamientoType {
   _id?: string;
   cliente: string | ClienteType; // Puede ser ID o objeto completo
-  vehiculo: string | VehiculoType; // Puede ser ID o objeto completo
+  vehiculo?: string | VehiculoType; // Puede ser ID o objeto completo (opcional)
+  empresa: string | EmpresaType; // Puede ser ID o objeto completo
   costoVehiculo: number;
   cuotas: number;
   valorCuota: number;
@@ -152,7 +155,9 @@ export interface FinanciamientoType {
   montoTotal: number;
   fechaVenta: Date;
   estadoFinanciamiento: 'activo' | 'finalizado' | 'cancelado' | 'en_mora';
+  usuarioCreacion?: string | Usuario; // Puede ser ID o objeto completo
   usuarioRegistro: string | Usuario; // Puede ser ID o objeto completo
+  usuarioModificacion?: string | Usuario; // Puede ser ID o objeto completo
   observaciones?: string;
   fechaPrimeraCuota: Date;
   fechaUltimaCuota: Date;
@@ -167,8 +172,9 @@ export interface FinanciamientoType {
 }
 
 export interface FinanciamientoFormType {
-  cliente: string; // ID del cliente
-  vehiculo: string; // ID del vehículo
+  cliente: string; // ID del cliente o datos del cliente nuevo
+  vehiculo?: string; // ID del vehículo (opcional)
+  empresa: string; // ID de la empresa
   costoVehiculo: number;
   cuotas: number;
   valorCuota: number;
@@ -198,6 +204,7 @@ export interface PagoCuotaType {
   estadoPago: 'confirmado' | 'pendiente' | 'cancelado';
   numeroComprobante?: string;
   banco?: string;
+  esExtra?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -211,6 +218,7 @@ export interface PagoCuotaFormType {
   observaciones?: string;
   numeroComprobante?: string;
   banco?: string;
+  esExtra?: boolean;
 }
 
 // Tipos para Empresas
@@ -220,6 +228,7 @@ export interface EmpresaType {
   descripcion?: string;
   telefono?: string;
   usuarioRegistro: string | Usuario; // Puede ser ID o objeto completo
+  usuarioModificacion?: string | Usuario; // Puede ser ID o objeto completo
   estado: 'activa' | 'inactiva';
   createdAt?: Date;
   updatedAt?: Date;

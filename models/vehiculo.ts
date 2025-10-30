@@ -9,7 +9,31 @@ const vehiculoSchema = new Schema(
     Descripcion: { type: String, require: false, unique: false, trim: true },
     Año: { type: Number, require: false, unique: false },
     Color: { type: String, require: false, unique: false, trim: true },
+    usuarioCreacion: {
+      type: Schema.Types.ObjectId,
+      ref: 'Usuario',
+      required: false,
+    },
+    usuarioModificacion: {
+      type: Schema.Types.ObjectId,
+      ref: 'Usuario',
+      required: false,
+    },
+    fechaCreacion: {
+      type: Date,
+      default: Date.now,
+    },
+    fechaActualizacion: {
+      type: Date,
+      default: Date.now,
+    },
   },
   { timestamps: true }
 );
-export default models.Vehiculo || model('Vehiculo', vehiculoSchema);
+
+// Limpiar el modelo si ya existe para forzar la recreación
+if (models.Vehiculo) {
+  delete models.Vehiculo;
+}
+
+export default model('Vehiculo', vehiculoSchema);

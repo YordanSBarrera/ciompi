@@ -2,7 +2,7 @@ import { Schema, model, models } from 'mongoose';
 
 const financiamientoSchema = new Schema(
   {
-    // Referencias a Cliente y Vehículo
+    // Referencias a Cliente, Vehículo y Empresa
     cliente: {
       type: Schema.Types.ObjectId,
       ref: 'Cliente',
@@ -11,6 +11,11 @@ const financiamientoSchema = new Schema(
     vehiculo: {
       type: Schema.Types.ObjectId,
       ref: 'Vehiculo',
+      required: false,
+    },
+    empresa: {
+      type: Schema.Types.ObjectId,
+      ref: 'Empresa',
       required: true,
     },
 
@@ -54,11 +59,21 @@ const financiamientoSchema = new Schema(
       default: 'activo',
     },
 
-    // Usuario que registró la venta
+    // Usuarios de registro y modificación
+    usuarioCreacion: {
+      type: Schema.Types.ObjectId,
+      ref: 'Usuario',
+      required: false,
+    },
     usuarioRegistro: {
       type: Schema.Types.ObjectId,
       ref: 'Usuario',
       required: true,
+    },
+    usuarioModificacion: {
+      type: Schema.Types.ObjectId,
+      ref: 'Usuario',
+      required: false,
     },
 
     // Información adicional
@@ -112,7 +127,10 @@ const financiamientoSchema = new Schema(
 // Índices para mejorar rendimiento
 financiamientoSchema.index({ cliente: 1 });
 financiamientoSchema.index({ vehiculo: 1 });
+financiamientoSchema.index({ empresa: 1 });
 financiamientoSchema.index({ usuarioRegistro: 1 });
+financiamientoSchema.index({ usuarioCreacion: 1 });
+financiamientoSchema.index({ usuarioModificacion: 1 });
 financiamientoSchema.index({ estadoFinanciamiento: 1 });
 financiamientoSchema.index({ fechaVenta: -1 });
 
@@ -128,5 +146,9 @@ financiamientoSchema.virtual('estaAlDia').get(function () {
   return this.fechaUltimaCuota >= hoy;
 });
 
-export default models.Financiamiento ||
-  model('Financiamiento', financiamientoSchema);
+// Limpiar caché del modelo para evitar problemas con esquemas actualizados
+if (models.Financiamiento) {
+  delete models.Financiamiento;
+}
+
+export default model('Financiamiento', financiamientoSchema);

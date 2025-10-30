@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { VehiculoType, VehiculoFormType } from '@/lib/types';
+import { getAuthHeaders } from '@/lib/utils';
 
 interface ApiResponse<T> {
   success: boolean;
@@ -27,6 +28,7 @@ export function useVehiculos() {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders(),
         },
       });
 
@@ -60,6 +62,7 @@ export function useVehiculos() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders(),
         },
         body: JSON.stringify(vehiculoData),
       });
@@ -94,6 +97,7 @@ export function useVehiculos() {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
+            ...getAuthHeaders(),
           },
           body: JSON.stringify(vehiculoData),
         });
@@ -131,6 +135,9 @@ export function useVehiculos() {
       setError(null);
       const response = await fetch(`/api/vehiculos/${id}`, {
         method: 'DELETE',
+        headers: {
+          ...getAuthHeaders(),
+        },
       });
 
       if (response.ok) {

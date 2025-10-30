@@ -263,7 +263,7 @@ export default function ClienteDetailPage() {
               </Box>
             </Grid>
 
-            {/* Columna 3: Información del Sistema */}
+            {/* Información del Sistema */}
             <Grid size={{ xs: 12 }}>
               <Divider sx={{ my: 2 }} />
               <Typography
@@ -275,24 +275,7 @@ export default function ClienteDetailPage() {
               </Typography>
 
               <Grid container spacing={3}>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Box>
-                    <Typography
-                      variant="body2"
-                      color="textSecondary"
-                      gutterBottom
-                    >
-                      ID de Base de Datos
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}
-                    >
-                      {cliente._id}
-                    </Typography>
-                  </Box>
-                </Grid>
-
+                {/* Fila 1: Creado por y Fecha de Creación */}
                 <Grid size={{ xs: 12, md: 6 }}>
                   <Box>
                     <Typography
@@ -318,6 +301,30 @@ export default function ClienteDetailPage() {
                       color="textSecondary"
                       gutterBottom
                     >
+                      Fecha de Creación
+                    </Typography>
+                    <Typography variant="body2">
+                      {cliente.createdAt
+                        ? new Date(cliente.createdAt).toLocaleString('es-ES', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : 'No disponible'}
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                {/* Fila 2: Modificado por y Última Actualización */}
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
+                    >
                       Modificado por
                     </Typography>
                     <Typography variant="body2">
@@ -329,25 +336,47 @@ export default function ClienteDetailPage() {
                   </Box>
                 </Grid>
 
-                {/* {(cliente.createdAt || cliente.updatedAt) && (
-                <Grid item xs={12} md={4}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Box>
-                    <Typography variant="body2" color="textSecondary" gutterBottom>
-                      Fechas
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
+                    >
+                      Última Actualización
                     </Typography>
-                    {cliente.createdAt && (
-                      <Typography variant="body2">
-                        Creado: {new Date(cliente.createdAt).toLocaleDateString()}
-                      </Typography>
-                    )}
-                    {cliente.updatedAt && (
-                      <Typography variant="body2">
-                        Actualizado: {new Date(cliente.updatedAt).toLocaleDateString()}
-                      </Typography>
-                    )}
+                    <Typography variant="body2">
+                      {cliente.updatedAt
+                        ? new Date(cliente.updatedAt).toLocaleString('es-ES', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : 'No disponible'}
+                    </Typography>
                   </Box>
                 </Grid>
-              )} */}
+
+                {/* Fila 3: ID de Base de Datos */}
+                <Grid size={{ xs: 12 }}>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
+                    >
+                      ID de Base de Datos
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}
+                    >
+                      {cliente._id}
+                    </Typography>
+                  </Box>
+                </Grid>
               </Grid>
             </Grid>
           </Grid>

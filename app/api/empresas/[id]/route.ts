@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/db/dbConnection';
+import { getUserIdFromToken } from '@/lib/server-utils';
 import Empresa from '@/models/empresa';
 
 // GET - Obtener empresa por ID
@@ -10,10 +11,9 @@ export async function GET(
   try {
     await connectDB();
 
-    const empresa = await Empresa.findById(params.id).populate(
-      'usuarioRegistro',
-      'nombre usuario email'
-    );
+    const empresa = await Empresa.findById(params.id)
+      .populate('usuarioRegistro', 'nombre usuario email')
+      .populate('usuarioModificacion', 'nombre usuario email');
 
     if (!empresa) {
       return NextResponse.json(
@@ -83,9 +83,13 @@ export async function PUT(
     if (estado) {
       empresa.estado = estado;
     }
+    // Asignar usuario de modificación si existe token
+    const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb';
+    empresa.usuarioModificacion = userId as any;
 
     await empresa.save();
     await empresa.populate('usuarioRegistro', 'nombre usuario email');
+    await empresa.populate('usuarioModificacion', 'nombre usuario email');
 
     return NextResponse.json({
       success: true,

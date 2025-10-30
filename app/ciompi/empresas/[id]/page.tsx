@@ -1,11 +1,5 @@
 'use client';
-import {
-  blanco,
-  grisClaro,
-  grisMedio,
-  azulBase,
-  azulOscuro,
-} from '@/lib/color';
+import { grisClaro, grisMedio, azulBase } from '@/lib/color';
 import { EmpresaType } from '@/lib/types';
 import { useEliminarEmpresa } from '@/app/hook/useEliminarEmpresa';
 import AuthGuard from '@/app/components/AuthGuard';
@@ -133,6 +127,11 @@ export default function EmpresaDetailPage() {
       ? empresa.usuarioRegistro
       : null;
 
+  const usuarioModificacion =
+    typeof empresa.usuarioModificacion === 'object'
+      ? empresa.usuarioModificacion
+      : null;
+
   return (
     <AuthGuard>
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -206,7 +205,7 @@ export default function EmpresaDetailPage() {
               <Typography
                 variant="h6"
                 gutterBottom
-                sx={{ color: azulOscuro, fontWeight: 600 }}
+                sx={{ color: 'primary.main', fontWeight: 600 }}
               >
                 Información Básica
               </Typography>
@@ -260,7 +259,7 @@ export default function EmpresaDetailPage() {
               <Typography
                 variant="h6"
                 gutterBottom
-                sx={{ color: azulOscuro, fontWeight: 600 }}
+                sx={{ color: 'primary.main', fontWeight: 600 }}
               >
                 Información de Contacto
               </Typography>
@@ -304,19 +303,102 @@ export default function EmpresaDetailPage() {
               )}
             </Grid>
 
-            {/* Columna 3: Información del Sistema */}
+            {/* Información del Sistema */}
             <Grid size={{ xs: 12 }}>
               <Divider sx={{ my: 2 }} />
               <Typography
                 variant="h6"
                 gutterBottom
-                sx={{ color: azulOscuro, fontWeight: 600 }}
+                sx={{ color: 'primary.main', fontWeight: 600 }}
               >
                 Información del Sistema
               </Typography>
 
               <Grid container spacing={3}>
-                <Grid size={{ xs: 12, md: 4 }}>
+                {/* Fila 1: Creado por y Fecha de Creación */}
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
+                    >
+                      Creado por
+                    </Typography>
+                    <Typography variant="body2">
+                      {usuarioRegistro?.nombre ||
+                        usuarioRegistro?.usuario ||
+                        '-'}
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
+                    >
+                      Fecha de Creación
+                    </Typography>
+                    <Typography variant="body2">
+                      {empresa.createdAt
+                        ? new Date(empresa.createdAt).toLocaleString('es-ES', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : 'No disponible'}
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                {/* Fila 2: Modificado por y Última Actualización */}
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
+                    >
+                      Modificado por
+                    </Typography>
+                    <Typography variant="body2">
+                      {usuarioModificacion?.nombre ||
+                        usuarioModificacion?.usuario ||
+                        '-'}
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
+                    >
+                      Última Actualización
+                    </Typography>
+                    <Typography variant="body2">
+                      {empresa.updatedAt
+                        ? new Date(empresa.updatedAt).toLocaleString('es-ES', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })
+                        : 'No disponible'}
+                    </Typography>
+                  </Box>
+                </Grid>
+
+                {/* Fila 3: ID de Base de Datos */}
+                <Grid size={{ xs: 12 }}>
                   <Box>
                     <Typography
                       variant="body2"
@@ -333,63 +415,6 @@ export default function EmpresaDetailPage() {
                     </Typography>
                   </Box>
                 </Grid>
-
-                {usuarioRegistro && (
-                  <Grid size={{ xs: 12, md: 4 }}>
-                    <Box>
-                      <Typography
-                        variant="body2"
-                        color="textSecondary"
-                        gutterBottom
-                      >
-                        Registrado por
-                      </Typography>
-                      <Typography variant="body1" gutterBottom>
-                        {usuarioRegistro.nombre ||
-                          usuarioRegistro.usuario ||
-                          'N/A'}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                )}
-
-                {empresa.createdAt && (
-                  <Grid size={{ xs: 12, md: 4 }}>
-                    <Box>
-                      <Typography
-                        variant="body2"
-                        color="textSecondary"
-                        gutterBottom
-                      >
-                        Fecha de Registro
-                      </Typography>
-                      <Typography variant="body2">
-                        {format(new Date(empresa.createdAt), 'dd/MM/yyyy', {
-                          locale: es,
-                        })}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                )}
-
-                {empresa.updatedAt && (
-                  <Grid size={{ xs: 12, md: 4 }}>
-                    <Box>
-                      <Typography
-                        variant="body2"
-                        color="textSecondary"
-                        gutterBottom
-                      >
-                        Última Actualización
-                      </Typography>
-                      <Typography variant="body2">
-                        {format(new Date(empresa.updatedAt), 'dd/MM/yyyy', {
-                          locale: es,
-                        })}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                )}
               </Grid>
             </Grid>
           </Grid>

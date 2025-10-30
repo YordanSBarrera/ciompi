@@ -1,16 +1,21 @@
 import { connectDB } from '@/db/dbConnection';
 import Financiamiento from '@/models/financiamiento';
-import { NextResponse } from 'next/server';
+import Cliente from '@/models/cliente';
+import { NextResponse, NextRequest } from 'next/server';
+import { getUserIdFromToken } from '@/lib/server-utils';
 
 export async function GET() {
   try {
     await connectDB();
 
-    // Obtener todos los financiamientos con información de cliente, vehículo y usuario
+    // Obtener todos los financiamientos con información de cliente, vehículo, empresa y usuario
     const financiamientos = await Financiamiento.find()
       .populate('cliente', 'NOMBRE TELEFONO cedula')
       .populate('vehiculo', 'Marca Modelo Matricula Año Color')
+      .populate('empresa', 'nombre descripcion telefono')
       .populate('usuarioRegistro', 'nombre usuario')
+      .populate('usuarioCreacion', 'nombre usuario email')
+      .populate('usuarioModificacion', 'nombre usuario email')
       .sort({ fechaVenta: -1 }); // Ordenar por fecha de venta descendente
 
     return NextResponse.json(financiamientos);
@@ -23,15 +28,18 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     await connectDB();
     const body = await request.json();
 
+    // Obtener usuario del token
+    const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb';
+
     // Validar datos requeridos
     const requiredFields = [
       'cliente',
-      'vehiculo',
+      'empresa',
       'costoVehiculo',
       'cuotas',
       'valorCuota',
@@ -49,6 +57,19 @@ export async function POST(request: Request) {
       }
     }
 
+    // Manejar cliente nuevo (si viene como objeto, crearlo)
+    let clienteId = body.cliente;
+    if (typeof body.cliente === 'object' && body.cliente.NOMBRE) {
+      // Es un cliente nuevo, crearlo en la base de datos
+      const nuevoCliente = new Cliente({
+        ...body.cliente,
+        usuarioCreacion: userId,
+        usuarioModificacion: userId,
+      });
+      const clienteGuardado = await nuevoCliente.save();
+      clienteId = clienteGuardado._id.toString();
+    }
+
     // Calcular fechas y montos
     const fechaPrimeraCuota = new Date(body.fechaPrimeraCuota);
     const fechaUltimaCuota = new Date(fechaPrimeraCuota);
@@ -56,7 +77,14 @@ export async function POST(request: Request) {
 
     // Crear nuevo financiamiento
     const nuevoFinanciamiento = new Financiamiento({
-      ...body,
+      cliente: clienteId,
+      vehiculo: body.vehiculo || undefined, // Opcional
+      empresa: body.empresa,
+      costoVehiculo: body.costoVehiculo,
+      cuotas: body.cuotas,
+      valorCuota: body.valorCuota,
+      interesTotal: body.interesTotal,
+      montoTotal: body.montoTotal,
       fechaPrimeraCuota,
       fechaUltimaCuota,
       cuotasPendientes: body.cuotas,
@@ -64,6 +92,11 @@ export async function POST(request: Request) {
       cuotasPagadas: 0,
       montoPagado: 0,
       estadoFinanciamiento: 'activo',
+      observaciones: body.observaciones,
+      fechaVenta: body.fechaVenta || new Date(),
+      usuarioRegistro: body.usuarioRegistro || userId,
+      usuarioCreacion: body.usuarioRegistro || userId,
+      usuarioModificacion: userId,
     });
 
     const financiamientoGuardado = await nuevoFinanciamiento.save();
@@ -74,7 +107,10 @@ export async function POST(request: Request) {
     )
       .populate('cliente', 'NOMBRE TELEFONO cedula')
       .populate('vehiculo', 'Marca Modelo Matricula Año Color')
-      .populate('usuarioRegistro', 'nombre usuario');
+      .populate('empresa', 'nombre descripcion telefono')
+      .populate('usuarioRegistro', 'nombre usuario')
+      .populate('usuarioCreacion', 'nombre usuario email')
+      .populate('usuarioModificacion', 'nombre usuario email');
 
     return NextResponse.json(financiamientoCompleto, { status: 201 });
   } catch (error: unknown) {

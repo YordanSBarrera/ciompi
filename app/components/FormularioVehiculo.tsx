@@ -57,6 +57,7 @@ import {
   coloresComunes,
   colorMap,
 } from '@/lib/color';
+import { marcaVehiculos } from '@/lib/utils';
 
 interface FormularioVehiculoProps {
   open: boolean;
@@ -549,7 +550,7 @@ export default function FormularioVehiculo({
                               </InputAdornment>
                             }
                           >
-                            {marcasComunes.map(marca => (
+                            {marcaVehiculos.map(marca => (
                               <MenuItem
                                 key={marca}
                                 value={marca}

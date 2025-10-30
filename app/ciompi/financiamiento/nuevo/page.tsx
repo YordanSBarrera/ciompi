@@ -1,12 +1,14 @@
 'use client';
-import { blanco, grisClaro, grisMedio } from '@/lib/color';
+import { grisClaro, grisMedio } from '@/lib/color';
 import {
   ClienteType,
   VehiculoType,
+  EmpresaType,
   FinanciamientoFormType,
-  SelectOption,
+  ClienteFormType,
 } from '@/lib/types';
 import AuthGuard from '@/app/components/AuthGuard';
+import ModalNuevoCliente from '@/app/components/ModalNuevoCliente';
 import {
   Alert,
   Box,
@@ -58,18 +60,39 @@ async function cargarVehiculos(): Promise<VehiculoType[]> {
   }
 }
 
+// Función para cargar empresas
+async function cargarEmpresas(): Promise<EmpresaType[]> {
+  try {
+    const response = await fetch('/api/empresas');
+    if (!response.ok) {
+      throw new Error('Error al cargar empresas');
+    }
+    const result = await response.json();
+    return result.success ? result.data : result;
+  } catch (error) {
+    console.error('Error cargando empresas:', error);
+    return [];
+  }
+}
+
 export default function NuevoFinanciamientoPage() {
   const router = useRouter();
   const [clientes, setClientes] = useState<ClienteType[]>([]);
   const [vehiculos, setVehiculos] = useState<VehiculoType[]>([]);
+  const [empresas, setEmpresas] = useState<EmpresaType[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [modalClienteOpen, setModalClienteOpen] = useState(false);
+  const [clienteNuevo, setClienteNuevo] = useState<ClienteFormType | null>(
+    null
+  );
 
   const [formData, setFormData] = useState<FinanciamientoFormType>({
     cliente: '',
     vehiculo: '',
+    empresa: '',
     costoVehiculo: 0,
     cuotas: 12,
     valorCuota: 0,
@@ -84,12 +107,14 @@ export default function NuevoFinanciamientoPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [clientesData, vehiculosData] = await Promise.all([
+        const [clientesData, vehiculosData, empresasData] = await Promise.all([
           cargarClientes(),
           cargarVehiculos(),
+          cargarEmpresas(),
         ]);
         setClientes(clientesData);
         setVehiculos(vehiculosData);
+        setEmpresas(empresasData);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error cargando datos');
       } finally {
@@ -139,13 +164,18 @@ export default function NuevoFinanciamientoPage() {
     }));
   };
 
+  const handleClienteCreado = (cliente: ClienteFormType) => {
+    setClienteNuevo(cliente);
+    setModalClienteOpen(false);
+  };
+
   const validateForm = (): boolean => {
-    if (!formData.cliente) {
-      setError('Debe seleccionar un cliente');
+    if (!formData.cliente && !clienteNuevo) {
+      setError('Debe seleccionar un cliente o crear uno nuevo');
       return false;
     }
-    if (!formData.vehiculo) {
-      setError('Debe seleccionar un vehículo');
+    if (!formData.empresa) {
+      setError('Debe seleccionar una empresa');
       return false;
     }
     if (formData.costoVehiculo <= 0) {
@@ -185,8 +215,12 @@ export default function NuevoFinanciamientoPage() {
         usuarioRegistro = user.id || user._id;
       }
 
+      // Si hay cliente nuevo, enviarlo como objeto, sino el ID
+      const clienteData = clienteNuevo || formData.cliente;
+
       const dataToSend = {
         ...formData,
+        cliente: clienteData,
         usuarioRegistro,
       };
 
@@ -216,9 +250,10 @@ export default function NuevoFinanciamientoPage() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-UY', {
+    return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'UYU',
+      currency: 'USD',
+      minimumFractionDigits: 2,
     }).format(amount);
   };
 
@@ -283,10 +318,22 @@ export default function NuevoFinanciamientoPage() {
                   <InputLabel>Cliente</InputLabel>
                   <Select
                     name="cliente"
-                    value={formData.cliente}
-                    onChange={handleSelectChange}
+                    value={clienteNuevo ? 'nuevo' : formData.cliente}
+                    onChange={e => {
+                      if (e.target.value === 'nuevo') {
+                        setModalClienteOpen(true);
+                      } else {
+                        setClienteNuevo(null);
+                        handleSelectChange(e);
+                      }
+                    }}
                     label="Cliente"
                   >
+                    <MenuItem value="nuevo">
+                      <Typography variant="body1" sx={{ fontStyle: 'italic' }}>
+                        + Crear Cliente Nuevo
+                      </Typography>
+                    </MenuItem>
                     {clientes.map(cliente => (
                       <MenuItem key={cliente._id} value={cliente._id}>
                         <Box>
@@ -299,6 +346,62 @@ export default function NuevoFinanciamientoPage() {
                         </Box>
                       </MenuItem>
                     ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              {clienteNuevo && (
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Alert severity="info" sx={{ mt: 2 }}>
+                    <Typography variant="body2">
+                      Cliente seleccionado:{' '}
+                      <strong>{clienteNuevo.NOMBRE}</strong>
+                      {clienteNuevo.cedula && ` (${clienteNuevo.cedula})`}
+                    </Typography>
+                    <Button
+                      size="small"
+                      onClick={() => {
+                        setClienteNuevo(null);
+                        setFormData(prev => ({ ...prev, cliente: '' }));
+                      }}
+                      sx={{ mt: 1 }}
+                    >
+                      Cambiar Cliente
+                    </Button>
+                  </Alert>
+                </Grid>
+              )}
+
+              {/* Selección de Empresa */}
+              <Grid size={{ xs: 12 }}>
+                <Typography
+                  variant="h6"
+                  gutterBottom
+                  sx={{ color: 'primary.main', mt: 2 }}
+                >
+                  Empresa Financiadora
+                </Typography>
+                <Divider sx={{ mb: 3 }} />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <FormControl fullWidth required>
+                  <InputLabel>Empresa</InputLabel>
+                  <Select
+                    name="empresa"
+                    value={formData.empresa}
+                    onChange={handleSelectChange}
+                    label="Empresa"
+                  >
+                    {empresas
+                      .filter(empresa => empresa.estado === 'activa')
+                      .map(empresa => (
+                        <MenuItem key={empresa._id} value={empresa._id}>
+                          <Typography variant="body1">
+                            {empresa.nombre}
+                          </Typography>
+                        </MenuItem>
+                      ))}
                   </Select>
                 </FormControl>
               </Grid>
@@ -316,14 +419,19 @@ export default function NuevoFinanciamientoPage() {
               </Grid>
 
               <Grid size={{ xs: 12, md: 6 }}>
-                <FormControl fullWidth required>
-                  <InputLabel>Vehículo</InputLabel>
+                <FormControl fullWidth>
+                  <InputLabel>Vehículo (Opcional)</InputLabel>
                   <Select
                     name="vehiculo"
                     value={formData.vehiculo}
                     onChange={handleSelectChange}
-                    label="Vehículo"
+                    label="Vehículo (Opcional)"
                   >
+                    <MenuItem value="">
+                      <Typography variant="body2" color="textSecondary">
+                        Sin vehículo
+                      </Typography>
+                    </MenuItem>
                     {vehiculos.map(vehiculo => (
                       <MenuItem key={vehiculo._id} value={vehiculo._id}>
                         <Box>
@@ -357,11 +465,10 @@ export default function NuevoFinanciamientoPage() {
                   fullWidth
                   label="Costo del Vehículo"
                   name="costoVehiculo"
-                  type="number"
                   value={formData.costoVehiculo}
                   onChange={handleChange}
                   required
-                  inputProps={{ min: 0, step: 1000 }}
+                  placeholder="Ingrese el costo del vehículo"
                 />
               </Grid>
 
@@ -383,11 +490,10 @@ export default function NuevoFinanciamientoPage() {
                   fullWidth
                   label="Valor de Cuota"
                   name="valorCuota"
-                  type="number"
                   value={formData.valorCuota}
                   onChange={handleChange}
                   required
-                  inputProps={{ min: 0, step: 1000 }}
+                  placeholder="Ingrese el valor de la cuota"
                 />
               </Grid>
 
@@ -515,6 +621,13 @@ export default function NuevoFinanciamientoPage() {
           onClose={() => setSuccess(false)}
           message="Financiamiento registrado correctamente"
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        />
+
+        {/* Modal para crear cliente nuevo */}
+        <ModalNuevoCliente
+          open={modalClienteOpen}
+          onClose={() => setModalClienteOpen(false)}
+          onClienteCreado={handleClienteCreado}
         />
       </Container>
     </AuthGuard>

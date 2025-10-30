@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/db/dbConnection';
+import { getUserIdFromToken } from '@/lib/server-utils';
 import Empresa from '@/models/empresa';
 
 // GET - Obtener todas las empresas
@@ -21,6 +22,7 @@ export async function GET(request: NextRequest) {
 
     const empresas = await Empresa.find(filter)
       .populate('usuarioRegistro', 'nombre usuario email')
+      .populate('usuarioModificacion', 'nombre usuario email')
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -74,11 +76,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Obtener ID del usuario desde el token con fallback
+    const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb'; // Fallback al admin
+
     const nuevaEmpresa = new Empresa({
       nombre: nombre.trim(),
       descripcion: descripcion?.trim(),
       telefono: telefono?.trim(),
-      usuarioRegistro: '507f1f77bcf86cd799439011', // ID temporal - reemplazar con usuario real
+      usuarioRegistro: userId as any,
       estado: 'activa',
     });
 

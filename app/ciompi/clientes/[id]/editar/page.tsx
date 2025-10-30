@@ -1,7 +1,12 @@
 'use client';
 import { blanco, grisClaro, grisMedio } from '@/lib/color';
 import { ClienteType, ClienteFormType } from '@/lib/types';
-import { validateCedula, handleCedulaInput, cleanCedula } from '@/lib/utils';
+import {
+  validateCedula,
+  handleCedulaInput,
+  cleanCedula,
+  getAuthHeaders,
+} from '@/lib/utils';
 import AuthGuard from '@/app/components/AuthGuard';
 import {
   Alert,
@@ -157,6 +162,7 @@ export default function EditarClientePage() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          ...getAuthHeaders(),
         },
         body: JSON.stringify(dataToSend),
       });

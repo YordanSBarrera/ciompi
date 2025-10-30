@@ -1,7 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { blanco, grisClaro, grisMedio } from '@/lib/color';
+import { grisClaro, grisMedio } from '@/lib/color';
 import { Usuario } from '@/lib/types';
 import AuthGuard from '@/app/components/AuthGuard';
 import {

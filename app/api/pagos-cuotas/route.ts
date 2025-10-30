@@ -58,37 +58,43 @@ export async function POST(request: Request) {
       );
     }
 
-    // Verificar que el número de cuota es válido
-    if (body.numeroCuota < 1 || body.numeroCuota > financiamiento.cuotas) {
+    // Verificar que el número de cuota es válido (permitir cuotas adicionales)
+    if (!body.esExtra && body.numeroCuota < 1) {
       return NextResponse.json(
         { error: 'Número de cuota inválido' },
         { status: 400 }
       );
     }
 
-    // Verificar que la cuota no esté ya pagada
-    const pagoExistente = await PagoCuota.findOne({
-      financiamiento: body.financiamiento,
-      numeroCuota: body.numeroCuota,
-    });
-
-    if (pagoExistente) {
-      return NextResponse.json(
-        { error: `La cuota ${body.numeroCuota} ya está pagada` },
-        { status: 400 }
-      );
+    // Verificar duplicados solo si no es extra
+    if (!body.esExtra) {
+      const pagoExistente = await PagoCuota.findOne({
+        financiamiento: body.financiamiento,
+        numeroCuota: body.numeroCuota,
+      });
+      if (pagoExistente) {
+        return NextResponse.json(
+          { error: `La cuota ${body.numeroCuota} ya fue registrada` },
+          { status: 400 }
+        );
+      }
     }
 
     // Crear nuevo pago
     const nuevoPago = new PagoCuota({
       ...body,
+      // Para pagos extra no persistimos numeroCuota (queda undefined)
+      numeroCuota: body.esExtra ? undefined : body.numeroCuota,
+      esExtra: !!body.esExtra,
       estadoPago: 'confirmado',
     });
 
     const pagoGuardado = await nuevoPago.save();
 
     // Actualizar el financiamiento con el nuevo pago
-    const cuotasPagadas = financiamiento.cuotasPagadas + 1;
+    const cuotasPagadas = body.esExtra
+      ? financiamiento.cuotasPagadas
+      : financiamiento.cuotasPagadas + 1;
     const montoPagado = financiamiento.montoPagado + body.montoPago;
     const cuotasPendientes = financiamiento.cuotas - cuotasPagadas;
     const saldoPendiente = financiamiento.montoTotal - montoPagado;

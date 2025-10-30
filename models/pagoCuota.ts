@@ -12,8 +12,9 @@ const pagoCuotaSchema = new Schema(
     // Información del pago
     numeroCuota: {
       type: Number,
-      required: true,
-      min: 1,
+      required: false, // para pagos extra no es obligatorio
+      min: 0, // 0 indica pago extra
+      default: 0,
     },
     montoPago: {
       type: Number,
@@ -54,6 +55,12 @@ const pagoCuotaSchema = new Schema(
       default: 'confirmado',
     },
 
+    // Pago fuera de cuota (extra)
+    esExtra: {
+      type: Boolean,
+      default: false,
+    },
+
     // Referencias bancarias (opcional)
     numeroComprobante: {
       type: String,
@@ -77,7 +84,7 @@ pagoCuotaSchema.index({ fechaPago: -1 });
 pagoCuotaSchema.index({ usuarioRegistro: 1 });
 pagoCuotaSchema.index({ estadoPago: 1 });
 
-// Índice compuesto para evitar pagos duplicados de la misma cuota
-pagoCuotaSchema.index({ financiamiento: 1, numeroCuota: 1 }, { unique: true });
+// Índice por financiamiento y cuota (sin unique). Duplicados controlados en la API si no es extra
+pagoCuotaSchema.index({ financiamiento: 1, numeroCuota: 1 });
 
 export default models.PagoCuota || model('PagoCuota', pagoCuotaSchema);
