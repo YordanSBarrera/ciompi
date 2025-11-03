@@ -32,6 +32,7 @@ import {
 import {
   Add as AddIcon,
   Visibility as VisibilityIcon,
+  Print as PrintIcon,
 } from '@mui/icons-material';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
@@ -855,7 +856,22 @@ export default function FinanciamientoDetailPage() {
                 Volver al Listado
               </Button>
             </Box>
-            <Box />
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button
+                variant="contained"
+                color="primary"
+                size="large"
+                startIcon={<PrintIcon />}
+                onClick={() => {
+                  window.open(
+                    `/api/reports/financiaciones/${id}?format=pdf`,
+                    '_blank'
+                  );
+                }}
+              >
+                Imprimir Detalles
+              </Button>
+            </Box>
           </Box>
         </Paper>
 
