@@ -16,27 +16,15 @@ import {
   InputAdornment,
   TextField,
   Tooltip,
-  MenuItem,
-  Menu,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
   Button,
-  Alert,
-  Snackbar,
   useTheme,
   useMediaQuery,
   LinearProgress,
 } from '@mui/material';
 import {
   Visibility as ViewIcon,
-  Edit as EditIcon,
   Search as SearchIcon,
-  Delete as DeleteIcon,
   Add as AddIcon,
-  AttachMoney as AttachMoneyIcon,
 } from '@mui/icons-material';
 import { FinanciamientoType } from '@/lib/types';
 import {
@@ -48,10 +36,8 @@ import {
   grisMedio,
   grisOscuro,
   grisTexto,
-  naranja,
   turquesa,
 } from '@/lib/color';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { useRouter } from 'next/navigation';
 
 interface ListaFinanciamientosProps {
@@ -60,33 +46,12 @@ interface ListaFinanciamientosProps {
   onAgregarFinanciamiento?: () => void;
 }
 
-interface MenuState {
-  anchorEl: HTMLElement | null;
-  financiamientoId: string | null;
-}
-
 export default function ListaFinanciamientos({
   financiamientos,
   onFinanciamientoEliminado,
   onAgregarFinanciamiento,
 }: ListaFinanciamientosProps) {
   const [filter, setFilter] = React.useState('');
-  const [menuState, setMenuState] = React.useState<MenuState>({
-    anchorEl: null,
-    financiamientoId: null,
-  });
-  const [confirmDialog, setConfirmDialog] = React.useState({
-    open: false,
-    financiamientoId: null as string | null,
-    clienteNombre: '',
-  });
-  const [loading, setLoading] = React.useState(false);
-  const [snackbar, setSnackbar] = React.useState({
-    open: false,
-    message: '',
-    severity: 'success' as 'success' | 'error' | 'info' | 'warning',
-  });
-
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -118,99 +83,8 @@ export default function ListaFinanciamientos({
     }
   };
 
-  const handleMenuOpen = (
-    event: React.MouseEvent<HTMLButtonElement>,
-    financiamientoId: string
-  ) => {
-    setMenuState({
-      anchorEl: event.currentTarget,
-      financiamientoId,
-    });
-  };
-
-  const handleMenuClose = () => {
-    setMenuState({
-      anchorEl: null,
-      financiamientoId: null,
-    });
-  };
-
   const handleClickVerDetalles = (id: string) => {
-    handleMenuClose();
     router.push(`/ciompi/financiamiento/${id}`);
-  };
-
-  const handleClickEditar = (id: string) => {
-    handleMenuClose();
-    router.push(`/ciompi/financiamiento/${id}/editar`);
-  };
-
-  const handleClickEliminar = (id: string, clienteNombre: string) => {
-    handleMenuClose();
-    setConfirmDialog({
-      open: true,
-      financiamientoId: id,
-      clienteNombre,
-    });
-  };
-
-  const handleConfirmEliminar = async () => {
-    if (!confirmDialog.financiamientoId) return;
-
-    setLoading(true);
-    try {
-      const response = await fetch(
-        `/api/financiamiento?id=${confirmDialog.financiamientoId}`,
-        {
-          method: 'DELETE',
-        }
-      );
-
-      const result = await response.json();
-
-      if (result.success || response.ok) {
-        setSnackbar({
-          open: true,
-          message: 'Financiamiento eliminado exitosamente',
-          severity: 'success',
-        });
-
-        if (onFinanciamientoEliminado) {
-          onFinanciamientoEliminado();
-        }
-      } else {
-        setSnackbar({
-          open: true,
-          message: result.error || 'Error al eliminar financiamiento',
-          severity: 'error',
-        });
-      }
-    } catch (error) {
-      setSnackbar({
-        open: true,
-        message: 'Error de conexión',
-        severity: 'error',
-      });
-    } finally {
-      setLoading(false);
-      setConfirmDialog({
-        open: false,
-        financiamientoId: null,
-        clienteNombre: '',
-      });
-    }
-  };
-
-  const handleCancelEliminar = () => {
-    setConfirmDialog({
-      open: false,
-      financiamientoId: null,
-      clienteNombre: '',
-    });
-  };
-
-  const handleCloseSnackbar = () => {
-    setSnackbar({ ...snackbar, open: false });
   };
 
   const filteredFinanciamientos = financiamientos.filter(fin => {
@@ -553,11 +427,14 @@ export default function ListaFinanciamientos({
                     right: 0,
                     backgroundColor: getStatusColor(index),
                     zIndex: 5,
+                    '.MuiTableRow-root:hover &': {
+                      backgroundColor: azulClaro + '20',
+                    },
                   }}
                 >
-                  <Tooltip title="Opciones">
+                  <Tooltip title="Ver Detalles">
                     <IconButton
-                      onClick={e => handleMenuOpen(e, fin._id || '')}
+                      onClick={() => handleClickVerDetalles(fin._id || '')}
                       size="small"
                       sx={{
                         color: azulBase,
@@ -566,7 +443,7 @@ export default function ListaFinanciamientos({
                         },
                       }}
                     >
-                      <MoreVertIcon />
+                      <ViewIcon />
                     </IconButton>
                   </Tooltip>
                 </TableCell>
@@ -575,97 +452,6 @@ export default function ListaFinanciamientos({
           </TableBody>
         </Table>
       </TableContainer>
-
-      {/* Menú de acciones */}
-      <Menu
-        anchorEl={menuState.anchorEl}
-        open={Boolean(menuState.anchorEl)}
-        onClose={handleMenuClose}
-        onClick={handleMenuClose}
-      >
-        <MenuItem
-          onClick={() =>
-            handleClickVerDetalles(menuState.financiamientoId || '')
-          }
-        >
-          <ViewIcon sx={{ mr: 1, fontSize: 20 }} />
-          Ver Detalles
-        </MenuItem>
-        <MenuItem
-          onClick={() => handleClickEditar(menuState.financiamientoId || '')}
-        >
-          <EditIcon sx={{ mr: 1, fontSize: 20 }} />
-          Editar
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            const fin = financiamientos.find(
-              f => f._id === menuState.financiamientoId
-            );
-            const clienteNombre =
-              fin && typeof fin.cliente === 'object'
-                ? fin.cliente.NOMBRE
-                : 'N/A';
-            handleClickEliminar(
-              menuState.financiamientoId || '',
-              clienteNombre
-            );
-          }}
-          sx={{
-            '&:hover': {
-              backgroundColor: 'error.light',
-              color: 'error.contrastText',
-            },
-          }}
-        >
-          <DeleteIcon sx={{ mr: 1, fontSize: 20 }} />
-          Eliminar
-        </MenuItem>
-      </Menu>
-
-      {/* Diálogo de confirmación */}
-      <Dialog
-        open={confirmDialog.open}
-        onClose={handleCancelEliminar}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">Confirmar eliminación</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-description">
-            ¿Estás seguro de que deseas eliminar el financiamiento del cliente "
-            {confirmDialog.clienteNombre}"? Esta acción no se puede deshacer.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCancelEliminar} disabled={loading}>
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleConfirmEliminar}
-            color="error"
-            variant="contained"
-            disabled={loading}
-          >
-            {loading ? 'Eliminando...' : 'Eliminar'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Snackbar */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Stack>
   );
 }
