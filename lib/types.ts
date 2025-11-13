@@ -171,16 +171,26 @@ export interface FinanciamientoType {
   updatedAt?: Date;
 }
 
+export interface CuotaFutura {
+  numeroCuota: number;
+  fechaVencimiento: string; // ISO date string
+  valorCuota: number;
+}
+
 export interface FinanciamientoFormType {
-  cliente: string; // ID del cliente o datos del cliente nuevo
+  clientes: Array<string | ClienteFormType>; // Array de 1 o 2 clientes (ID o objeto nuevo)
   vehiculo?: string; // ID del vehículo (opcional)
   empresa: string; // ID de la empresa
-  costoVehiculo: number;
+  valorBase: number; // Valor base (antes costoVehiculo)
+  costosDocumentacion?: number; // Costos de documentación
+  gastosExtras?: number; // Gastos extras
   cuotas: number;
+  cuotasExtras?: number; // Número de cuotas extras
   valorCuota: number;
   interesTotal: number;
   montoTotal: number;
   fechaPrimeraCuota: string;
+  cuotasFuturas?: CuotaFutura[]; // Array de cuotas futuras con fechas editables
   observaciones?: string;
 }
 

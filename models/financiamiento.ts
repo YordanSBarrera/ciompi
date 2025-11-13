@@ -25,6 +25,37 @@ const financiamientoSchema = new Schema(
       required: true,
       min: 0,
     },
+    // Nuevos campos financieros
+    valorBase: {
+      type: Number,
+      required: false,
+      min: 0,
+    },
+    costosDocumentacion: {
+      type: Number,
+      required: false,
+      default: 0,
+      min: 0,
+    },
+    gastosExtras: {
+      type: Number,
+      required: false,
+      default: 0,
+      min: 0,
+    },
+    cuotasExtras: {
+      type: Number,
+      required: false,
+      default: 0,
+      min: 0,
+    },
+    cuotasFuturas: [
+      {
+        numeroCuota: { type: Number, required: true },
+        fechaVencimiento: { type: Date, required: true },
+        valorCuota: { type: Number, required: true },
+      },
+    ],
     cuotas: {
       type: Number,
       required: true,
@@ -39,7 +70,6 @@ const financiamientoSchema = new Schema(
     interesTotal: {
       type: Number,
       required: true,
-      min: 0,
     },
     montoTotal: {
       type: Number,

@@ -4,12 +4,31 @@ import Cliente from '@/models/cliente';
 import { NextResponse, NextRequest } from 'next/server';
 import { getUserIdFromToken } from '@/lib/server-utils';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await connectDB();
 
+    // Obtener parámetros de búsqueda
+    const { searchParams } = new URL(request.url);
+    const nombreCliente = searchParams.get('nombreCliente');
+
+    let query = Financiamiento.find();
+
+    // Si hay búsqueda por nombre de cliente, filtrar
+    if (nombreCliente && nombreCliente.trim()) {
+      // Buscar clientes que coincidan con el nombre
+      const clientes = await Cliente.find({
+        NOMBRE: { $regex: nombreCliente.trim(), $options: 'i' },
+      }).select('_id');
+
+      const clienteIds = clientes.map(c => c._id);
+
+      // Filtrar financiamientos por los IDs de clientes encontrados
+      query = query.where('cliente').in(clienteIds);
+    }
+
     // Obtener todos los financiamientos con información de cliente, vehículo, empresa y usuario
-    const financiamientos = await Financiamiento.find()
+    const financiamientos = await query
       .populate('cliente', 'NOMBRE TELEFONO cedula')
       .populate('vehiculo', 'Marca Modelo Matricula Año Color')
       .populate('empresa', 'nombre descripcion telefono')
@@ -40,7 +59,6 @@ export async function POST(request: NextRequest) {
     const requiredFields = [
       'cliente',
       'empresa',
-      'costoVehiculo',
       'cuotas',
       'valorCuota',
       'interesTotal',
@@ -49,12 +67,20 @@ export async function POST(request: NextRequest) {
     ];
 
     for (const field of requiredFields) {
-      if (!body[field]) {
+      if (body[field] === undefined || body[field] === null) {
         return NextResponse.json(
           { error: `El campo ${field} es obligatorio` },
           { status: 400 }
         );
       }
+    }
+
+    // Validar que haya al menos costoVehiculo o valorBase
+    if (!body.costoVehiculo && !body.valorBase) {
+      return NextResponse.json(
+        { error: 'Debe proporcionar costoVehiculo o valorBase' },
+        { status: 400 }
+      );
     }
 
     // Manejar cliente nuevo (si viene como objeto, crearlo)
@@ -70,25 +96,49 @@ export async function POST(request: NextRequest) {
       clienteId = clienteGuardado._id.toString();
     }
 
+    // Manejar costoVehiculo y valorBase (compatibilidad)
+    const costoVehiculo = body.costoVehiculo || body.valorBase || 0;
+    const valorBase = body.valorBase || body.costoVehiculo || 0;
+
     // Calcular fechas y montos
     const fechaPrimeraCuota = new Date(body.fechaPrimeraCuota);
-    const fechaUltimaCuota = new Date(fechaPrimeraCuota);
-    fechaUltimaCuota.setMonth(fechaUltimaCuota.getMonth() + body.cuotas - 1);
+    
+    // Si hay cuotasFuturas, usar la última fecha de ahí, sino calcular
+    let fechaUltimaCuota = new Date(fechaPrimeraCuota);
+    if (body.cuotasFuturas && body.cuotasFuturas.length > 0) {
+      const ultimaCuota = body.cuotasFuturas[body.cuotasFuturas.length - 1];
+      fechaUltimaCuota = new Date(ultimaCuota.fechaVencimiento);
+    } else {
+      fechaUltimaCuota.setMonth(
+        fechaUltimaCuota.getMonth() + body.cuotas - 1
+      );
+    }
 
     // Crear nuevo financiamiento
     const nuevoFinanciamiento = new Financiamiento({
       cliente: clienteId,
       vehiculo: body.vehiculo || undefined, // Opcional
       empresa: body.empresa,
-      costoVehiculo: body.costoVehiculo,
+      costoVehiculo: costoVehiculo, // Mantener para compatibilidad
+      valorBase: valorBase, // Nuevo campo
+      costosDocumentacion: body.costosDocumentacion || 0,
+      gastosExtras: body.gastosExtras || 0,
+      cuotasExtras: body.cuotasExtras || 0,
+      cuotasFuturas: body.cuotasFuturas
+        ? body.cuotasFuturas.map((cf: any) => ({
+            numeroCuota: cf.numeroCuota,
+            fechaVencimiento: new Date(cf.fechaVencimiento),
+            valorCuota: cf.valorCuota,
+          }))
+        : undefined,
       cuotas: body.cuotas,
       valorCuota: body.valorCuota,
-      interesTotal: body.interesTotal,
-      montoTotal: body.montoTotal,
+      interesTotal: body.interesTotal || 0,
+      montoTotal: body.montoTotal || 0,
       fechaPrimeraCuota,
       fechaUltimaCuota,
-      cuotasPendientes: body.cuotas,
-      saldoPendiente: body.montoTotal,
+      cuotasPendientes: body.cuotas + (body.cuotasExtras || 0),
+      saldoPendiente: body.montoTotal || 0,
       cuotasPagadas: 0,
       montoPagado: 0,
       estadoFinanciamiento: 'activo',
