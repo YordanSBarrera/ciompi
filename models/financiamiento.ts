@@ -8,6 +8,11 @@ const financiamientoSchema = new Schema(
       ref: 'Cliente',
       required: true,
     },
+    cliente2: {
+      type: Schema.Types.ObjectId,
+      ref: 'Cliente',
+      required: false,
+    },
     vehiculo: {
       type: Schema.Types.ObjectId,
       ref: 'Vehiculo',
@@ -156,6 +161,7 @@ const financiamientoSchema = new Schema(
 
 // Índices para mejorar rendimiento
 financiamientoSchema.index({ cliente: 1 });
+financiamientoSchema.index({ cliente2: 1 });
 financiamientoSchema.index({ vehiculo: 1 });
 financiamientoSchema.index({ empresa: 1 });
 financiamientoSchema.index({ usuarioRegistro: 1 });

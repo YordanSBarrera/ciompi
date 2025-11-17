@@ -29,7 +29,8 @@ export async function GET(request: NextRequest) {
 
     // Obtener todos los financiamientos con información de cliente, vehículo, empresa y usuario
     const financiamientos = await query
-      .populate('cliente', 'NOMBRE TELEFONO cedula')
+      .populate('cliente', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
+      .populate('cliente2', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
       .populate('vehiculo', 'Marca Modelo Matricula Año Color')
       .populate('empresa', 'nombre descripcion telefono')
       .populate('usuarioRegistro', 'nombre usuario')
@@ -96,6 +97,37 @@ export async function POST(request: NextRequest) {
       clienteId = clienteGuardado._id.toString();
     }
 
+    // Manejar segundo cliente (si existe)
+    let cliente2Id = body.cliente2;
+    if (body.clientes && Array.isArray(body.clientes) && body.clientes.length > 1) {
+      // Si viene en el array de clientes, usar el segundo elemento
+      const segundoCliente = body.clientes[1];
+      if (typeof segundoCliente === 'object' && segundoCliente.NOMBRE) {
+        // Es un cliente nuevo, crearlo en la base de datos
+        const nuevoCliente2 = new Cliente({
+          ...segundoCliente,
+          usuarioCreacion: userId,
+          usuarioModificacion: userId,
+        });
+        const cliente2Guardado = await nuevoCliente2.save();
+        cliente2Id = cliente2Guardado._id.toString();
+      } else if (typeof segundoCliente === 'string') {
+        cliente2Id = segundoCliente;
+      }
+    } else if (body.cliente2) {
+      cliente2Id = body.cliente2;
+      if (typeof body.cliente2 === 'object' && body.cliente2.NOMBRE) {
+        // Es un cliente nuevo, crearlo en la base de datos
+        const nuevoCliente2 = new Cliente({
+          ...body.cliente2,
+          usuarioCreacion: userId,
+          usuarioModificacion: userId,
+        });
+        const cliente2Guardado = await nuevoCliente2.save();
+        cliente2Id = cliente2Guardado._id.toString();
+      }
+    }
+
     // Manejar costoVehiculo y valorBase (compatibilidad)
     const costoVehiculo = body.costoVehiculo || body.valorBase || 0;
     const valorBase = body.valorBase || body.costoVehiculo || 0;
@@ -117,6 +149,7 @@ export async function POST(request: NextRequest) {
     // Crear nuevo financiamiento
     const nuevoFinanciamiento = new Financiamiento({
       cliente: clienteId,
+      cliente2: cliente2Id || undefined, // Segundo cliente opcional
       vehiculo: body.vehiculo || undefined, // Opcional
       empresa: body.empresa,
       costoVehiculo: costoVehiculo, // Mantener para compatibilidad
@@ -155,7 +188,8 @@ export async function POST(request: NextRequest) {
     const financiamientoCompleto = await Financiamiento.findById(
       financiamientoGuardado._id
     )
-      .populate('cliente', 'NOMBRE TELEFONO cedula')
+      .populate('cliente', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
+      .populate('cliente2', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
       .populate('vehiculo', 'Marca Modelo Matricula Año Color')
       .populate('empresa', 'nombre descripcion telefono')
       .populate('usuarioRegistro', 'nombre usuario')

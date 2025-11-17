@@ -25,6 +25,7 @@ import {
   Visibility as ViewIcon,
   Search as SearchIcon,
   Add as AddIcon,
+  Print as PrintIcon,
 } from '@mui/icons-material';
 import { FinanciamientoType } from '@/lib/types';
 import {
@@ -41,15 +42,22 @@ import {
 import { useRouter } from 'next/navigation';
 
 interface ListaFinanciamientosProps {
-  financiamientos: FinanciamientoType[];
+  financiamientos: (FinanciamientoType & {
+    cuotasAtrasadas?: number;
+    montoAtrasado?: number;
+  })[];
   onFinanciamientoEliminado?: () => void;
   onAgregarFinanciamiento?: () => void;
+  mostrarAtrasos?: boolean;
+  onImprimir?: (id: string) => void;
 }
 
 export default function ListaFinanciamientos({
   financiamientos,
   onFinanciamientoEliminado,
   onAgregarFinanciamiento,
+  mostrarAtrasos = false,
+  onImprimir,
 }: ListaFinanciamientosProps) {
   const [filter, setFilter] = React.useState('');
   const router = useRouter();
@@ -313,6 +321,28 @@ export default function ListaFinanciamientos({
               >
                 Estado
               </TableCell>
+              {mostrarAtrasos && (
+                <TableCell
+                  sx={{
+                    color: blanco,
+                    fontWeight: 600,
+                    fontSize: '0.875rem',
+                  }}
+                >
+                  Cuotas Atrasadas
+                </TableCell>
+              )}
+              {mostrarAtrasos && (
+                <TableCell
+                  sx={{
+                    color: blanco,
+                    fontWeight: 600,
+                    fontSize: '0.875rem',
+                  }}
+                >
+                  Monto Atrasado
+                </TableCell>
+              )}
               <TableCell
                 sx={{
                   color: blanco,
@@ -343,7 +373,10 @@ export default function ListaFinanciamientos({
           <TableBody>
             {filteredFinanciamientos.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} align="center">
+                <TableCell
+                  colSpan={mostrarAtrasos ? 10 : 8}
+                  align="center"
+                >
                   <Typography variant="body1" color={grisTexto} sx={{ py: 4 }}>
                     {filter
                       ? 'No se encontraron financiamientos que coincidan con la búsqueda'
@@ -416,6 +449,29 @@ export default function ListaFinanciamientos({
                     }}
                   />
                 </TableCell>
+                {mostrarAtrasos && (
+                  <TableCell>
+                    <Chip
+                      label={fin.cuotasAtrasadas || 0}
+                      color="error"
+                      size="small"
+                      sx={{
+                        fontWeight: 600,
+                      }}
+                    />
+                  </TableCell>
+                )}
+                {mostrarAtrasos && (
+                  <TableCell>
+                    <Typography
+                      variant="body2"
+                      fontWeight={600}
+                      color="error.main"
+                    >
+                      {formatCurrency(fin.montoAtrasado || 0)}
+                    </Typography>
+                  </TableCell>
+                )}
                 <TableCell>
                   <Typography variant="body2" color={grisTexto}>
                     {formatDate(fin.fechaVenta)}
@@ -432,20 +488,38 @@ export default function ListaFinanciamientos({
                     },
                   }}
                 >
-                  <Tooltip title="Ver Detalles">
-                    <IconButton
-                      onClick={() => handleClickVerDetalles(fin._id || '')}
-                      size="small"
-                      sx={{
-                        color: azulBase,
-                        '&:hover': {
-                          backgroundColor: azulBase + '20',
-                        },
-                      }}
-                    >
-                      <ViewIcon />
-                    </IconButton>
-                  </Tooltip>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Tooltip title="Ver Detalles">
+                      <IconButton
+                        onClick={() => handleClickVerDetalles(fin._id || '')}
+                        size="small"
+                        sx={{
+                          color: azulBase,
+                          '&:hover': {
+                            backgroundColor: azulBase + '20',
+                          },
+                        }}
+                      >
+                        <ViewIcon />
+                      </IconButton>
+                    </Tooltip>
+                    {mostrarAtrasos && onImprimir && (
+                      <Tooltip title="Imprimir">
+                        <IconButton
+                          onClick={() => onImprimir(fin._id || '')}
+                          size="small"
+                          sx={{
+                            color: azulOscuro,
+                            '&:hover': {
+                              backgroundColor: azulOscuro + '20',
+                            },
+                          }}
+                        >
+                          <PrintIcon />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </Box>
                 </TableCell>
               </TableRow>
             ))}

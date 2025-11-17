@@ -13,7 +13,8 @@ export async function GET(
     const { id } = await params;
 
     const financiamiento = await Financiamiento.findById(id)
-      .populate('cliente', 'NOMBRE TELEFONO cedula correo DIRECCION')
+      .populate('cliente', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
+      .populate('cliente2', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
       .populate('vehiculo', 'Marca Modelo Matricula Año Color Descripcion')
       .populate('empresa', 'nombre descripcion telefono')
       .populate('usuarioRegistro', 'nombre usuario email')
@@ -108,8 +109,9 @@ export async function PUT(
       id,
       datosActualizados,
       { new: true, runValidators: true }
-    )
-      .populate('cliente', 'NOMBRE TELEFONO cedula')
+    ) 
+      .populate('cliente', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
+      .populate('cliente2', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
       .populate('vehiculo', 'Marca Modelo Matricula Año Color')
       .populate('empresa', 'nombre descripcion telefono')
       .populate('usuarioRegistro', 'nombre usuario')

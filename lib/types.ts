@@ -146,6 +146,7 @@ export interface VehiculoFormType {
 export interface FinanciamientoType {
   _id?: string;
   cliente: string | ClienteType; // Puede ser ID o objeto completo
+  cliente2?: string | ClienteType; // Segundo cliente (opcional)
   vehiculo?: string | VehiculoType; // Puede ser ID o objeto completo (opcional)
   empresa: string | EmpresaType; // Puede ser ID o objeto completo
   costoVehiculo: number;

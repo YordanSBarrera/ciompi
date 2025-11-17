@@ -218,7 +218,7 @@ export default function FinanciamientoDetailPage() {
                 gutterBottom
                 sx={{ fontWeight: 600 }}
               >
-                Financiamiento #{financiamiento._id?.slice(-8)}
+                Financiamiento # {financiamiento._id?.slice(-8)}
               </Typography>
               <Typography variant="body1" color="textSecondary">
                 Registrado el {formatDate(financiamiento.createdAt || '')}
@@ -264,10 +264,32 @@ export default function FinanciamientoDetailPage() {
                       : 'N/A'}
                   </Typography>
 
+                  {typeof financiamiento.cliente === 'object' &&
+                    financiamiento.cliente.cedula && (
+                      <>
+                        <Typography
+                          variant="body2"
+                          color="textSecondary"
+                          gutterBottom
+                          sx={{ mt: 2 }}
+                        >
+                          Cédula
+                        </Typography>
+                        <Typography
+                          variant="body1"
+                          gutterBottom
+                          sx={{ fontFamily: 'monospace' }}
+                        >
+                          {financiamiento.cliente.cedula}
+                        </Typography>
+                      </>
+                    )}
+
                   <Typography
                     variant="body2"
                     color="textSecondary"
                     gutterBottom
+                    sx={{ mt: 2 }}
                   >
                     Teléfono
                   </Typography>
@@ -277,12 +299,196 @@ export default function FinanciamientoDetailPage() {
                     sx={{ fontFamily: 'monospace' }}
                   >
                     {typeof financiamiento.cliente === 'object'
-                      ? financiamiento.cliente.TELEFONO
+                      ? financiamiento.cliente.TELEFONO || 'No especificado'
                       : 'N/A'}
                   </Typography>
+
+                  {typeof financiamiento.cliente === 'object' &&
+                    financiamiento.cliente.correo && (
+                      <>
+                        <Typography
+                          variant="body2"
+                          color="textSecondary"
+                          gutterBottom
+                          sx={{ mt: 2 }}
+                        >
+                          Correo Electrónico
+                        </Typography>
+                        <Typography
+                          variant="body1"
+                          gutterBottom
+                          sx={{ wordBreak: 'break-word' }}
+                        >
+                          {financiamiento.cliente.correo}
+                        </Typography>
+                      </>
+                    )}
+
+                  {typeof financiamiento.cliente === 'object' &&
+                    financiamiento.cliente.DIRECCION && (
+                      <>
+                        <Typography
+                          variant="body2"
+                          color="textSecondary"
+                          gutterBottom
+                          sx={{ mt: 2 }}
+                        >
+                          Dirección
+                        </Typography>
+                        <Typography
+                          variant="body1"
+                          gutterBottom
+                          sx={{ lineHeight: 1.6 }}
+                        >
+                          {financiamiento.cliente.DIRECCION}
+                        </Typography>
+                      </>
+                    )}
+
+                  {typeof financiamiento.cliente === 'object' &&
+                    financiamiento.cliente.profesion && (
+                      <>
+                        <Typography
+                          variant="body2"
+                          color="textSecondary"
+                          gutterBottom
+                          sx={{ mt: 2 }}
+                        >
+                          Profesión
+                        </Typography>
+                        <Typography variant="body1" gutterBottom>
+                          {financiamiento.cliente.profesion}
+                        </Typography>
+                      </>
+                    )}
                 </CardContent>
               </Card>
             </Grid>
+
+            {/* Información del Segundo Cliente (si existe) */}
+            {financiamiento.cliente2 &&
+              typeof financiamiento.cliente2 === 'object' && (
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Typography
+                    variant="h6"
+                    gutterBottom
+                    sx={{ color: 'primary.main', fontWeight: 600 }}
+                  >
+                    Información del Segundo Cliente
+                  </Typography>
+
+                  <Card sx={{ bgcolor: 'background.paper' }}>
+                    <CardContent>
+                      <Typography
+                        variant="body2"
+                        color="textSecondary"
+                        gutterBottom
+                      >
+                        Nombre
+                      </Typography>
+                      <Typography
+                        variant="body1"
+                        gutterBottom
+                        sx={{ fontWeight: 500 }}
+                      >
+                        {financiamiento.cliente2.NOMBRE}
+                      </Typography>
+
+                      {financiamiento.cliente2.cedula && (
+                        <>
+                          <Typography
+                            variant="body2"
+                            color="textSecondary"
+                            gutterBottom
+                            sx={{ mt: 2 }}
+                          >
+                            Cédula
+                          </Typography>
+                          <Typography
+                            variant="body1"
+                            gutterBottom
+                            sx={{ fontFamily: 'monospace' }}
+                          >
+                            {financiamiento.cliente2.cedula}
+                          </Typography>
+                        </>
+                      )}
+
+                      <Typography
+                        variant="body2"
+                        color="textSecondary"
+                        gutterBottom
+                        sx={{ mt: 2 }}
+                      >
+                        Teléfono
+                      </Typography>
+                      <Typography
+                        variant="body1"
+                        gutterBottom
+                        sx={{ fontFamily: 'monospace' }}
+                      >
+                        {financiamiento.cliente2.TELEFONO || 'No especificado'}
+                      </Typography>
+
+                      {financiamiento.cliente2.correo && (
+                        <>
+                          <Typography
+                            variant="body2"
+                            color="textSecondary"
+                            gutterBottom
+                            sx={{ mt: 2 }}
+                          >
+                            Correo Electrónico
+                          </Typography>
+                          <Typography
+                            variant="body1"
+                            gutterBottom
+                            sx={{ wordBreak: 'break-word' }}
+                          >
+                            {financiamiento.cliente2.correo}
+                          </Typography>
+                        </>
+                      )}
+
+                      {financiamiento.cliente2.DIRECCION && (
+                        <>
+                          <Typography
+                            variant="body2"
+                            color="textSecondary"
+                            gutterBottom
+                            sx={{ mt: 2 }}
+                          >
+                            Dirección
+                          </Typography>
+                          <Typography
+                            variant="body1"
+                            gutterBottom
+                            sx={{ lineHeight: 1.6 }}
+                          >
+                            {financiamiento.cliente2.DIRECCION}
+                          </Typography>
+                        </>
+                      )}
+
+                      {financiamiento.cliente2.profesion && (
+                        <>
+                          <Typography
+                            variant="body2"
+                            color="textSecondary"
+                            gutterBottom
+                            sx={{ mt: 2 }}
+                          >
+                            Profesión
+                          </Typography>
+                          <Typography variant="body1" gutterBottom>
+                            {financiamiento.cliente2.profesion}
+                          </Typography>
+                        </>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Grid>
+              )}
 
             {/* Información del Vehículo */}
             <Grid size={{ xs: 12, md: 6 }}>
