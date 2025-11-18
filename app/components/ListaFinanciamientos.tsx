@@ -107,6 +107,8 @@ export default function ListaFinanciamientos({
 
     const clienteNombre =
       typeof fin.cliente === 'object' ? fin.cliente.NOMBRE : '';
+    const cliente2Nombre =
+      typeof fin.cliente2 === 'object' ? fin.cliente2.NOMBRE : '';
     const vehiculoMarca =
       typeof fin.vehiculo === 'object' ? fin.vehiculo.Marca : '';
     const vehiculoModelo =
@@ -116,6 +118,7 @@ export default function ListaFinanciamientos({
 
     return (
       searchInField(clienteNombre) ||
+      searchInField(cliente2Nombre) ||
       searchInField(vehiculoMarca) ||
       searchInField(vehiculoModelo) ||
       searchInField(vehiculoMatricula) ||
@@ -373,10 +376,7 @@ export default function ListaFinanciamientos({
           <TableBody>
             {filteredFinanciamientos.length === 0 && (
               <TableRow>
-                <TableCell
-                  colSpan={mostrarAtrasos ? 10 : 8}
-                  align="center"
-                >
+                <TableCell colSpan={mostrarAtrasos ? 10 : 8} align="center">
                   <Typography variant="body1" color={grisTexto} sx={{ py: 4 }}>
                     {filter
                       ? 'No se encontraron financiamientos que coincidan con la búsqueda'
@@ -397,9 +397,24 @@ export default function ListaFinanciamientos({
               >
                 <TableCell>{index + 1}</TableCell>
                 <TableCell>
-                  <Typography variant="body2" fontWeight={600}>
-                    {typeof fin.cliente === 'object' ? fin.cliente.NOMBRE : '-'}
-                  </Typography>
+                  <Box>
+                    <Typography variant="body2" fontWeight={600}>
+                      {typeof fin.cliente === 'object'
+                        ? fin.cliente.NOMBRE
+                        : '-'}
+                    </Typography>
+                    {fin.cliente2 &&
+                      typeof fin.cliente2 === 'object' &&
+                      fin.cliente2.NOMBRE && (
+                        <Typography
+                          variant="body2"
+                          fontWeight={600}
+                          sx={{ mt: 0.5, color: grisTexto }}
+                        >
+                          {fin.cliente2.NOMBRE}
+                        </Typography>
+                      )}
+                  </Box>
                 </TableCell>
                 <TableCell>
                   <Typography variant="body2" fontWeight={600}>

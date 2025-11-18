@@ -1,7 +1,8 @@
 import { connectDB } from '@/db/dbConnection';
 import PagoCuota from '@/models/pagoCuota';
 import Financiamiento from '@/models/financiamiento';
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
+import { getUserIdFromToken } from '@/lib/server-utils';
 
 export async function GET() {
   try {
@@ -26,10 +27,19 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     await connectDB();
     const body = await request.json();
+    
+    // Obtener el usuario logueado
+    const userId = getUserIdFromToken(request);
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Usuario no autenticado' },
+        { status: 401 }
+      );
+    }
 
     // Validar datos requeridos
     const requiredFields = [
@@ -83,10 +93,12 @@ export async function POST(request: Request) {
     // Crear nuevo pago
     const nuevoPago = new PagoCuota({
       ...body,
-      // Para pagos extra no persistimos numeroCuota (queda undefined)
-      numeroCuota: body.esExtra ? undefined : body.numeroCuota,
+      // Para pagos extra, guardamos el número de cuota si se proporciona (cuotasTotal + numeroCuotaExtra)
+      // Para pagos normales, guardamos el número de cuota normalmente
+      numeroCuota: body.esExtra && body.numeroCuota ? body.numeroCuota : (body.esExtra ? undefined : body.numeroCuota),
       esExtra: !!body.esExtra,
       estadoPago: 'confirmado',
+      usuarioRegistro: userId, // Registrar el usuario que cobró la cuota
     });
 
     const pagoGuardado = await nuevoPago.save();
@@ -107,12 +119,14 @@ export async function POST(request: Request) {
       estadoFinanciamiento = 'finalizado';
     }
 
+    // Actualizar el financiamiento con el nuevo pago y el usuario que lo modificó
     await Financiamiento.findByIdAndUpdate(body.financiamiento, {
       cuotasPagadas,
       montoPagado,
       cuotasPendientes,
       saldoPendiente,
       estadoFinanciamiento,
+      usuarioModificacion: userId, // Registrar el usuario que modificó el financiamiento
     });
 
     // Devolver el pago con información poblada
@@ -137,11 +151,20 @@ export async function POST(request: Request) {
   }
 }
 
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
   try {
     await connectDB();
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
+    
+    // Obtener el usuario logueado
+    const userId = getUserIdFromToken(request);
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Usuario no autenticado' },
+        { status: 401 }
+      );
+    }
 
     if (!id) {
       return NextResponse.json(
@@ -181,12 +204,14 @@ export async function DELETE(request: Request) {
         estadoFinanciamiento = 'finalizado';
       }
 
+      // Actualizar el financiamiento restando el pago y registrando el usuario que lo modificó
       await Financiamiento.findByIdAndUpdate(pago.financiamiento, {
         cuotasPagadas,
         montoPagado,
         cuotasPendientes,
         saldoPendiente,
         estadoFinanciamiento,
+        usuarioModificacion: userId, // Registrar el usuario que modificó el financiamiento
       });
     }
 

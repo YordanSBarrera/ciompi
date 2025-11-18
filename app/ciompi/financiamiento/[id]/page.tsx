@@ -38,6 +38,23 @@ import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 
+type FieldDataProps = {
+  fieldName: string;
+  fieldValue: string;
+};
+const FieldData = ({ fieldName, fieldValue }: FieldDataProps) => {
+  return (
+    <Box sx={{ mb: 1 }}>
+      <Typography variant="body2" color="textSecondary" gutterBottom>
+        {fieldName}
+      </Typography>
+      <Typography variant="body1" gutterBottom sx={{ fontWeight: 500 }}>
+        {fieldValue}
+      </Typography>
+    </Box>
+  );
+};
+
 export default function FinanciamientoDetailPage() {
   const params = useParams();
   const id = params.id as string;
@@ -77,7 +94,22 @@ export default function FinanciamientoDetailPage() {
         ]);
 
         setFinanciamiento(financiamientoData);
-        setPagos(pagosData);
+        // Ordenar pagos: primero normales por número, luego extras por número o fecha
+        const pagosOrdenados = [...pagosData].sort((a, b) => {
+          // Primero separar por tipo: normales primero
+          if (a.esExtra !== b.esExtra) {
+            return a.esExtra ? 1 : -1;
+          }
+          // Si ambos son del mismo tipo, ordenar por número de cuota
+          if (a.numeroCuota && b.numeroCuota) {
+            return a.numeroCuota - b.numeroCuota;
+          }
+          // Si no tienen número, ordenar por fecha
+          return (
+            new Date(a.fechaPago).getTime() - new Date(b.fechaPago).getTime()
+          );
+        });
+        setPagos(pagosOrdenados);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error desconocido');
       } finally {
@@ -100,6 +132,115 @@ export default function FinanciamientoDetailPage() {
 
   const formatDate = (date: Date | string) => {
     return new Date(date).toLocaleDateString('es-UY');
+  };
+
+  // Función para generar todas las cuotas (normales y extras)
+  const generarTodasLasCuotas = () => {
+    if (!financiamiento) return [];
+
+    const todasLasCuotas: Array<{
+      numeroCuota: number;
+      fechaVencimiento: Date;
+      valorCuota: number;
+      esExtra: boolean;
+      pagada: boolean;
+    }> = [];
+
+    // Si hay cuotasFuturas definidas, usarlas
+    if (
+      financiamiento.cuotasFuturas &&
+      financiamiento.cuotasFuturas.length > 0
+    ) {
+      financiamiento.cuotasFuturas.forEach(cuota => {
+        const fechaVencimiento = new Date(cuota.fechaVencimiento);
+        const pagada = pagos.some(
+          pago =>
+            !pago.esExtra &&
+            pago.numeroCuota === cuota.numeroCuota &&
+            pago.estadoPago === 'confirmado'
+        );
+
+        todasLasCuotas.push({
+          numeroCuota: cuota.numeroCuota,
+          fechaVencimiento,
+          valorCuota: cuota.valorCuota,
+          esExtra: false,
+          pagada,
+        });
+      });
+    } else {
+      // Si no hay cuotasFuturas, calcular las fechas basándome en fechaPrimeraCuota
+      const fechaPrimera = new Date(financiamiento.fechaPrimeraCuota);
+      for (let i = 1; i <= financiamiento.cuotas; i++) {
+        const fechaVencimiento = new Date(fechaPrimera);
+        fechaVencimiento.setMonth(fechaVencimiento.getMonth() + i - 1);
+
+        const pagada = pagos.some(
+          pago =>
+            !pago.esExtra &&
+            pago.numeroCuota === i &&
+            pago.estadoPago === 'confirmado'
+        );
+
+        todasLasCuotas.push({
+          numeroCuota: i,
+          fechaVencimiento,
+          valorCuota: financiamiento.valorCuota,
+          esExtra: false,
+          pagada,
+        });
+      }
+    }
+
+    // Agregar cuotas extras si existen
+    // Nota: Las cuotas extras no están en cuotasFuturas, así que las calculamos
+    // basándonos en cuotasExtras y fechaUltimaCuota
+    if (financiamiento.cuotasExtras && financiamiento.cuotasExtras > 0) {
+      // Obtener la fecha de la última cuota normal
+      const fechaUltima =
+        todasLasCuotas.length > 0
+          ? new Date(todasLasCuotas[todasLasCuotas.length - 1].fechaVencimiento)
+          : financiamiento.cuotasFuturas &&
+              financiamiento.cuotasFuturas.length > 0
+            ? new Date(
+                financiamiento.cuotasFuturas[
+                  financiamiento.cuotasFuturas.length - 1
+                ].fechaVencimiento
+              )
+            : new Date(financiamiento.fechaUltimaCuota);
+
+      // Obtener todos los pagos extras para verificar cuáles están pagados
+      const pagosExtras = pagos.filter(
+        pago => pago.esExtra && pago.estadoPago === 'confirmado'
+      );
+
+      for (let i = 1; i <= financiamiento.cuotasExtras; i++) {
+        const fechaVencimiento = new Date(fechaUltima);
+        fechaVencimiento.setMonth(fechaVencimiento.getMonth() + i);
+
+        // Verificar si hay algún pago extra que corresponda a esta cuota
+        // Como las cuotas extras pueden no tener número específico, verificamos por fecha aproximada
+        const pagada = pagosExtras.some(pago => {
+          const fechaPago = new Date(pago.fechaPago);
+          // Considerar pagada si la fecha de pago está dentro de un mes de la fecha de vencimiento
+          const diferenciaMeses = Math.abs(
+            (fechaPago.getTime() - fechaVencimiento.getTime()) /
+              (1000 * 60 * 60 * 24 * 30)
+          );
+          return diferenciaMeses < 1.5; // Tolerancia de 1.5 meses
+        });
+
+        todasLasCuotas.push({
+          numeroCuota: financiamiento.cuotas + i,
+          fechaVencimiento,
+          valorCuota: financiamiento.valorCuota, // O el valor específico si está disponible
+          esExtra: true,
+          pagada,
+        });
+      }
+    }
+
+    return todasLasCuotas.sort((a, b) => a.numeroCuota - b.numeroCuota);
   };
 
   const getEstadoColor = (estado: string) => {
@@ -131,7 +272,22 @@ export default function FinanciamientoDetailPage() {
       ]);
 
       setFinanciamiento(financiamientoData);
-      setPagos(pagosData);
+      // Ordenar pagos: primero normales por número, luego extras por número o fecha
+      const pagosOrdenados = [...pagosData].sort((a, b) => {
+        // Primero separar por tipo: normales primero
+        if (a.esExtra !== b.esExtra) {
+          return a.esExtra ? 1 : -1;
+        }
+        // Si ambos son del mismo tipo, ordenar por número de cuota
+        if (a.numeroCuota && b.numeroCuota) {
+          return a.numeroCuota - b.numeroCuota;
+        }
+        // Si no tienen número, ordenar por fecha
+        return (
+          new Date(a.fechaPago).getTime() - new Date(b.fechaPago).getTime()
+        );
+      });
+      setPagos(pagosOrdenados);
     } catch (err) {
       console.error('Error recargando datos:', err);
     }
@@ -248,119 +404,74 @@ export default function FinanciamientoDetailPage() {
               <Card sx={{ bgcolor: 'background.paper' }}>
                 <CardContent>
                   <Typography
-                    variant="body2"
-                    color="textSecondary"
+                    variant="subtitle2"
                     gutterBottom
+                    sx={{ color: 'primary.main', fontWeight: 600, mb: 2 }}
                   >
-                    Nombre
+                    Información Personal
                   </Typography>
+                  <FieldData
+                    fieldName="Nombre"
+                    fieldValue={
+                      typeof financiamiento.cliente === 'object'
+                        ? financiamiento.cliente.NOMBRE
+                        : 'N/A'
+                    }
+                  />
+                  <FieldData
+                    fieldName="Cédula"
+                    fieldValue={
+                      typeof financiamiento.cliente === 'object' &&
+                      financiamiento.cliente.cedula
+                        ? financiamiento.cliente.cedula
+                        : 'No especificada'
+                    }
+                  />
+                  <FieldData
+                    fieldName="Profesión"
+                    fieldValue={
+                      typeof financiamiento.cliente === 'object' &&
+                      financiamiento.cliente.profesion
+                        ? financiamiento.cliente.profesion
+                        : 'No especificada'
+                    }
+                  />
+                  {/* Información de Contacto */}
+                  <Divider sx={{ my: 3 }} />
                   <Typography
-                    variant="body1"
+                    variant="subtitle2"
                     gutterBottom
-                    sx={{ fontWeight: 500 }}
+                    sx={{ color: 'primary.main', fontWeight: 600, mb: 2 }}
                   >
-                    {typeof financiamiento.cliente === 'object'
-                      ? financiamiento.cliente.NOMBRE
-                      : 'N/A'}
+                    Información de Contacto
                   </Typography>
-
-                  {typeof financiamiento.cliente === 'object' &&
-                    financiamiento.cliente.cedula && (
-                      <>
-                        <Typography
-                          variant="body2"
-                          color="textSecondary"
-                          gutterBottom
-                          sx={{ mt: 2 }}
-                        >
-                          Cédula
-                        </Typography>
-                        <Typography
-                          variant="body1"
-                          gutterBottom
-                          sx={{ fontFamily: 'monospace' }}
-                        >
-                          {financiamiento.cliente.cedula}
-                        </Typography>
-                      </>
-                    )}
-
-                  <Typography
-                    variant="body2"
-                    color="textSecondary"
-                    gutterBottom
-                    sx={{ mt: 2 }}
-                  >
-                    Teléfono
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    gutterBottom
-                    sx={{ fontFamily: 'monospace' }}
-                  >
-                    {typeof financiamiento.cliente === 'object'
-                      ? financiamiento.cliente.TELEFONO || 'No especificado'
-                      : 'N/A'}
-                  </Typography>
-
-                  {typeof financiamiento.cliente === 'object' &&
-                    financiamiento.cliente.correo && (
-                      <>
-                        <Typography
-                          variant="body2"
-                          color="textSecondary"
-                          gutterBottom
-                          sx={{ mt: 2 }}
-                        >
-                          Correo Electrónico
-                        </Typography>
-                        <Typography
-                          variant="body1"
-                          gutterBottom
-                          sx={{ wordBreak: 'break-word' }}
-                        >
-                          {financiamiento.cliente.correo}
-                        </Typography>
-                      </>
-                    )}
-
-                  {typeof financiamiento.cliente === 'object' &&
-                    financiamiento.cliente.DIRECCION && (
-                      <>
-                        <Typography
-                          variant="body2"
-                          color="textSecondary"
-                          gutterBottom
-                          sx={{ mt: 2 }}
-                        >
-                          Dirección
-                        </Typography>
-                        <Typography
-                          variant="body1"
-                          gutterBottom
-                          sx={{ lineHeight: 1.6 }}
-                        >
-                          {financiamiento.cliente.DIRECCION}
-                        </Typography>
-                      </>
-                    )}
-
-                  {typeof financiamiento.cliente === 'object' &&
-                    financiamiento.cliente.profesion && (
-                      <>
-                        <Typography
-                          variant="body2"
-                          color="textSecondary"
-                          gutterBottom
-                          sx={{ mt: 2 }}
-                        >
-                          Profesión
-                        </Typography>
-                        <Typography variant="body1" gutterBottom>
-                          {financiamiento.cliente.profesion}
-                        </Typography>
-                      </>
-                    )}
+                  <FieldData
+                    fieldName="Teléfono"
+                    fieldValue={
+                      typeof financiamiento.cliente === 'object' &&
+                      financiamiento.cliente.TELEFONO
+                        ? financiamiento.cliente.TELEFONO
+                        : 'No especificado'
+                    }
+                  />
+                  <FieldData
+                    fieldName="Correo Electrónico"
+                    fieldValue={
+                      typeof financiamiento.cliente === 'object' &&
+                      financiamiento.cliente.correo
+                        ? financiamiento.cliente.correo
+                        : 'No especificado'
+                    }
+                  />
+                  <FieldData
+                    fieldName="Dirección"
+                    fieldValue={
+                      typeof financiamiento.cliente === 'object' &&
+                      financiamiento.cliente.DIRECCION
+                        ? financiamiento.cliente.DIRECCION
+                        : 'No especificada'
+                    }
+                  />
                 </CardContent>
               </Card>
             </Grid>
@@ -379,112 +490,61 @@ export default function FinanciamientoDetailPage() {
 
                   <Card sx={{ bgcolor: 'background.paper' }}>
                     <CardContent>
+                      {/* Información Personal */}
                       <Typography
-                        variant="body2"
-                        color="textSecondary"
+                        variant="subtitle2"
                         gutterBottom
+                        sx={{ color: 'primary.main', fontWeight: 600, mb: 2 }}
                       >
-                        Nombre
+                        Información Personal
                       </Typography>
+                      <FieldData
+                        fieldName="Nombre"
+                        fieldValue={
+                          financiamiento.cliente2?.NOMBRE || 'No especificada'
+                        }
+                      />
+                      <FieldData
+                        fieldName="Cédula"
+                        fieldValue={
+                          financiamiento.cliente2?.cedula || 'No especificada'
+                        }
+                      />
+                      <FieldData
+                        fieldName="Profesión"
+                        fieldValue={
+                          financiamiento.cliente2?.profesion ||
+                          'No especificada'
+                        }
+                      />
+
+                      {/* Información de Contacto */}
+                      <Divider sx={{ my: 3 }} />
                       <Typography
-                        variant="body1"
+                        variant="subtitle2"
                         gutterBottom
-                        sx={{ fontWeight: 500 }}
+                        sx={{ color: 'primary.main', fontWeight: 600, mb: 2 }}
                       >
-                        {financiamiento.cliente2.NOMBRE}
+                        Información de Contacto
                       </Typography>
-
-                      {financiamiento.cliente2.cedula && (
-                        <>
-                          <Typography
-                            variant="body2"
-                            color="textSecondary"
-                            gutterBottom
-                            sx={{ mt: 2 }}
-                          >
-                            Cédula
-                          </Typography>
-                          <Typography
-                            variant="body1"
-                            gutterBottom
-                            sx={{ fontFamily: 'monospace' }}
-                          >
-                            {financiamiento.cliente2.cedula}
-                          </Typography>
-                        </>
-                      )}
-
-                      <Typography
-                        variant="body2"
-                        color="textSecondary"
-                        gutterBottom
-                        sx={{ mt: 2 }}
-                      >
-                        Teléfono
-                      </Typography>
-                      <Typography
-                        variant="body1"
-                        gutterBottom
-                        sx={{ fontFamily: 'monospace' }}
-                      >
-                        {financiamiento.cliente2.TELEFONO || 'No especificado'}
-                      </Typography>
-
-                      {financiamiento.cliente2.correo && (
-                        <>
-                          <Typography
-                            variant="body2"
-                            color="textSecondary"
-                            gutterBottom
-                            sx={{ mt: 2 }}
-                          >
-                            Correo Electrónico
-                          </Typography>
-                          <Typography
-                            variant="body1"
-                            gutterBottom
-                            sx={{ wordBreak: 'break-word' }}
-                          >
-                            {financiamiento.cliente2.correo}
-                          </Typography>
-                        </>
-                      )}
-
-                      {financiamiento.cliente2.DIRECCION && (
-                        <>
-                          <Typography
-                            variant="body2"
-                            color="textSecondary"
-                            gutterBottom
-                            sx={{ mt: 2 }}
-                          >
-                            Dirección
-                          </Typography>
-                          <Typography
-                            variant="body1"
-                            gutterBottom
-                            sx={{ lineHeight: 1.6 }}
-                          >
-                            {financiamiento.cliente2.DIRECCION}
-                          </Typography>
-                        </>
-                      )}
-
-                      {financiamiento.cliente2.profesion && (
-                        <>
-                          <Typography
-                            variant="body2"
-                            color="textSecondary"
-                            gutterBottom
-                            sx={{ mt: 2 }}
-                          >
-                            Profesión
-                          </Typography>
-                          <Typography variant="body1" gutterBottom>
-                            {financiamiento.cliente2.profesion}
-                          </Typography>
-                        </>
-                      )}
+                      <FieldData
+                        fieldName="Teléfono"
+                        fieldValue={
+                          financiamiento.cliente2.TELEFONO || 'No especificado'
+                        }
+                      />
+                      <FieldData
+                        fieldName="Correo Electrónico"
+                        fieldValue={
+                          financiamiento.cliente2.correo || 'No especificado'
+                        }
+                      />
+                      <FieldData
+                        fieldName="Dirección"
+                        fieldValue={
+                          financiamiento.cliente2.DIRECCION || 'No especificada'
+                        }
+                      />
                     </CardContent>
                   </Card>
                 </Grid>
@@ -712,68 +772,162 @@ export default function FinanciamientoDetailPage() {
               </Card>
             </Grid>
 
-            {/* Fechas Importantes */}
+            {/* Fechas de Cuotas */}
             <Grid size={{ xs: 12 }}>
-              <Typography
-                variant="h6"
-                gutterBottom
-                sx={{ color: 'primary.main', fontWeight: 600, mt: 2 }}
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mt: 2,
+                  mb: 2,
+                }}
               >
-                Fechas Importantes
-              </Typography>
+                <Typography
+                  variant="h6"
+                  gutterBottom
+                  sx={{ color: 'primary.main', fontWeight: 600 }}
+                >
+                  Fechas de Cuotas
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                  <Chip
+                    label={`Fecha de Venta: ${formatDate(financiamiento.fechaVenta)}`}
+                    size="small"
+                    variant="outlined"
+                  />
+                </Box>
+              </Box>
 
-              <Grid container spacing={3}>
-                <Grid size={{ xs: 12, md: 4 }}>
-                  <Card sx={{ bgcolor: 'background.paper' }}>
-                    <CardContent>
-                      <Typography
-                        variant="body2"
-                        color="textSecondary"
-                        gutterBottom
-                      >
-                        Fecha de Venta
-                      </Typography>
-                      <Typography variant="body1" gutterBottom>
-                        {formatDate(financiamiento.fechaVenta)}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
+              <Card sx={{ bgcolor: 'background.paper' }}>
+                <CardContent>
+                  {generarTodasLasCuotas().length === 0 ? (
+                    <Typography
+                      variant="body1"
+                      color="textSecondary"
+                      align="center"
+                      sx={{ py: 3 }}
+                    >
+                      No hay cuotas definidas
+                    </Typography>
+                  ) : (
+                    <TableContainer>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell sx={{ fontWeight: 600 }}>
+                              Cuota
+                            </TableCell>
+                            <TableCell sx={{ fontWeight: 600 }}>
+                              Fecha de Vencimiento
+                            </TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 600 }}>
+                              Valor
+                            </TableCell>
+                            <TableCell align="center" sx={{ fontWeight: 600 }}>
+                              Estado
+                            </TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {generarTodasLasCuotas().map(cuota => {
+                            const hoy = new Date();
+                            hoy.setHours(0, 0, 0, 0);
+                            const fechaVenc = new Date(cuota.fechaVencimiento);
+                            fechaVenc.setHours(0, 0, 0, 0);
+                            const vencida = !cuota.pagada && fechaVenc < hoy;
 
-                <Grid size={{ xs: 12, md: 4 }}>
-                  <Card sx={{ bgcolor: 'background.paper' }}>
-                    <CardContent>
-                      <Typography
-                        variant="body2"
-                        color="textSecondary"
-                        gutterBottom
-                      >
-                        Primera Cuota
-                      </Typography>
-                      <Typography variant="body1" gutterBottom>
-                        {formatDate(financiamiento.fechaPrimeraCuota)}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 4 }}>
-                  <Card sx={{ bgcolor: 'background.paper' }}>
-                    <CardContent>
-                      <Typography
-                        variant="body2"
-                        color="textSecondary"
-                        gutterBottom
-                      >
-                        Última Cuota
-                      </Typography>
-                      <Typography variant="body1" gutterBottom>
-                        {formatDate(financiamiento.fechaUltimaCuota)}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
+                            return (
+                              <TableRow
+                                key={cuota.numeroCuota}
+                                sx={{
+                                  bgcolor: cuota.pagada
+                                    ? 'action.selected'
+                                    : vencida
+                                      ? 'error.light'
+                                      : 'transparent',
+                                  '&:hover': {
+                                    bgcolor: 'action.hover',
+                                  },
+                                }}
+                              >
+                                <TableCell>
+                                  <Box
+                                    sx={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: 1,
+                                    }}
+                                  >
+                                    <Typography
+                                      variant="body2"
+                                      fontWeight={500}
+                                    >
+                                      #{cuota.numeroCuota}
+                                    </Typography>
+                                    {cuota.esExtra && (
+                                      <Chip
+                                        label="Extra"
+                                        size="small"
+                                        color="default"
+                                        variant="outlined"
+                                      />
+                                    )}
+                                  </Box>
+                                </TableCell>
+                                <TableCell>
+                                  <Typography
+                                    variant="body2"
+                                    sx={{
+                                      color:
+                                        vencida && !cuota.pagada
+                                          ? 'error.main'
+                                          : 'inherit',
+                                      fontWeight:
+                                        vencida && !cuota.pagada ? 600 : 400,
+                                    }}
+                                  >
+                                    {formatDate(cuota.fechaVencimiento)}
+                                  </Typography>
+                                </TableCell>
+                                <TableCell align="right">
+                                  <Typography variant="body2" fontWeight={500}>
+                                    {formatCurrency(cuota.valorCuota)}
+                                  </Typography>
+                                </TableCell>
+                                <TableCell align="center">
+                                  {cuota.pagada ? (
+                                    <Chip
+                                      label="Pagada"
+                                      size="small"
+                                      color="success"
+                                      variant="filled"
+                                    />
+                                  ) : vencida ? (
+                                    <Chip
+                                      label="Vencida"
+                                      size="small"
+                                      color="error"
+                                      variant="filled"
+                                    />
+                                  ) : (
+                                    <Chip
+                                      label="Pendiente"
+                                      size="small"
+                                      color="default"
+                                      variant="outlined"
+                                    />
+                                  )}
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  )}
+                </CardContent>
+              </Card>
             </Grid>
 
             {/* Observaciones */}
@@ -846,7 +1000,7 @@ export default function FinanciamientoDetailPage() {
                             <TableCell>Monto</TableCell>
                             <TableCell>Método</TableCell>
                             <TableCell>Comprobante</TableCell>
-                            <TableCell>Usuario</TableCell>
+                            <TableCell>Cobrado por</TableCell>
                             <TableCell>Acciones</TableCell>
                           </TableRow>
                         </TableHead>
@@ -854,17 +1008,40 @@ export default function FinanciamientoDetailPage() {
                           {pagos.map(pago => (
                             <TableRow key={pago._id}>
                               <TableCell>
-                                {pago.esExtra ? (
-                                  <Chip
-                                    label="Extra"
-                                    size="small"
-                                    color="default"
-                                  />
-                                ) : (
-                                  <Typography variant="body2" fontWeight={500}>
-                                    #{pago.numeroCuota}
-                                  </Typography>
-                                )}
+                                <Box
+                                  sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1,
+                                  }}
+                                >
+                                  {pago.esExtra ? (
+                                    <>
+                                      <Chip
+                                        label="Extra"
+                                        size="small"
+                                        color="warning"
+                                        variant="filled"
+                                      />
+                                      {pago.numeroCuota && (
+                                        <Typography
+                                          variant="body2"
+                                          fontWeight={500}
+                                          color="textSecondary"
+                                        >
+                                          #{pago.numeroCuota}
+                                        </Typography>
+                                      )}
+                                    </>
+                                  ) : (
+                                    <Typography
+                                      variant="body2"
+                                      fontWeight={500}
+                                    >
+                                      #{pago.numeroCuota}
+                                    </Typography>
+                                  )}
+                                </Box>
                               </TableCell>
                               <TableCell>
                                 <Typography variant="body2">
@@ -985,10 +1162,13 @@ export default function FinanciamientoDetailPage() {
                       Modificado por
                     </Typography>
                     <Typography variant="body2">
-                      {typeof financiamiento.usuarioModificacion === 'object' &&
-                      financiamiento.usuarioModificacion?.nombre
-                        ? financiamiento.usuarioModificacion.nombre
-                        : '-'}
+                      {financiamiento.usuarioModificacion
+                        ? typeof financiamiento.usuarioModificacion ===
+                            'object' &&
+                          financiamiento.usuarioModificacion?.nombre
+                          ? financiamiento.usuarioModificacion.nombre
+                          : '-'
+                        : 'N/A'}
                     </Typography>
                   </Box>
                 </Grid>
@@ -1089,6 +1269,7 @@ export default function FinanciamientoDetailPage() {
           valorCuota={financiamiento.valorCuota}
           cuotasPagadas={financiamiento.cuotasPagadas}
           cuotasTotal={financiamiento.cuotas}
+          cuotasExtras={financiamiento.cuotasExtras || 0}
           onPagoRegistrado={handlePagoRegistrado}
         />
 
@@ -1104,7 +1285,15 @@ export default function FinanciamientoDetailPage() {
         >
           <DialogTitle>
             <Typography variant="h6">
-              Detalles del Pago - Cuota #{pagoSeleccionado?.numeroCuota}
+              {pagoSeleccionado?.esExtra ? (
+                <>
+                  Detalles del Pago - Cuota Extra
+                  {pagoSeleccionado.numeroCuota &&
+                    ` #${pagoSeleccionado.numeroCuota}`}
+                </>
+              ) : (
+                `Detalles del Pago - Cuota #${pagoSeleccionado?.numeroCuota}`
+              )}
             </Typography>
           </DialogTitle>
           <DialogContent>

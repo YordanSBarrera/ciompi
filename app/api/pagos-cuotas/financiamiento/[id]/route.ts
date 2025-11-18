@@ -11,9 +11,10 @@ export async function GET(
     const { id } = await params;
 
     // Obtener todos los pagos de un financiamiento específico
+    // Ordenar: primero cuotas normales por número, luego extras por número (si tienen) o fecha
     const pagos = await PagoCuota.find({ financiamiento: id })
       .populate('usuarioRegistro', 'nombre usuario')
-      .sort({ numeroCuota: 1 });
+      .sort({ esExtra: 1, numeroCuota: 1, fechaPago: 1 });
 
     return NextResponse.json(pagos);
   } catch (error: any) {

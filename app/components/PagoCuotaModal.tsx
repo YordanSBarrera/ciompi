@@ -17,8 +17,6 @@ import {
   TextField,
   Typography,
   Grid,
-  Checkbox,
-  FormControlLabel,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 
@@ -29,6 +27,7 @@ interface PagoCuotaModalProps {
   valorCuota: number;
   cuotasPagadas: number;
   cuotasTotal: number;
+  cuotasExtras?: number;
   onPagoRegistrado: () => void;
 }
 
@@ -39,6 +38,7 @@ export default function PagoCuotaModal({
   valorCuota,
   cuotasPagadas,
   cuotasTotal,
+  cuotasExtras = 0,
   onPagoRegistrado,
 }: PagoCuotaModalProps) {
   const [formData, setFormData] = useState<PagoCuotaFormType>({
@@ -52,6 +52,8 @@ export default function PagoCuotaModal({
     banco: '',
     esExtra: false,
   });
+  const [tipoPago, setTipoPago] = useState<'normal' | 'extra'>('normal');
+  const [numeroCuotaExtra, setNumeroCuotaExtra] = useState<number>(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -68,6 +70,8 @@ export default function PagoCuotaModal({
         banco: '',
         esExtra: false,
       });
+      setTipoPago('normal');
+      setNumeroCuotaExtra(1);
       setError(null);
     }
   }, [open, financiamientoId, cuotasPagadas, valorCuota]);
@@ -90,8 +94,12 @@ export default function PagoCuotaModal({
   };
 
   const validateForm = (): boolean => {
-    if (formData.numeroCuota < 1) {
+    if (tipoPago === 'normal' && formData.numeroCuota < 1) {
       setError('El número de cuota debe ser 1 o mayor');
+      return false;
+    }
+    if (tipoPago === 'extra' && numeroCuotaExtra < 1) {
+      setError('El número de cuota extra debe ser 1 o mayor');
       return false;
     }
     if (formData.montoPago <= 0) {
@@ -123,8 +131,11 @@ export default function PagoCuotaModal({
         usuarioRegistro = user.id || user._id;
       }
 
+      // Preparar datos según el tipo de pago
       const dataToSend = {
         ...formData,
+        esExtra: tipoPago === 'extra',
+        numeroCuota: tipoPago === 'extra' ? cuotasTotal + numeroCuotaExtra : formData.numeroCuota,
         usuarioRegistro,
       };
 
@@ -165,34 +176,85 @@ export default function PagoCuotaModal({
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
         <Typography variant="h5" component="h2">
-          Registrar Pago de Cuota
+          Registrar Pago
         </Typography>
         <Typography variant="body2" color="textSecondary">
-          Cuota #{formData.numeroCuota} de {cuotasTotal}
+          {tipoPago === 'normal'
+            ? `Cuota #${formData.numeroCuota} de ${cuotasTotal}`
+            : `Cuota Extra #${numeroCuotaExtra}${cuotasExtras > 0 ? ` de ${cuotasExtras}` : ''}`}
         </Typography>
       </DialogTitle>
 
       <form onSubmit={handleSubmit}>
         <DialogContent>
           <Grid container spacing={3}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <TextField
-                fullWidth
-                label="Número de Cuota"
-                name="numeroCuota"
-                type="number"
-                value={formData.esExtra ? 0 : formData.numeroCuota}
-                onChange={handleChange}
-                required={!formData.esExtra}
-                disabled={formData.esExtra}
-                inputProps={{ min: 1 }}
-                helperText={
-                  formData.esExtra
-                    ? 'Pago extra: no cuenta como cuota pagada'
-                    : `Cuotas pagadas: ${cuotasPagadas} de ${cuotasTotal}. Puede registrar cuotas adicionales.`
-                }
-              />
+            {/* Selector de tipo de pago */}
+            <Grid size={{ xs: 12 }}>
+              <FormControl fullWidth>
+                <InputLabel>Tipo de Pago</InputLabel>
+                <Select
+                  value={tipoPago}
+                  onChange={e => {
+                    const nuevoTipo = e.target.value as 'normal' | 'extra';
+                    setTipoPago(nuevoTipo);
+                    if (nuevoTipo === 'normal') {
+                      setFormData(prev => ({
+                        ...prev,
+                        numeroCuota: cuotasPagadas + 1,
+                        esExtra: false,
+                      }));
+                    } else {
+                      setFormData(prev => ({
+                        ...prev,
+                        esExtra: true,
+                      }));
+                    }
+                  }}
+                  label="Tipo de Pago"
+                >
+                  <MenuItem value="normal">
+                    Cuota Normal ({cuotasPagadas} de {cuotasTotal} pagadas)
+                  </MenuItem>
+                  <MenuItem value="extra" disabled={cuotasExtras === 0}>
+                    Cuota Extra{cuotasExtras > 0 ? ` (${cuotasExtras} disponibles)` : ' (No hay cuotas extras definidas)'}
+                  </MenuItem>
+                </Select>
+              </FormControl>
             </Grid>
+
+            {/* Número de cuota normal */}
+            {tipoPago === 'normal' && (
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Número de Cuota"
+                  name="numeroCuota"
+                  type="number"
+                  value={formData.numeroCuota}
+                  onChange={handleChange}
+                  required
+                  inputProps={{ min: 1, max: cuotasTotal }}
+                  helperText={`Cuotas pagadas: ${cuotasPagadas} de ${cuotasTotal}. Puede registrar cuotas adicionales.`}
+                />
+              </Grid>
+            )}
+
+            {/* Número de cuota extra */}
+            {tipoPago === 'extra' && cuotasExtras > 0 && (
+              <Grid size={{ xs: 12, md: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Número de Cuota Extra"
+                  name="numeroCuotaExtra"
+                  type="number"
+                  value={numeroCuotaExtra}
+                  onChange={e => setNumeroCuotaExtra(Number(e.target.value))}
+                  required
+                  inputProps={{ min: 1, max: cuotasExtras }}
+                  helperText={`Cuota extra #${numeroCuotaExtra} de ${cuotasExtras} (Cuota total: #${cuotasTotal + numeroCuotaExtra})`}
+                />
+              </Grid>
+            )}
 
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
@@ -279,22 +341,6 @@ export default function PagoCuotaModal({
               />
             </Grid>
 
-            <Grid size={{ xs: 12 }}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={!!formData.esExtra}
-                    onChange={e =>
-                      setFormData(prev => ({
-                        ...prev,
-                        esExtra: e.target.checked,
-                      }))
-                    }
-                  />
-                }
-                label="Pago fuera de cuota / extra (no incrementa cuotas pagadas)"
-              />
-            </Grid>
           </Grid>
 
           {error && (

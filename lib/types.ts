@@ -166,6 +166,12 @@ export interface FinanciamientoType {
   cuotasPendientes: number;
   montoPagado: number;
   saldoPendiente: number;
+  cuotasExtras?: number;
+  cuotasFuturas?: Array<{
+    numeroCuota: number;
+    fechaVencimiento: Date | string;
+    valorCuota: number;
+  }>;
   progresoFinanciamiento?: number; // Virtual
   estaAlDia?: boolean; // Virtual
   createdAt?: Date;
