@@ -126,6 +126,7 @@ export interface VehiculoType {
   Descripcion?: string;
   Año?: number;
   Color?: string;
+  disponible?: boolean;
   usuarioCreacion?: Usuario | string;
   usuarioModificacion?: Usuario | string;
   createdAt?: Date;
@@ -140,12 +141,14 @@ export interface VehiculoFormType {
   Descripcion?: string;
   Año?: number;
   Color?: string;
+  disponible?: boolean;
 }
 
 // Tipos para Financiamiento
 export interface FinanciamientoType {
   _id?: string;
   cliente: string | ClienteType; // Puede ser ID o objeto completo
+  cliente2?: string | ClienteType; // Segundo cliente (opcional)
   vehiculo?: string | VehiculoType; // Puede ser ID o objeto completo (opcional)
   empresa: string | EmpresaType; // Puede ser ID o objeto completo
   costoVehiculo: number;
@@ -165,22 +168,38 @@ export interface FinanciamientoType {
   cuotasPendientes: number;
   montoPagado: number;
   saldoPendiente: number;
+  cuotasExtras?: number;
+  cuotasFuturas?: Array<{
+    numeroCuota: number;
+    fechaVencimiento: Date | string;
+    valorCuota: number;
+  }>;
   progresoFinanciamiento?: number; // Virtual
   estaAlDia?: boolean; // Virtual
   createdAt?: Date;
   updatedAt?: Date;
 }
 
+export interface CuotaFutura {
+  numeroCuota: number;
+  fechaVencimiento: string; // ISO date string
+  valorCuota: number;
+}
+
 export interface FinanciamientoFormType {
-  cliente: string; // ID del cliente o datos del cliente nuevo
+  clientes: Array<string | ClienteFormType>; // Array de 1 o 2 clientes (ID o objeto nuevo)
   vehiculo?: string; // ID del vehículo (opcional)
   empresa: string; // ID de la empresa
-  costoVehiculo: number;
+  valorBase: number; // Valor base (antes costoVehiculo)
+  costosDocumentacion?: number; // Costos de documentación
+  gastosExtras?: number; // Gastos extras
   cuotas: number;
+  cuotasExtras?: number; // Número de cuotas extras
   valorCuota: number;
   interesTotal: number;
   montoTotal: number;
   fechaPrimeraCuota: string;
+  cuotasFuturas?: CuotaFutura[]; // Array de cuotas futuras con fechas editables
   observaciones?: string;
 }
 
@@ -213,7 +232,7 @@ export interface PagoCuotaFormType {
   financiamiento: string;
   numeroCuota: number;
   montoPago: number;
-  fechaPago: Date;
+  fechaPago: Date | string;
   metodoPago: 'efectivo' | 'transferencia' | 'cheque' | 'tarjeta' | 'otro';
   observaciones?: string;
   numeroComprobante?: string;

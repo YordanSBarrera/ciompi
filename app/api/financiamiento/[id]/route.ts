@@ -1,6 +1,7 @@
 import { connectDB } from '@/db/dbConnection';
 import { RouteParams } from '@/lib/types';
 import Financiamiento from '@/models/financiamiento';
+import Vehiculo from '@/models/vehiculo';
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserIdFromToken } from '@/lib/server-utils';
 
@@ -13,8 +14,9 @@ export async function GET(
     const { id } = await params;
 
     const financiamiento = await Financiamiento.findById(id)
-      .populate('cliente', 'NOMBRE TELEFONO cedula correo DIRECCION')
-      .populate('vehiculo', 'Marca Modelo Matricula Año Color Descripcion')
+      .populate('cliente', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
+      .populate('cliente2', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
+      .populate('vehiculo', 'Marca Modelo Matricula Padron Año Color Descripcion disponible')
       .populate('empresa', 'nombre descripcion telefono')
       .populate('usuarioRegistro', 'nombre usuario email')
       .populate('usuarioCreacion', 'nombre usuario email')
@@ -108,9 +110,10 @@ export async function PUT(
       id,
       datosActualizados,
       { new: true, runValidators: true }
-    )
-      .populate('cliente', 'NOMBRE TELEFONO cedula')
-      .populate('vehiculo', 'Marca Modelo Matricula Año Color')
+    ) 
+      .populate('cliente', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
+      .populate('cliente2', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
+      .populate('vehiculo', 'Marca Modelo Matricula Padron Año Color Descripcion disponible')
       .populate('empresa', 'nombre descripcion telefono')
       .populate('usuarioRegistro', 'nombre usuario')
       .populate('usuarioCreacion', 'nombre usuario email')
@@ -134,13 +137,26 @@ export async function DELETE(
     await connectDB();
     const { id } = await params;
 
-    const financiamientoEliminado = await Financiamiento.findByIdAndDelete(id);
+    // Buscar el financiamiento antes de eliminarlo para obtener el vehículo
+    const financiamiento = await Financiamiento.findById(id);
 
-    if (!financiamientoEliminado) {
+    if (!financiamiento) {
       return NextResponse.json(
         { error: 'Financiamiento no encontrado' },
         { status: 404 }
       );
+    }
+
+    // Eliminar el financiamiento
+    await Financiamiento.findByIdAndDelete(id);
+
+    // Si tenía un vehículo asignado, marcarlo como disponible nuevamente
+    if (financiamiento.vehiculo) {
+      const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb';
+      await Vehiculo.findByIdAndUpdate(financiamiento.vehiculo, {
+        disponible: true,
+        usuarioModificacion: userId,
+      });
     }
 
     return NextResponse.json({

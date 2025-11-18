@@ -84,7 +84,7 @@ pagoCuotaSchema.index({ fechaPago: -1 });
 pagoCuotaSchema.index({ usuarioRegistro: 1 });
 pagoCuotaSchema.index({ estadoPago: 1 });
 
-// Índice por financiamiento y cuota (sin unique). Duplicados controlados en la API si no es extra
-pagoCuotaSchema.index({ financiamiento: 1, numeroCuota: 1 });
+// Índice por financiamiento y cuota (sin unique) para permitir múltiples pagos de la misma cuota (pagos parciales)
+pagoCuotaSchema.index({ financiamiento: 1, numeroCuota: 1 }, { unique: false });
 
 export default models.PagoCuota || model('PagoCuota', pagoCuotaSchema);

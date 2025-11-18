@@ -1,17 +1,38 @@
 import { connectDB } from '@/db/dbConnection';
 import Financiamiento from '@/models/financiamiento';
 import Cliente from '@/models/cliente';
+import Vehiculo from '@/models/vehiculo';
 import { NextResponse, NextRequest } from 'next/server';
 import { getUserIdFromToken } from '@/lib/server-utils';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await connectDB();
 
+    // Obtener parámetros de búsqueda
+    const { searchParams } = new URL(request.url);
+    const nombreCliente = searchParams.get('nombreCliente');
+
+    let query = Financiamiento.find();
+
+    // Si hay búsqueda por nombre de cliente, filtrar
+    if (nombreCliente && nombreCliente.trim()) {
+      // Buscar clientes que coincidan con el nombre
+      const clientes = await Cliente.find({
+        NOMBRE: { $regex: nombreCliente.trim(), $options: 'i' },
+      }).select('_id');
+
+      const clienteIds = clientes.map(c => c._id);
+
+      // Filtrar financiamientos por los IDs de clientes encontrados
+      query = query.where('cliente').in(clienteIds);
+    }
+
     // Obtener todos los financiamientos con información de cliente, vehículo, empresa y usuario
-    const financiamientos = await Financiamiento.find()
-      .populate('cliente', 'NOMBRE TELEFONO cedula')
-      .populate('vehiculo', 'Marca Modelo Matricula Año Color')
+    const financiamientos = await query
+      .populate('cliente', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
+      .populate('cliente2', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
+      .populate('vehiculo', 'Marca Modelo Matricula Padron Año Color Descripcion disponible')
       .populate('empresa', 'nombre descripcion telefono')
       .populate('usuarioRegistro', 'nombre usuario')
       .populate('usuarioCreacion', 'nombre usuario email')
@@ -40,7 +61,6 @@ export async function POST(request: NextRequest) {
     const requiredFields = [
       'cliente',
       'empresa',
-      'costoVehiculo',
       'cuotas',
       'valorCuota',
       'interesTotal',
@@ -49,12 +69,20 @@ export async function POST(request: NextRequest) {
     ];
 
     for (const field of requiredFields) {
-      if (!body[field]) {
+      if (body[field] === undefined || body[field] === null) {
         return NextResponse.json(
           { error: `El campo ${field} es obligatorio` },
           { status: 400 }
         );
       }
+    }
+
+    // Validar que haya al menos costoVehiculo o valorBase
+    if (!body.costoVehiculo && !body.valorBase) {
+      return NextResponse.json(
+        { error: 'Debe proporcionar costoVehiculo o valorBase' },
+        { status: 400 }
+      );
     }
 
     // Manejar cliente nuevo (si viene como objeto, crearlo)
@@ -70,25 +98,81 @@ export async function POST(request: NextRequest) {
       clienteId = clienteGuardado._id.toString();
     }
 
+    // Manejar segundo cliente (si existe)
+    let cliente2Id = body.cliente2;
+    if (body.clientes && Array.isArray(body.clientes) && body.clientes.length > 1) {
+      // Si viene en el array de clientes, usar el segundo elemento
+      const segundoCliente = body.clientes[1];
+      if (typeof segundoCliente === 'object' && segundoCliente.NOMBRE) {
+        // Es un cliente nuevo, crearlo en la base de datos
+        const nuevoCliente2 = new Cliente({
+          ...segundoCliente,
+          usuarioCreacion: userId,
+          usuarioModificacion: userId,
+        });
+        const cliente2Guardado = await nuevoCliente2.save();
+        cliente2Id = cliente2Guardado._id.toString();
+      } else if (typeof segundoCliente === 'string') {
+        cliente2Id = segundoCliente;
+      }
+    } else if (body.cliente2) {
+      cliente2Id = body.cliente2;
+      if (typeof body.cliente2 === 'object' && body.cliente2.NOMBRE) {
+        // Es un cliente nuevo, crearlo en la base de datos
+        const nuevoCliente2 = new Cliente({
+          ...body.cliente2,
+          usuarioCreacion: userId,
+          usuarioModificacion: userId,
+        });
+        const cliente2Guardado = await nuevoCliente2.save();
+        cliente2Id = cliente2Guardado._id.toString();
+      }
+    }
+
+    // Manejar costoVehiculo y valorBase (compatibilidad)
+    const costoVehiculo = body.costoVehiculo || body.valorBase || 0;
+    const valorBase = body.valorBase || body.costoVehiculo || 0;
+
     // Calcular fechas y montos
     const fechaPrimeraCuota = new Date(body.fechaPrimeraCuota);
-    const fechaUltimaCuota = new Date(fechaPrimeraCuota);
-    fechaUltimaCuota.setMonth(fechaUltimaCuota.getMonth() + body.cuotas - 1);
+    
+    // Si hay cuotasFuturas, usar la última fecha de ahí, sino calcular
+    let fechaUltimaCuota = new Date(fechaPrimeraCuota);
+    if (body.cuotasFuturas && body.cuotasFuturas.length > 0) {
+      const ultimaCuota = body.cuotasFuturas[body.cuotasFuturas.length - 1];
+      fechaUltimaCuota = new Date(ultimaCuota.fechaVencimiento);
+    } else {
+      fechaUltimaCuota.setMonth(
+        fechaUltimaCuota.getMonth() + body.cuotas - 1
+      );
+    }
 
     // Crear nuevo financiamiento
     const nuevoFinanciamiento = new Financiamiento({
       cliente: clienteId,
+      cliente2: cliente2Id || undefined, // Segundo cliente opcional
       vehiculo: body.vehiculo || undefined, // Opcional
       empresa: body.empresa,
-      costoVehiculo: body.costoVehiculo,
+      costoVehiculo: costoVehiculo, // Mantener para compatibilidad
+      valorBase: valorBase, // Nuevo campo
+      costosDocumentacion: body.costosDocumentacion || 0,
+      gastosExtras: body.gastosExtras || 0,
+      cuotasExtras: body.cuotasExtras || 0,
+      cuotasFuturas: body.cuotasFuturas
+        ? body.cuotasFuturas.map((cf: any) => ({
+            numeroCuota: cf.numeroCuota,
+            fechaVencimiento: new Date(cf.fechaVencimiento),
+            valorCuota: cf.valorCuota,
+          }))
+        : undefined,
       cuotas: body.cuotas,
       valorCuota: body.valorCuota,
-      interesTotal: body.interesTotal,
-      montoTotal: body.montoTotal,
+      interesTotal: body.interesTotal || 0,
+      montoTotal: body.montoTotal || 0,
       fechaPrimeraCuota,
       fechaUltimaCuota,
-      cuotasPendientes: body.cuotas,
-      saldoPendiente: body.montoTotal,
+      cuotasPendientes: body.cuotas + (body.cuotasExtras || 0),
+      saldoPendiente: body.montoTotal || 0,
       cuotasPagadas: 0,
       montoPagado: 0,
       estadoFinanciamiento: 'activo',
@@ -101,12 +185,21 @@ export async function POST(request: NextRequest) {
 
     const financiamientoGuardado = await nuevoFinanciamiento.save();
 
+    // Si se asignó un vehículo, marcarlo como no disponible
+    if (body.vehiculo) {
+      await Vehiculo.findByIdAndUpdate(body.vehiculo, {
+        disponible: false,
+        usuarioModificacion: userId,
+      });
+    }
+
     // Devolver el financiamiento con información poblada
     const financiamientoCompleto = await Financiamiento.findById(
       financiamientoGuardado._id
     )
-      .populate('cliente', 'NOMBRE TELEFONO cedula')
-      .populate('vehiculo', 'Marca Modelo Matricula Año Color')
+      .populate('cliente', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
+      .populate('cliente2', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
+      .populate('vehiculo', 'Marca Modelo Matricula Padron Año Color Descripcion disponible')
       .populate('empresa', 'nombre descripcion telefono')
       .populate('usuarioRegistro', 'nombre usuario')
       .populate('usuarioCreacion', 'nombre usuario email')
@@ -139,13 +232,26 @@ export async function DELETE(request: Request) {
       );
     }
 
-    const financiamientoEliminado = await Financiamiento.findByIdAndDelete(id);
-
-    if (!financiamientoEliminado) {
+    // Buscar el financiamiento antes de eliminarlo para obtener el vehículo
+    const financiamiento = await Financiamiento.findById(id);
+    
+    if (!financiamiento) {
       return NextResponse.json(
         { error: 'Financiamiento no encontrado' },
         { status: 404 }
       );
+    }
+
+    // Eliminar el financiamiento
+    await Financiamiento.findByIdAndDelete(id);
+
+    // Si tenía un vehículo asignado, marcarlo como disponible nuevamente
+    if (financiamiento.vehiculo) {
+      const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb';
+      await Vehiculo.findByIdAndUpdate(financiamiento.vehiculo, {
+        disponible: true,
+        usuarioModificacion: userId,
+      });
     }
 
     return NextResponse.json({

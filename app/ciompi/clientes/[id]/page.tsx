@@ -8,7 +8,6 @@ import {
   Alert,
   Box,
   Button,
-  Chip,
   CircularProgress,
   Container,
   Dialog,
@@ -22,6 +21,7 @@ import {
   Snackbar,
   Typography,
 } from '@mui/material';
+import { Print as PrintIcon } from '@mui/icons-material';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -404,6 +404,21 @@ export default function ClienteDetailPage() {
               </Button>
             </Box>
             <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button
+                variant="contained"
+                color="primary"
+                size="large"
+                startIcon={<PrintIcon />}
+                onClick={() => {
+                  window.open(
+                    `/api/reports/clientes/${id}?format=pdf`,
+                    '_blank'
+                  );
+                }}
+              >
+                Imprimir Detalles
+              </Button>
+
               <Button
                 component={Link}
                 href={`/ciompi/clientes/${id}/editar`}

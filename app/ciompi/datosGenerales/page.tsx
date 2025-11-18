@@ -12,8 +12,9 @@ import {
   LinearProgress,
   CircularProgress,
   IconButton,
-  Divider,
   Chip,
+  Button,
+  Stack,
 } from '@mui/material';
 import {
   People as PeopleIcon,
@@ -27,6 +28,7 @@ import {
   Refresh as RefreshIcon,
   Person as PersonIcon,
   Assessment as AssessmentIcon,
+  Print as PrintIcon,
 } from '@mui/icons-material';
 import {
   azulBase,
@@ -38,6 +40,7 @@ import {
   verde,
   rojo,
 } from '@/lib/color';
+import CardDG from './CardDG';
 
 interface StatsData {
   clientes: {
@@ -104,6 +107,21 @@ export default function DatosGeneralesPage() {
     }).format(amount);
   };
 
+  const handleImprimirClientes = () => {
+    window.open('/api/reports/clientes?format=pdf', '_blank');
+  };
+
+  const handleImprimirFinanciaciones = () => {
+    window.open('/api/reports/financiaciones?format=pdf', '_blank');
+  };
+
+  const handleImprimirFinanciacionesActivas = () => {
+    window.open(
+      '/api/reports/financiaciones?estado=activo&format=pdf',
+      '_blank'
+    );
+  };
+
   return (
     <AuthGuard>
       <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
@@ -156,15 +174,7 @@ export default function DatosGeneralesPage() {
           </Box>
         ) : (
           <>
-            {/* Estadísticas de Financiamientos */}
-            <Paper elevation={3} sx={{ p: 3, mb: 4, bgcolor: grisClaro }}>
-              <Typography
-                variant="h5"
-                gutterBottom
-                sx={{ fontWeight: 600, mb: 3, color: 'primary.main' }}
-              >
-                Estadísticas Financieras
-              </Typography>
+            <CardDG titulo="Estadísticas Financieras">
               <Grid container spacing={3}>
                 <Grid size={{ xs: 12, md: 4 }}>
                   <Card sx={{ height: '100%', boxShadow: 3 }}>
@@ -279,17 +289,9 @@ export default function DatosGeneralesPage() {
                   </Card>
                 </Grid>
               </Grid>
-            </Paper>
+            </CardDG>
 
-            {/* Estadísticas Generales */}
-            <Paper elevation={3} sx={{ p: 3, mb: 4, bgcolor: grisClaro }}>
-              <Typography
-                variant="h5"
-                gutterBottom
-                sx={{ fontWeight: 600, mb: 3, color: 'primary.main' }}
-              >
-                Resumen General del Sistema
-              </Typography>
+            <CardDG titulo="Estadísticas de Clientes y Vehículos">
               <Grid container spacing={3}>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <Card
@@ -467,17 +469,10 @@ export default function DatosGeneralesPage() {
                   </Card>
                 </Grid>
               </Grid>
-            </Paper>
+            </CardDG>
 
             {/* Información Adicional */}
-            <Paper elevation={3} sx={{ p: 3, bgcolor: grisClaro }}>
-              <Typography
-                variant="h5"
-                gutterBottom
-                sx={{ fontWeight: 600, mb: 3, color: 'primary.main' }}
-              >
-                Información Adicional
-              </Typography>
+            <CardDG titulo="Información Adicional">
               <Grid container spacing={3}>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <Card sx={{ height: '100%' }}>
@@ -586,7 +581,75 @@ export default function DatosGeneralesPage() {
                   </Card>
                 </Grid>
               </Grid>
-            </Paper>
+            </CardDG>
+
+            {/* Acciones de Impresión */}
+            <CardDG titulo="Acciones de Impresión">
+              <Card sx={{ boxShadow: 2 }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                    <PrintIcon sx={{ fontSize: 32, color: azulBase, mr: 2 }} />
+                    <Typography variant="h6">Imprimir Listados</Typography>
+                  </Box>
+                  <Stack spacing={2} direction={{ xs: 'column', sm: 'row' }}>
+                    <Button
+                      variant="contained"
+                      startIcon={<PrintIcon />}
+                      onClick={handleImprimirClientes}
+                      sx={{
+                        flex: 1,
+                        backgroundColor: azulBase,
+                        background: `linear-gradient(135deg, ${azulBase} 0%, ${azulClaro} 100%)`,
+                        '&:hover': {
+                          background: `linear-gradient(135deg, ${azulClaro} 0%, ${azulBase} 100%)`,
+                        },
+                        py: 1.5,
+                        fontWeight: 600,
+                        textTransform: 'none',
+                      }}
+                    >
+                      Imprimir Listado de Clientes
+                    </Button>
+                    <Button
+                      variant="contained"
+                      startIcon={<PrintIcon />}
+                      onClick={handleImprimirFinanciaciones}
+                      sx={{
+                        flex: 1,
+                        backgroundColor: verde,
+                        background: `linear-gradient(135deg, ${verde} 0%, #66bb6a 100%)`,
+                        '&:hover': {
+                          background: `linear-gradient(135deg, #66bb6a 0%, ${verde} 100%)`,
+                        },
+                        py: 1.5,
+                        fontWeight: 600,
+                        textTransform: 'none',
+                      }}
+                    >
+                      Imprimir Listado de Financiaciones
+                    </Button>
+                    <Button
+                      variant="contained"
+                      startIcon={<PrintIcon />}
+                      onClick={handleImprimirFinanciacionesActivas}
+                      sx={{
+                        flex: 1,
+                        backgroundColor: naranja,
+                        background: `linear-gradient(135deg, ${naranja} 0%, #ff7043 100%)`,
+                        '&:hover': {
+                          background: `linear-gradient(135deg, #ff7043 0%, ${naranja} 100%)`,
+                        },
+                        py: 1.5,
+                        fontWeight: 600,
+                        textTransform: 'none',
+                      }}
+                    >
+                      Imprimir Financiaciones Activas
+                    </Button>
+                  </Stack>
+                </CardContent>
+              </Card>
+            </CardDG>
           </>
         )}
       </Container>

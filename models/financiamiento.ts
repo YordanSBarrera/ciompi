@@ -8,6 +8,11 @@ const financiamientoSchema = new Schema(
       ref: 'Cliente',
       required: true,
     },
+    cliente2: {
+      type: Schema.Types.ObjectId,
+      ref: 'Cliente',
+      required: false,
+    },
     vehiculo: {
       type: Schema.Types.ObjectId,
       ref: 'Vehiculo',
@@ -25,6 +30,37 @@ const financiamientoSchema = new Schema(
       required: true,
       min: 0,
     },
+    // Nuevos campos financieros
+    valorBase: {
+      type: Number,
+      required: false,
+      min: 0,
+    },
+    costosDocumentacion: {
+      type: Number,
+      required: false,
+      default: 0,
+      min: 0,
+    },
+    gastosExtras: {
+      type: Number,
+      required: false,
+      default: 0,
+      min: 0,
+    },
+    cuotasExtras: {
+      type: Number,
+      required: false,
+      default: 0,
+      min: 0,
+    },
+    cuotasFuturas: [
+      {
+        numeroCuota: { type: Number, required: true },
+        fechaVencimiento: { type: Date, required: true },
+        valorCuota: { type: Number, required: true },
+      },
+    ],
     cuotas: {
       type: Number,
       required: true,
@@ -39,7 +75,6 @@ const financiamientoSchema = new Schema(
     interesTotal: {
       type: Number,
       required: true,
-      min: 0,
     },
     montoTotal: {
       type: Number,
@@ -126,6 +161,7 @@ const financiamientoSchema = new Schema(
 
 // Índices para mejorar rendimiento
 financiamientoSchema.index({ cliente: 1 });
+financiamientoSchema.index({ cliente2: 1 });
 financiamientoSchema.index({ vehiculo: 1 });
 financiamientoSchema.index({ empresa: 1 });
 financiamientoSchema.index({ usuarioRegistro: 1 });

@@ -31,12 +31,9 @@ import {
   naranja,
   turquesa,
   grisClaro,
-  grisMedio,
   verde,
-  rojo,
 } from '@/lib/color';
 import { routes } from '@/lib/rutas';
-import Link from 'next/link';
 
 interface StatsData {
   clientes: {
@@ -94,14 +91,6 @@ export default function CiompiHomePage() {
   const handleRefresh = () => {
     setRefreshing(true);
     loadStats();
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    }).format(amount);
   };
 
   const menuItems = [
@@ -406,83 +395,6 @@ export default function CiompiHomePage() {
             </Grid>
           </Grid>
         )}
-
-        {/* Menú de Accesos Rápidos */}
-        <Paper elevation={3} sx={{ p: 3, mb: 4, bgcolor: grisClaro }}>
-          <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 3 }}>
-            Accesos Rápidos
-          </Typography>
-          <Grid container spacing={3}>
-            {menuItems.map((item, index) => (
-              <Grid key={index} size={{ xs: 12, sm: 6, md: 4 }}>
-                <Card
-                  component={Link}
-                  href={item.href}
-                  sx={{
-                    height: '100%',
-                    textDecoration: 'none',
-                    transition: 'all 0.3s ease',
-                    border: `2px solid transparent`,
-                    '&:hover': {
-                      transform: 'translateY(-8px)',
-                      boxShadow: 6,
-                      borderColor: item.color,
-                    },
-                  }}
-                >
-                  <CardContent sx={{ p: 3 }}>
-                    <Box
-                      sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}
-                    >
-                      <Box
-                        sx={{
-                          width: 64,
-                          height: 64,
-                          borderRadius: 2,
-                          bgcolor: item.color,
-                          color: 'white',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                        }}
-                      >
-                        {item.icon}
-                      </Box>
-                      <Box sx={{ flex: 1 }}>
-                        <Typography
-                          variant="h6"
-                          gutterBottom
-                          sx={{ fontWeight: 600 }}
-                        >
-                          {item.title}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          color="textSecondary"
-                          sx={{ mb: 1 }}
-                        >
-                          {item.description}
-                        </Typography>
-                        {item.count !== undefined && (
-                          <Chip
-                            label={`${item.count} registros`}
-                            size="small"
-                            sx={{
-                              backgroundColor: `${item.color}20`,
-                              color: item.color,
-                              fontWeight: 600,
-                            }}
-                          />
-                        )}
-                      </Box>
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        </Paper>
       </Container>
     </AuthGuard>
   );

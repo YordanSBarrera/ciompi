@@ -6,9 +6,12 @@ import {
   EmpresaType,
   FinanciamientoFormType,
   ClienteFormType,
+  CuotaFutura,
+  VehiculoFormType,
 } from '@/lib/types';
 import AuthGuard from '@/app/components/AuthGuard';
 import ModalNuevoCliente from '@/app/components/ModalNuevoCliente';
+import FormularioVehiculo from '@/app/components/FormularioVehiculo';
 import {
   Alert,
   Box,
@@ -27,7 +30,18 @@ import {
   Divider,
   Card,
   CardContent,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  IconButton,
+  Chip,
+  Checkbox,
+  FormControlLabel,
 } from '@mui/material';
+import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -85,22 +99,38 @@ export default function NuevoFinanciamientoPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [modalClienteOpen, setModalClienteOpen] = useState(false);
-  const [clienteNuevo, setClienteNuevo] = useState<ClienteFormType | null>(
-    null
-  );
+  const [vehiculoModalOpen, setVehiculoModalOpen] = useState(false);
+  const [clienteModalIndex, setClienteModalIndex] = useState<0 | 1>(0); // Para saber qué cliente estamos creando
+  const [incluirCostosDocumentacion, setIncluirCostosDocumentacion] =
+    useState(false);
+  const [incluirGastosExtras, setIncluirGastosExtras] = useState(false);
+  const [mostrarCuotasExtras, setMostrarCuotasExtras] = useState(false);
+  const [cuotasExtras, setCuotasExtras] = useState<CuotaFutura[]>([]);
+  const [nuevaCuotaExtra, setNuevaCuotaExtra] = useState({
+    valorCuota: 0,
+    fechaCuota: new Date().toISOString().split('T')[0],
+  });
 
   const [formData, setFormData] = useState<FinanciamientoFormType>({
-    cliente: '',
+    clientes: [''],
     vehiculo: '',
     empresa: '',
-    costoVehiculo: 0,
+    valorBase: 0,
+    costosDocumentacion: 0,
+    gastosExtras: 0,
     cuotas: 12,
+    cuotasExtras: 0,
     valorCuota: 0,
     interesTotal: 0,
     montoTotal: 0,
     fechaPrimeraCuota: new Date().toISOString().split('T')[0],
+    cuotasFuturas: [],
     observaciones: '',
   });
+
+  const [clientesNuevos, setClientesNuevos] = useState<
+    Array<ClienteFormType | null>
+  >([null, null]);
 
   // Cargar datos iniciales
   useEffect(() => {
@@ -125,15 +155,51 @@ export default function NuevoFinanciamientoPage() {
     fetchData();
   }, []);
 
-  // Calcular montos automáticamente cuando cambian costoVehiculo, cuotas o valorCuota
+  // Generar cuotas futuras cuando cambian cuotas, fechaPrimeraCuota o valorCuota
   useEffect(() => {
-    const costoVehiculo = formData.costoVehiculo;
     const cuotas = formData.cuotas;
+    const fechaPrimeraCuota = formData.fechaPrimeraCuota;
     const valorCuota = formData.valorCuota;
 
-    if (costoVehiculo > 0 && cuotas > 0 && valorCuota > 0) {
-      const montoTotal = valorCuota * cuotas;
-      const interesTotal = montoTotal - costoVehiculo;
+    if (cuotas > 0 && fechaPrimeraCuota && valorCuota > 0) {
+      const nuevasCuotas: CuotaFutura[] = [];
+      const fechaBase = new Date(fechaPrimeraCuota);
+
+      for (let i = 0; i < cuotas; i++) {
+        const fechaCuota = new Date(fechaBase);
+        fechaCuota.setMonth(fechaCuota.getMonth() + i);
+        nuevasCuotas.push({
+          numeroCuota: i + 1,
+          fechaVencimiento: fechaCuota.toISOString().split('T')[0],
+          valorCuota: valorCuota,
+        });
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        cuotasFuturas: nuevasCuotas,
+      }));
+    }
+  }, [formData.cuotas, formData.fechaPrimeraCuota, formData.valorCuota]);
+
+  // Calcular montos automáticamente
+  useEffect(() => {
+    const valorBase = formData.valorBase || 0;
+    const costosDocumentacion = formData.costosDocumentacion || 0;
+    const gastosExtras = formData.gastosExtras || 0;
+    const cuotas = formData.cuotas || 0;
+    const valorCuota = formData.valorCuota || 0;
+
+    // Calcular monto de cuotas extras
+    const montoCuotasExtras = cuotasExtras.reduce(
+      (sum, cuota) => sum + cuota.valorCuota,
+      0
+    );
+
+    if ((cuotas > 0 && valorCuota > 0) || montoCuotasExtras > 0) {
+      const montoTotal = valorCuota * cuotas + montoCuotasExtras;
+      const interesTotal =
+        montoTotal - valorBase - costosDocumentacion - gastosExtras;
 
       setFormData(prev => ({
         ...prev,
@@ -141,7 +207,14 @@ export default function NuevoFinanciamientoPage() {
         interesTotal,
       }));
     }
-  }, [formData.costoVehiculo, formData.cuotas, formData.valorCuota]);
+  }, [
+    formData.valorBase,
+    formData.costosDocumentacion,
+    formData.gastosExtras,
+    formData.cuotas,
+    formData.valorCuota,
+    cuotasExtras,
+  ]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -150,7 +223,12 @@ export default function NuevoFinanciamientoPage() {
     setFormData(prev => ({
       ...prev,
       [name]:
-        name === 'costoVehiculo' || name === 'cuotas' || name === 'valorCuota'
+        name === 'valorBase' ||
+        name === 'costosDocumentacion' ||
+        name === 'gastosExtras' ||
+        name === 'cuotas' ||
+        name === 'cuotasExtras' ||
+        name === 'valorCuota'
           ? Number(value)
           : value,
     }));
@@ -164,22 +242,142 @@ export default function NuevoFinanciamientoPage() {
     }));
   };
 
+  const handleClienteSelect = (
+    index: 0 | 1,
+    value: string | ClienteFormType
+  ) => {
+    const nuevosClientes = [...formData.clientes];
+    nuevosClientes[index] = value;
+    setFormData(prev => ({
+      ...prev,
+      clientes: nuevosClientes,
+    }));
+  };
+
   const handleClienteCreado = (cliente: ClienteFormType) => {
-    setClienteNuevo(cliente);
+    const nuevosClientesNuevos = [...clientesNuevos];
+    nuevosClientesNuevos[clienteModalIndex] = cliente;
+    setClientesNuevos(nuevosClientesNuevos);
+
+    const nuevosClientes = [...formData.clientes];
+    nuevosClientes[clienteModalIndex] = cliente;
+    setFormData(prev => ({
+      ...prev,
+      clientes: nuevosClientes,
+    }));
+
     setModalClienteOpen(false);
   };
 
+  const handleGuardarVehiculo = async (vehiculoData: VehiculoFormType) => {
+    try {
+      const response = await fetch('/api/vehiculos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(vehiculoData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(
+          errorData?.error || 'Error al crear el vehículo. Intenta nuevamente.'
+        );
+      }
+
+      const vehiculoGuardado: VehiculoType = await response.json();
+      setVehiculos(prev => [vehiculoGuardado, ...prev]);
+      setFormData(prev => ({
+        ...prev,
+        vehiculo: vehiculoGuardado._id || '',
+      }));
+      return { success: true };
+    } catch (error) {
+      console.error('Error guardando vehículo:', error);
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : 'Error desconocido al guardar vehículo',
+      };
+    }
+  };
+
+  const handleAgregarSegundoCliente = () => {
+    setFormData(prev => ({
+      ...prev,
+      clientes: [...prev.clientes, ''],
+    }));
+    setClientesNuevos([...clientesNuevos, null]);
+  };
+
+  const handleEliminarSegundoCliente = () => {
+    setFormData(prev => ({
+      ...prev,
+      clientes: [prev.clientes[0]],
+    }));
+    setClientesNuevos([clientesNuevos[0]]);
+  };
+
+  const handleFechaCuotaChange = (index: number, nuevaFecha: string) => {
+    const nuevasCuotas = [...(formData.cuotasFuturas || [])];
+    nuevasCuotas[index] = {
+      ...nuevasCuotas[index],
+      fechaVencimiento: nuevaFecha,
+    };
+    setFormData(prev => ({
+      ...prev,
+      cuotasFuturas: nuevasCuotas,
+    }));
+  };
+
+  const handleAgregarCuotaExtra = () => {
+    if (nuevaCuotaExtra.valorCuota > 0 && nuevaCuotaExtra.fechaCuota) {
+      const nuevaCuota: CuotaFutura = {
+        numeroCuota: cuotasExtras.length + 1,
+        fechaVencimiento: nuevaCuotaExtra.fechaCuota,
+        valorCuota: nuevaCuotaExtra.valorCuota,
+      };
+      setCuotasExtras([...cuotasExtras, nuevaCuota]);
+      setNuevaCuotaExtra({
+        valorCuota: 0,
+        fechaCuota: new Date().toISOString().split('T')[0],
+      });
+    }
+  };
+
+  const handleEliminarCuotaExtra = (index: number) => {
+    const nuevasCuotasExtras = cuotasExtras.filter((_, i) => i !== index);
+    // Renumerar las cuotas
+    const cuotasRenumeradas = nuevasCuotasExtras.map((cuota, i) => ({
+      ...cuota,
+      numeroCuota: i + 1,
+    }));
+    setCuotasExtras(cuotasRenumeradas);
+  };
+
+  const handleFechaCuotaExtraChange = (index: number, nuevaFecha: string) => {
+    const nuevasCuotasExtras = [...cuotasExtras];
+    nuevasCuotasExtras[index] = {
+      ...nuevasCuotasExtras[index],
+      fechaVencimiento: nuevaFecha,
+    };
+    setCuotasExtras(nuevasCuotasExtras);
+  };
+
   const validateForm = (): boolean => {
-    if (!formData.cliente && !clienteNuevo) {
-      setError('Debe seleccionar un cliente o crear uno nuevo');
+    if (formData.clientes.length === 0 || !formData.clientes[0]) {
+      setError('Debe seleccionar al menos un cliente');
       return false;
     }
     if (!formData.empresa) {
       setError('Debe seleccionar una empresa');
       return false;
     }
-    if (formData.costoVehiculo <= 0) {
-      setError('El costo del vehículo debe ser mayor a 0');
+    if (formData.valorBase <= 0) {
+      setError('El valor base debe ser mayor a 0');
       return false;
     }
     if (formData.cuotas <= 0) {
@@ -215,12 +413,22 @@ export default function NuevoFinanciamientoPage() {
         usuarioRegistro = user.id || user._id;
       }
 
-      // Si hay cliente nuevo, enviarlo como objeto, sino el ID
-      const clienteData = clienteNuevo || formData.cliente;
+      // Preparar datos de clientes
+      const clientesData = formData.clientes.map((cliente, index) => {
+        if (typeof cliente === 'object' && cliente.NOMBRE) {
+          return cliente; // Es un cliente nuevo
+        }
+        return cliente; // Es un ID
+      });
 
+      // Para compatibilidad con el backend actual, usar el primer cliente
+      // TODO: Actualizar el backend para manejar múltiples clientes
       const dataToSend = {
         ...formData,
-        cliente: clienteData,
+        cliente: clientesData[0], // Por ahora solo el primer cliente
+        costoVehiculo: formData.valorBase, // Mapeo temporal para compatibilidad
+        cuotasExtras: cuotasExtras.length, // Número de cuotas extras para compatibilidad
+        cuotasExtrasDetalle: cuotasExtras, // Array completo de cuotas extras
         usuarioRegistro,
       };
 
@@ -250,7 +458,7 @@ export default function NuevoFinanciamientoPage() {
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('es-UY', {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 2,
@@ -301,35 +509,52 @@ export default function NuevoFinanciamientoPage() {
         >
           <form onSubmit={handleSubmit}>
             <Grid container spacing={3}>
-              {/* Selección de Cliente */}
+              {/* Selección de Cliente(s) */}
               <Grid size={{ xs: 12 }}>
                 <Typography
                   variant="h6"
                   gutterBottom
                   sx={{ color: 'primary.main' }}
                 >
-                  Selección de Cliente
+                  Selección de Cliente(s)
                 </Typography>
                 <Divider sx={{ mb: 3 }} />
               </Grid>
 
+              {/* Cliente 1 */}
               <Grid size={{ xs: 12, md: 6 }}>
                 <FormControl fullWidth required>
-                  <InputLabel>Cliente</InputLabel>
+                  <InputLabel>Cliente 1 *</InputLabel>
                   <Select
-                    name="cliente"
-                    value={clienteNuevo ? 'nuevo' : formData.cliente}
+                    value={
+                      typeof formData.clientes[0] === 'object'
+                        ? 'nuevo-0'
+                        : formData.clientes[0] || ''
+                    }
                     onChange={e => {
-                      if (e.target.value === 'nuevo') {
+                      if (e.target.value === 'nuevo-0') {
+                        setClienteModalIndex(0);
                         setModalClienteOpen(true);
+                      } else if (e.target.value === '') {
+                        handleClienteSelect(0, '');
+                        const nuevosClientesNuevos = [...clientesNuevos];
+                        nuevosClientesNuevos[0] = null;
+                        setClientesNuevos(nuevosClientesNuevos);
                       } else {
-                        setClienteNuevo(null);
-                        handleSelectChange(e);
+                        handleClienteSelect(0, e.target.value);
+                        const nuevosClientesNuevos = [...clientesNuevos];
+                        nuevosClientesNuevos[0] = null;
+                        setClientesNuevos(nuevosClientesNuevos);
                       }
                     }}
-                    label="Cliente"
+                    label="Cliente 1 *"
                   >
-                    <MenuItem value="nuevo">
+                    <MenuItem value="">
+                      <Typography variant="body2" color="textSecondary">
+                        Seleccionar...
+                      </Typography>
+                    </MenuItem>
+                    <MenuItem value="nuevo-0">
                       <Typography variant="body1" sx={{ fontStyle: 'italic' }}>
                         + Crear Cliente Nuevo
                       </Typography>
@@ -350,26 +575,138 @@ export default function NuevoFinanciamientoPage() {
                 </FormControl>
               </Grid>
 
-              {clienteNuevo && (
+              {/* Mostrar cliente seleccionado 1 */}
+              {(typeof formData.clientes[0] === 'object' ||
+                formData.clientes[0]) && (
                 <Grid size={{ xs: 12, md: 6 }}>
                   <Alert severity="info" sx={{ mt: 2 }}>
                     <Typography variant="body2">
-                      Cliente seleccionado:{' '}
-                      <strong>{clienteNuevo.NOMBRE}</strong>
-                      {clienteNuevo.cedula && ` (${clienteNuevo.cedula})`}
+                      Cliente 1:{' '}
+                      <strong>
+                        {typeof formData.clientes[0] === 'object'
+                          ? formData.clientes[0].NOMBRE
+                          : clientes.find(c => c._id === formData.clientes[0])
+                              ?.NOMBRE || 'N/A'}
+                      </strong>
+                      {typeof formData.clientes[0] === 'object' &&
+                        formData.clientes[0].cedula &&
+                        ` (${formData.clientes[0].cedula})`}
+                      {typeof formData.clientes[0] === 'string' &&
+                        clientes.find(c => c._id === formData.clientes[0])
+                          ?.cedula &&
+                        ` (${clientes.find(c => c._id === formData.clientes[0])?.cedula})`}
                     </Typography>
-                    <Button
-                      size="small"
-                      onClick={() => {
-                        setClienteNuevo(null);
-                        setFormData(prev => ({ ...prev, cliente: '' }));
-                      }}
-                      sx={{ mt: 1 }}
-                    >
-                      Cambiar Cliente
-                    </Button>
                   </Alert>
                 </Grid>
+              )}
+
+              {/* Cliente 2 - Opcional */}
+              {formData.clientes.length === 1 && (
+                <Grid size={{ xs: 12 }}>
+                  <Button
+                    startIcon={<AddIcon />}
+                    onClick={handleAgregarSegundoCliente}
+                    variant="outlined"
+                    size="small"
+                  >
+                    Agregar Segundo Cliente (Opcional)
+                  </Button>
+                </Grid>
+              )}
+
+              {formData.clientes.length === 2 && (
+                <>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <FormControl fullWidth>
+                      <InputLabel>Cliente 2 (Opcional)</InputLabel>
+                      <Select
+                        value={
+                          typeof formData.clientes[1] === 'object'
+                            ? 'nuevo-1'
+                            : formData.clientes[1] || ''
+                        }
+                        onChange={e => {
+                          if (e.target.value === 'nuevo-1') {
+                            setClienteModalIndex(1);
+                            setModalClienteOpen(true);
+                          } else if (e.target.value === '') {
+                            handleClienteSelect(1, '');
+                            const nuevosClientesNuevos = [...clientesNuevos];
+                            nuevosClientesNuevos[1] = null;
+                            setClientesNuevos(nuevosClientesNuevos);
+                          } else {
+                            handleClienteSelect(1, e.target.value);
+                            const nuevosClientesNuevos = [...clientesNuevos];
+                            nuevosClientesNuevos[1] = null;
+                            setClientesNuevos(nuevosClientesNuevos);
+                          }
+                        }}
+                        label="Cliente 2 (Opcional)"
+                      >
+                        <MenuItem value="">
+                          <Typography variant="body2" color="textSecondary">
+                            Seleccionar...
+                          </Typography>
+                        </MenuItem>
+                        <MenuItem value="nuevo-1">
+                          <Typography
+                            variant="body1"
+                            sx={{ fontStyle: 'italic' }}
+                          >
+                            + Crear Cliente Nuevo
+                          </Typography>
+                        </MenuItem>
+                        {clientes.map(cliente => (
+                          <MenuItem key={cliente._id} value={cliente._id}>
+                            <Box>
+                              <Typography variant="body1">
+                                {cliente.NOMBRE}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="textSecondary"
+                              >
+                                {cliente.cedula}
+                              </Typography>
+                            </Box>
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  </Grid>
+
+                  {formData.clientes[1] && (
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <Alert severity="info" sx={{ mt: 2 }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                          }}
+                        >
+                          <Typography variant="body2">
+                            Cliente 2:{' '}
+                            <strong>
+                              {typeof formData.clientes[1] === 'object'
+                                ? formData.clientes[1].NOMBRE
+                                : clientes.find(
+                                    c => c._id === formData.clientes[1]
+                                  )?.NOMBRE || 'N/A'}
+                            </strong>
+                          </Typography>
+                          <IconButton
+                            size="small"
+                            onClick={handleEliminarSegundoCliente}
+                            color="error"
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      </Alert>
+                    </Grid>
+                  )}
+                </>
               )}
 
               {/* Selección de Empresa */}
@@ -424,7 +761,13 @@ export default function NuevoFinanciamientoPage() {
                   <Select
                     name="vehiculo"
                     value={formData.vehiculo}
-                    onChange={handleSelectChange}
+                    onChange={e => {
+                      if (e.target.value === 'nuevo-vehiculo') {
+                        setVehiculoModalOpen(true);
+                        return;
+                      }
+                      handleSelectChange(e);
+                    }}
                     label="Vehículo (Opcional)"
                   >
                     <MenuItem value="">
@@ -432,18 +775,25 @@ export default function NuevoFinanciamientoPage() {
                         Sin vehículo
                       </Typography>
                     </MenuItem>
-                    {vehiculos.map(vehiculo => (
-                      <MenuItem key={vehiculo._id} value={vehiculo._id}>
-                        <Box>
-                          <Typography variant="body1">
-                            {vehiculo.Marca} {vehiculo.Modelo}
-                          </Typography>
-                          <Typography variant="caption" color="textSecondary">
-                            {vehiculo.Matricula} - {vehiculo.Año}
-                          </Typography>
-                        </Box>
-                      </MenuItem>
-                    ))}
+                    <MenuItem value="nuevo-vehiculo">
+                      <Typography variant="body1" sx={{ fontStyle: 'italic' }}>
+                        + Crear Vehículo Nuevo
+                      </Typography>
+                    </MenuItem>
+                    {vehiculos
+                      .filter(vehiculo => vehiculo.disponible !== false)
+                      .map(vehiculo => (
+                        <MenuItem key={vehiculo._id} value={vehiculo._id}>
+                          <Box>
+                            <Typography variant="body1">
+                              {vehiculo.Marca} {vehiculo.Modelo}
+                            </Typography>
+                            <Typography variant="caption" color="textSecondary">
+                              {vehiculo.Matricula} - {vehiculo.Año}
+                            </Typography>
+                          </Box>
+                        </MenuItem>
+                      ))}
                   </Select>
                 </FormControl>
               </Grid>
@@ -460,28 +810,139 @@ export default function NuevoFinanciamientoPage() {
                 <Divider sx={{ mb: 3 }} />
               </Grid>
 
-              <Grid size={{ xs: 12, md: 4 }}>
+              {/* Valor Base */}
+              <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   fullWidth
-                  label="Costo del Vehículo"
-                  name="costoVehiculo"
-                  value={formData.costoVehiculo}
+                  label="Valor Base"
+                  name="valorBase"
+                  value={formData.valorBase}
                   onChange={handleChange}
                   required
-                  placeholder="Ingrese el costo del vehículo"
+                  placeholder="Ingrese el valor base"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Alert
+                  severity="info"
+                  sx={{ height: '100%', display: 'flex', alignItems: 'center' }}
+                >
+                  <Typography variant="body2">
+                    Este será el valor por la financiación del vehículo
+                  </Typography>
+                </Alert>
+              </Grid>
+
+              {/* Checkbox y Costos de Documentación */}
+              <Grid size={{ xs: 12 }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={incluirCostosDocumentacion}
+                      onChange={e => {
+                        setIncluirCostosDocumentacion(e.target.checked);
+                        if (!e.target.checked) {
+                          setFormData(prev => ({
+                            ...prev,
+                            costosDocumentacion: 0,
+                          }));
+                        }
+                      }}
+                    />
+                  }
+                  label="Incluir Costos de Documentación"
                 />
               </Grid>
 
+              {incluirCostosDocumentacion && (
+                <>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField
+                      fullWidth
+                      label="Costos de Documentación"
+                      name="costosDocumentacion"
+                      value={formData.costosDocumentacion || 0}
+                      onChange={handleChange}
+                      placeholder="Costos de documentación"
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Alert
+                      severity="info"
+                      sx={{
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Typography variant="body2">
+                        Este es el costo por la tramitación o documentación del
+                        vehículo
+                      </Typography>
+                    </Alert>
+                  </Grid>
+                </>
+              )}
+
+              {/* Checkbox y Gastos Extras */}
+              <Grid size={{ xs: 12 }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={incluirGastosExtras}
+                      onChange={e => {
+                        setIncluirGastosExtras(e.target.checked);
+                        if (!e.target.checked) {
+                          setFormData(prev => ({
+                            ...prev,
+                            gastosExtras: 0,
+                          }));
+                        }
+                      }}
+                    />
+                  }
+                  label="Incluir Gastos Extras"
+                />
+              </Grid>
+
+              {incluirGastosExtras && (
+                <>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <TextField
+                      fullWidth
+                      label="Gastos Extras"
+                      name="gastosExtras"
+                      value={formData.gastosExtras || 0}
+                      onChange={handleChange}
+                      placeholder="Gastos adicionales"
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Alert
+                      severity="info"
+                      sx={{
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Typography variant="body2">
+                        Gastos adicionales relacionados con el financiamiento
+                      </Typography>
+                    </Alert>
+                  </Grid>
+                </>
+              )}
+
+              {/* Cantidad de Cuotas, Valor de Cuota y Fecha Primera Cuota */}
               <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   fullWidth
                   label="Número de Cuotas"
                   name="cuotas"
-                  type="number"
                   value={formData.cuotas}
                   onChange={handleChange}
                   required
-                  inputProps={{ min: 1, max: 120 }}
                 />
               </Grid>
 
@@ -494,6 +955,7 @@ export default function NuevoFinanciamientoPage() {
                   onChange={handleChange}
                   required
                   placeholder="Ingrese el valor de la cuota"
+                  inputProps={{ min: 0, step: 0.01 }}
                 />
               </Grid>
 
@@ -510,12 +972,226 @@ export default function NuevoFinanciamientoPage() {
                 />
               </Grid>
 
+              {/* Tabla de Cuotas Futuras */}
+              {formData.cuotasFuturas && formData.cuotasFuturas.length > 0 && (
+                <Grid size={{ xs: 12 }}>
+                  <Card sx={{ bgcolor: 'background.paper', mt: 2 }}>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>
+                        Cuotas Futuras
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        color="textSecondary"
+                        sx={{ mb: 2 }}
+                      >
+                        Puede editar las fechas de vencimiento de cada cuota
+                      </Typography>
+                      <TableContainer>
+                        <Table size="small">
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>#</TableCell>
+                              <TableCell>Fecha de Vencimiento</TableCell>
+                              <TableCell align="right">Valor Cuota</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {formData.cuotasFuturas.map((cuota, index) => (
+                              <TableRow key={index}>
+                                <TableCell>
+                                  <Chip
+                                    label={`Cuota ${cuota.numeroCuota}`}
+                                    size="small"
+                                    color="primary"
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <TextField
+                                    type="date"
+                                    value={cuota.fechaVencimiento}
+                                    onChange={e =>
+                                      handleFechaCuotaChange(
+                                        index,
+                                        e.target.value
+                                      )
+                                    }
+                                    size="small"
+                                    InputLabelProps={{ shrink: true }}
+                                    sx={{ width: '100%', maxWidth: 200 }}
+                                  />
+                                </TableCell>
+                                <TableCell align="right">
+                                  <Typography variant="body2" fontWeight={600}>
+                                    {formatCurrency(cuota.valorCuota)}
+                                  </Typography>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              )}
+              {/* Cuotas Extras */}
+              <Grid size={{ xs: 12 }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={mostrarCuotasExtras}
+                      onChange={e => {
+                        setMostrarCuotasExtras(e.target.checked);
+                        if (!e.target.checked) {
+                          setCuotasExtras([]);
+                        }
+                      }}
+                    />
+                  }
+                  label="Agregar Cuotas Extras"
+                />
+              </Grid>
+
+              {mostrarCuotasExtras && (
+                <>
+                  <Grid size={{ xs: 12 }}>
+                    <Card sx={{ bgcolor: 'background.paper', mt: 2, mb: 2 }}>
+                      <CardContent>
+                        <Typography variant="h6" gutterBottom>
+                          Nueva Cuota Extra
+                        </Typography>
+                        <Grid container spacing={2}>
+                          <Grid size={{ xs: 12, md: 4 }}>
+                            <TextField
+                              fullWidth
+                              label="Valor Cuota"
+                              value={nuevaCuotaExtra.valorCuota}
+                              onChange={e =>
+                                setNuevaCuotaExtra({
+                                  ...nuevaCuotaExtra,
+                                  valorCuota: Number(e.target.value),
+                                })
+                              }
+                              placeholder="Ingrese el valor de la cuota"
+                            />
+                          </Grid>
+                          <Grid size={{ xs: 12, md: 4 }}>
+                            <TextField
+                              fullWidth
+                              label="Fecha Cuota"
+                              type="date"
+                              value={nuevaCuotaExtra.fechaCuota}
+                              onChange={e =>
+                                setNuevaCuotaExtra({
+                                  ...nuevaCuotaExtra,
+                                  fechaCuota: e.target.value,
+                                })
+                              }
+                              InputLabelProps={{ shrink: true }}
+                            />
+                          </Grid>
+                          <Grid size={{ xs: 12, md: 4 }}>
+                            <Button
+                              variant="contained"
+                              startIcon={<AddIcon />}
+                              onClick={handleAgregarCuotaExtra}
+                              fullWidth
+                              sx={{ height: '100%' }}
+                              disabled={
+                                nuevaCuotaExtra.valorCuota <= 0 ||
+                                !nuevaCuotaExtra.fechaCuota
+                              }
+                            >
+                              Agregar
+                            </Button>
+                          </Grid>
+                        </Grid>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+
+                  {/* Tabla de Cuotas Extras */}
+                  {cuotasExtras.length > 0 && (
+                    <Grid size={{ xs: 12 }}>
+                      <Card sx={{ bgcolor: 'background.paper', mt: 2 }}>
+                        <CardContent>
+                          <Typography variant="h6" gutterBottom>
+                            Cuotas Extras
+                          </Typography>
+                          <TableContainer>
+                            <Table size="small">
+                              <TableHead>
+                                <TableRow>
+                                  <TableCell>#</TableCell>
+                                  <TableCell>Fecha de Vencimiento</TableCell>
+                                  <TableCell align="right">
+                                    Valor Cuota
+                                  </TableCell>
+                                  <TableCell align="center">Acciones</TableCell>
+                                </TableRow>
+                              </TableHead>
+                              <TableBody>
+                                {cuotasExtras.map((cuota, index) => (
+                                  <TableRow key={index}>
+                                    <TableCell>
+                                      <Chip
+                                        label={`Cuota Extra ${cuota.numeroCuota}`}
+                                        size="small"
+                                        color="secondary"
+                                      />
+                                    </TableCell>
+                                    <TableCell>
+                                      <TextField
+                                        type="date"
+                                        value={cuota.fechaVencimiento}
+                                        onChange={e =>
+                                          handleFechaCuotaExtraChange(
+                                            index,
+                                            e.target.value
+                                          )
+                                        }
+                                        size="small"
+                                        InputLabelProps={{ shrink: true }}
+                                        sx={{ width: '100%', maxWidth: 200 }}
+                                      />
+                                    </TableCell>
+                                    <TableCell align="right">
+                                      <Typography
+                                        variant="body2"
+                                        fontWeight={600}
+                                      >
+                                        {formatCurrency(cuota.valorCuota)}
+                                      </Typography>
+                                    </TableCell>
+                                    <TableCell align="center">
+                                      <IconButton
+                                        size="small"
+                                        onClick={() =>
+                                          handleEliminarCuotaExtra(index)
+                                        }
+                                        color="error"
+                                      >
+                                        <DeleteIcon fontSize="small" />
+                                      </IconButton>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
+                              </TableBody>
+                            </Table>
+                          </TableContainer>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  )}
+                </>
+              )}
               <Grid size={{ xs: 12 }}>
                 <TextField
                   fullWidth
                   label="Observaciones"
                   name="observaciones"
-                  value={formData.observaciones}
+                  value={formData.observaciones || ''}
                   onChange={handleChange}
                   multiline
                   rows={3}
@@ -526,6 +1202,17 @@ export default function NuevoFinanciamientoPage() {
               {/* Resumen de Cálculos */}
               {formData.montoTotal > 0 && (
                 <Grid size={{ xs: 12 }}>
+                  {formData.interesTotal < 0 && (
+                    <Alert severity="warning" sx={{ mb: 2 }}>
+                      <Typography variant="body2">
+                        <strong>Advertencia:</strong> El interés total es
+                        negativo ({formatCurrency(formData.interesTotal)}). Esto
+                        puede indicar que el monto total a cobrar es menor que
+                        los costos base. Puede continuar guardando el
+                        financiamiento.
+                      </Typography>
+                    </Alert>
+                  )}
                   <Card sx={{ bgcolor: 'background.paper', mt: 2 }}>
                     <CardContent>
                       <Typography variant="h6" gutterBottom>
@@ -534,12 +1221,34 @@ export default function NuevoFinanciamientoPage() {
                       <Grid container spacing={2}>
                         <Grid size={{ xs: 12, md: 3 }}>
                           <Typography variant="body2" color="textSecondary">
-                            Costo Vehículo
+                            Valor Base
                           </Typography>
                           <Typography variant="h6" color="primary">
-                            {formatCurrency(formData.costoVehiculo)}
+                            {formatCurrency(formData.valorBase)}
                           </Typography>
                         </Grid>
+                        {(formData.costosDocumentacion || 0) > 0 && (
+                          <Grid size={{ xs: 12, md: 3 }}>
+                            <Typography variant="body2" color="textSecondary">
+                              Costos Documentación
+                            </Typography>
+                            <Typography variant="h6">
+                              {formatCurrency(
+                                formData.costosDocumentacion || 0
+                              )}
+                            </Typography>
+                          </Grid>
+                        )}
+                        {(formData.gastosExtras || 0) > 0 && (
+                          <Grid size={{ xs: 12, md: 3 }}>
+                            <Typography variant="body2" color="textSecondary">
+                              Gastos Extras
+                            </Typography>
+                            <Typography variant="h6">
+                              {formatCurrency(formData.gastosExtras || 0)}
+                            </Typography>
+                          </Grid>
+                        )}
                         <Grid size={{ xs: 12, md: 3 }}>
                           <Typography variant="body2" color="textSecondary">
                             Interés Total
@@ -550,7 +1259,7 @@ export default function NuevoFinanciamientoPage() {
                         </Grid>
                         <Grid size={{ xs: 12, md: 3 }}>
                           <Typography variant="body2" color="textSecondary">
-                            Monto Total
+                            Monto por Cobrar
                           </Typography>
                           <Typography variant="h6" fontWeight="bold">
                             {formatCurrency(formData.montoTotal)}
@@ -563,6 +1272,9 @@ export default function NuevoFinanciamientoPage() {
                           <Typography variant="h6">
                             {formData.cuotas} cuotas de{' '}
                             {formatCurrency(formData.valorCuota)}
+                            {cuotasExtras.length > 0
+                              ? ` + ${cuotasExtras.length} extras`
+                              : ''}
                           </Typography>
                         </Grid>
                       </Grid>
@@ -628,6 +1340,12 @@ export default function NuevoFinanciamientoPage() {
           open={modalClienteOpen}
           onClose={() => setModalClienteOpen(false)}
           onClienteCreado={handleClienteCreado}
+        />
+        <FormularioVehiculo
+          open={vehiculoModalOpen}
+          onClose={() => setVehiculoModalOpen(false)}
+          onSave={handleGuardarVehiculo}
+          title="Registrar Vehículo"
         />
       </Container>
     </AuthGuard>
