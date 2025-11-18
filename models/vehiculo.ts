@@ -9,6 +9,11 @@ const vehiculoSchema = new Schema(
     Descripcion: { type: String, require: false, unique: false, trim: true },
     Año: { type: Number, require: false, unique: false },
     Color: { type: String, require: false, unique: false, trim: true },
+    disponible: {
+      type: Boolean,
+      default: true,
+      required: false,
+    },
     usuarioCreacion: {
       type: Schema.Types.ObjectId,
       ref: 'Usuario',
@@ -30,6 +35,11 @@ const vehiculoSchema = new Schema(
   },
   { timestamps: true }
 );
+
+// Índices para mejorar rendimiento
+vehiculoSchema.index({ disponible: 1 });
+vehiculoSchema.index({ Matricula: 1 });
+vehiculoSchema.index({ Padron: 1 });
 
 // Limpiar el modelo si ya existe para forzar la recreación
 if (models.Vehiculo) {

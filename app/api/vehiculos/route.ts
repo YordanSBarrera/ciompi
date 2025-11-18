@@ -34,6 +34,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const newVehiculo = new Vehiculo({
       ...body,
+      disponible: body.disponible !== undefined ? body.disponible : true, // Por defecto disponible
       usuarioCreacion: userId,
       usuarioModificacion: userId,
     });

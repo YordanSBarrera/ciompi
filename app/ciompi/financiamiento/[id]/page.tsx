@@ -562,52 +562,71 @@ export default function FinanciamientoDetailPage() {
 
               <Card sx={{ bgcolor: 'background.paper' }}>
                 <CardContent>
-                  <Typography
-                    variant="body2"
-                    color="textSecondary"
-                    gutterBottom
-                  >
-                    Marca y Modelo
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    gutterBottom
-                    sx={{ fontWeight: 500 }}
-                  >
-                    {typeof financiamiento.vehiculo === 'object'
-                      ? `${financiamiento.vehiculo.Marca} ${financiamiento.vehiculo.Modelo}`
-                      : 'N/A'}
-                  </Typography>
-
-                  <Typography
-                    variant="body2"
-                    color="textSecondary"
-                    gutterBottom
-                  >
-                    Matrícula
-                  </Typography>
-                  <Typography
-                    variant="body1"
-                    gutterBottom
-                    sx={{ fontFamily: 'monospace', fontWeight: 600 }}
-                  >
-                    {typeof financiamiento.vehiculo === 'object'
-                      ? financiamiento.vehiculo.Matricula
-                      : 'N/A'}
-                  </Typography>
-
-                  <Typography
-                    variant="body2"
-                    color="textSecondary"
-                    gutterBottom
-                  >
-                    Año
-                  </Typography>
-                  <Typography variant="body1" gutterBottom>
-                    {typeof financiamiento.vehiculo === 'object'
-                      ? financiamiento.vehiculo.Año
-                      : 'N/A'}
-                  </Typography>
+                  {typeof financiamiento.vehiculo === 'object' ? (
+                    <>
+                      <FieldData
+                        fieldName="Marca"
+                        fieldValue={
+                          financiamiento.vehiculo.Marca || 'No especificada'
+                        }
+                      />
+                      <FieldData
+                        fieldName="Modelo"
+                        fieldValue={
+                          financiamiento.vehiculo.Modelo || 'No especificado'
+                        }
+                      />
+                      <FieldData
+                        fieldName="Matrícula"
+                        fieldValue={
+                          financiamiento.vehiculo.Matricula || 'No especificada'
+                        }
+                      />
+                      <FieldData
+                        fieldName="Padrón"
+                        fieldValue={
+                          financiamiento.vehiculo.Padron
+                            ? financiamiento.vehiculo.Padron.toString()
+                            : 'No especificado'
+                        }
+                      />
+                      <FieldData
+                        fieldName="Año"
+                        fieldValue={
+                          financiamiento.vehiculo.Año
+                            ? financiamiento.vehiculo.Año.toString()
+                            : 'No especificado'
+                        }
+                      />
+                      <FieldData
+                        fieldName="Color"
+                        fieldValue={
+                          financiamiento.vehiculo.Color || 'No especificado'
+                        }
+                      />
+                      <FieldData
+                        fieldName="Descripción"
+                        fieldValue={
+                          financiamiento.vehiculo.Descripcion ||
+                          'No especificada'
+                        }
+                      />
+                      <FieldData
+                        fieldName="Disponible"
+                        fieldValue={
+                          financiamiento.vehiculo.disponible !== undefined
+                            ? financiamiento.vehiculo.disponible
+                              ? 'Sí'
+                              : 'No'
+                            : 'No especificado'
+                        }
+                      />
+                    </>
+                  ) : (
+                    <Typography variant="body1" color="textSecondary">
+                      No hay vehículo asignado
+                    </Typography>
+                  )}
                 </CardContent>
               </Card>
             </Grid>
@@ -1000,7 +1019,6 @@ export default function FinanciamientoDetailPage() {
                             <TableCell>Monto</TableCell>
                             <TableCell>Método</TableCell>
                             <TableCell>Comprobante</TableCell>
-                            <TableCell>Cobrado por</TableCell>
                             <TableCell>Acciones</TableCell>
                           </TableRow>
                         </TableHead>
@@ -1065,12 +1083,7 @@ export default function FinanciamientoDetailPage() {
                                   {pago.numeroComprobante || '-'}
                                 </Typography>
                               </TableCell>
-                              <TableCell>
-                                {typeof pago.usuarioRegistro === 'object' &&
-                                pago.usuarioRegistro?.nombre
-                                  ? pago.usuarioRegistro.nombre
-                                  : '-'}
-                              </TableCell>
+
                               <TableCell>
                                 <IconButton
                                   size="small"

@@ -780,18 +780,20 @@ export default function NuevoFinanciamientoPage() {
                         + Crear Vehículo Nuevo
                       </Typography>
                     </MenuItem>
-                    {vehiculos.map(vehiculo => (
-                      <MenuItem key={vehiculo._id} value={vehiculo._id}>
-                        <Box>
-                          <Typography variant="body1">
-                            {vehiculo.Marca} {vehiculo.Modelo}
-                          </Typography>
-                          <Typography variant="caption" color="textSecondary">
-                            {vehiculo.Matricula} - {vehiculo.Año}
-                          </Typography>
-                        </Box>
-                      </MenuItem>
-                    ))}
+                    {vehiculos
+                      .filter(vehiculo => vehiculo.disponible !== false)
+                      .map(vehiculo => (
+                        <MenuItem key={vehiculo._id} value={vehiculo._id}>
+                          <Box>
+                            <Typography variant="body1">
+                              {vehiculo.Marca} {vehiculo.Modelo}
+                            </Typography>
+                            <Typography variant="caption" color="textSecondary">
+                              {vehiculo.Matricula} - {vehiculo.Año}
+                            </Typography>
+                          </Box>
+                        </MenuItem>
+                      ))}
                   </Select>
                 </FormControl>
               </Grid>

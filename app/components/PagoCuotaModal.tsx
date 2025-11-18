@@ -135,7 +135,10 @@ export default function PagoCuotaModal({
       const dataToSend = {
         ...formData,
         esExtra: tipoPago === 'extra',
-        numeroCuota: tipoPago === 'extra' ? cuotasTotal + numeroCuotaExtra : formData.numeroCuota,
+        numeroCuota:
+          tipoPago === 'extra'
+            ? cuotasTotal + numeroCuotaExtra
+            : formData.numeroCuota,
         usuarioRegistro,
       };
 
@@ -168,7 +171,6 @@ export default function PagoCuotaModal({
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
-      minimumFractionDigits: 2,
     }).format(amount);
   };
 
@@ -216,7 +218,10 @@ export default function PagoCuotaModal({
                     Cuota Normal ({cuotasPagadas} de {cuotasTotal} pagadas)
                   </MenuItem>
                   <MenuItem value="extra" disabled={cuotasExtras === 0}>
-                    Cuota Extra{cuotasExtras > 0 ? ` (${cuotasExtras} disponibles)` : ' (No hay cuotas extras definidas)'}
+                    Cuota Extra
+                    {cuotasExtras > 0
+                      ? ` (${cuotasExtras} disponibles)`
+                      : ' (No hay cuotas extras definidas)'}
                   </MenuItem>
                 </Select>
               </FormControl>
@@ -265,7 +270,6 @@ export default function PagoCuotaModal({
                 value={formData.montoPago}
                 onChange={handleChange}
                 required
-                inputProps={{ min: 0.01, step: 0.01 }}
                 helperText={`Valor de cuota: ${formatCurrency(valorCuota)}`}
               />
             </Grid>
@@ -340,7 +344,6 @@ export default function PagoCuotaModal({
                 placeholder="Observaciones adicionales sobre el pago..."
               />
             </Grid>
-
           </Grid>
 
           {error && (

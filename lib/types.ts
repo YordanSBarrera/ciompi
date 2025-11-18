@@ -126,6 +126,7 @@ export interface VehiculoType {
   Descripcion?: string;
   Año?: number;
   Color?: string;
+  disponible?: boolean;
   usuarioCreacion?: Usuario | string;
   usuarioModificacion?: Usuario | string;
   createdAt?: Date;
@@ -140,6 +141,7 @@ export interface VehiculoFormType {
   Descripcion?: string;
   Año?: number;
   Color?: string;
+  disponible?: boolean;
 }
 
 // Tipos para Financiamiento
@@ -230,7 +232,7 @@ export interface PagoCuotaFormType {
   financiamiento: string;
   numeroCuota: number;
   montoPago: number;
-  fechaPago: Date;
+  fechaPago: Date | string;
   metodoPago: 'efectivo' | 'transferencia' | 'cheque' | 'tarjeta' | 'otro';
   observaciones?: string;
   numeroComprobante?: string;

@@ -1,6 +1,7 @@
 import { connectDB } from '@/db/dbConnection';
 import Financiamiento from '@/models/financiamiento';
 import Cliente from '@/models/cliente';
+import Vehiculo from '@/models/vehiculo';
 import { NextResponse, NextRequest } from 'next/server';
 import { getUserIdFromToken } from '@/lib/server-utils';
 
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
     const financiamientos = await query
       .populate('cliente', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
       .populate('cliente2', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
-      .populate('vehiculo', 'Marca Modelo Matricula Año Color')
+      .populate('vehiculo', 'Marca Modelo Matricula Padron Año Color Descripcion disponible')
       .populate('empresa', 'nombre descripcion telefono')
       .populate('usuarioRegistro', 'nombre usuario')
       .populate('usuarioCreacion', 'nombre usuario email')
@@ -184,13 +185,21 @@ export async function POST(request: NextRequest) {
 
     const financiamientoGuardado = await nuevoFinanciamiento.save();
 
+    // Si se asignó un vehículo, marcarlo como no disponible
+    if (body.vehiculo) {
+      await Vehiculo.findByIdAndUpdate(body.vehiculo, {
+        disponible: false,
+        usuarioModificacion: userId,
+      });
+    }
+
     // Devolver el financiamiento con información poblada
     const financiamientoCompleto = await Financiamiento.findById(
       financiamientoGuardado._id
     )
       .populate('cliente', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
       .populate('cliente2', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
-      .populate('vehiculo', 'Marca Modelo Matricula Año Color')
+      .populate('vehiculo', 'Marca Modelo Matricula Padron Año Color Descripcion disponible')
       .populate('empresa', 'nombre descripcion telefono')
       .populate('usuarioRegistro', 'nombre usuario')
       .populate('usuarioCreacion', 'nombre usuario email')
@@ -223,13 +232,26 @@ export async function DELETE(request: Request) {
       );
     }
 
-    const financiamientoEliminado = await Financiamiento.findByIdAndDelete(id);
-
-    if (!financiamientoEliminado) {
+    // Buscar el financiamiento antes de eliminarlo para obtener el vehículo
+    const financiamiento = await Financiamiento.findById(id);
+    
+    if (!financiamiento) {
       return NextResponse.json(
         { error: 'Financiamiento no encontrado' },
         { status: 404 }
       );
+    }
+
+    // Eliminar el financiamiento
+    await Financiamiento.findByIdAndDelete(id);
+
+    // Si tenía un vehículo asignado, marcarlo como disponible nuevamente
+    if (financiamiento.vehiculo) {
+      const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb';
+      await Vehiculo.findByIdAndUpdate(financiamiento.vehiculo, {
+        disponible: true,
+        usuarioModificacion: userId,
+      });
     }
 
     return NextResponse.json({
