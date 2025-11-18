@@ -138,12 +138,29 @@ export default function FinanciamientoDetailPage() {
   const generarTodasLasCuotas = () => {
     if (!financiamiento) return [];
 
+    // Calcular el monto pagado por cada cuota
+    const pagosPorCuota: { [key: number]: number } = {};
+    pagos
+      .filter(
+        pago =>
+          !pago.esExtra && pago.numeroCuota && pago.estadoPago === 'confirmado'
+      )
+      .forEach(pago => {
+        const numCuota = pago.numeroCuota!;
+        if (!pagosPorCuota[numCuota]) {
+          pagosPorCuota[numCuota] = 0;
+        }
+        pagosPorCuota[numCuota] += pago.montoPago;
+      });
+
     const todasLasCuotas: Array<{
       numeroCuota: number;
       fechaVencimiento: Date;
       valorCuota: number;
       esExtra: boolean;
       pagada: boolean;
+      montoPagado: number;
+      montoPendiente: number;
     }> = [];
 
     // Si hay cuotasFuturas definidas, usarlas
@@ -153,12 +170,9 @@ export default function FinanciamientoDetailPage() {
     ) {
       financiamiento.cuotasFuturas.forEach(cuota => {
         const fechaVencimiento = new Date(cuota.fechaVencimiento);
-        const pagada = pagos.some(
-          pago =>
-            !pago.esExtra &&
-            pago.numeroCuota === cuota.numeroCuota &&
-            pago.estadoPago === 'confirmado'
-        );
+        const montoPagado = pagosPorCuota[cuota.numeroCuota] || 0;
+        const pagada = montoPagado >= cuota.valorCuota;
+        const montoPendiente = Math.max(0, cuota.valorCuota - montoPagado);
 
         todasLasCuotas.push({
           numeroCuota: cuota.numeroCuota,
@@ -166,6 +180,8 @@ export default function FinanciamientoDetailPage() {
           valorCuota: cuota.valorCuota,
           esExtra: false,
           pagada,
+          montoPagado,
+          montoPendiente,
         });
       });
     } else {
@@ -175,11 +191,11 @@ export default function FinanciamientoDetailPage() {
         const fechaVencimiento = new Date(fechaPrimera);
         fechaVencimiento.setMonth(fechaVencimiento.getMonth() + i - 1);
 
-        const pagada = pagos.some(
-          pago =>
-            !pago.esExtra &&
-            pago.numeroCuota === i &&
-            pago.estadoPago === 'confirmado'
+        const montoPagado = pagosPorCuota[i] || 0;
+        const pagada = montoPagado >= financiamiento.valorCuota;
+        const montoPendiente = Math.max(
+          0,
+          financiamiento.valorCuota - montoPagado
         );
 
         todasLasCuotas.push({
@@ -188,6 +204,8 @@ export default function FinanciamientoDetailPage() {
           valorCuota: financiamiento.valorCuota,
           esExtra: false,
           pagada,
+          montoPagado,
+          montoPendiente,
         });
       }
     }
@@ -230,12 +248,29 @@ export default function FinanciamientoDetailPage() {
           return diferenciaMeses < 1.5; // Tolerancia de 1.5 meses
         });
 
+        // Para cuotas extras, calcular monto pagado si tienen numeroCuota
+        const numeroCuotaExtra = financiamiento.cuotas + i;
+        const montoPagadoExtra = pagos
+          .filter(
+            pago =>
+              pago.esExtra &&
+              pago.numeroCuota === numeroCuotaExtra &&
+              pago.estadoPago === 'confirmado'
+          )
+          .reduce((sum, pago) => sum + pago.montoPago, 0);
+        const montoPendienteExtra = Math.max(
+          0,
+          financiamiento.valorCuota - montoPagadoExtra
+        );
+
         todasLasCuotas.push({
-          numeroCuota: financiamiento.cuotas + i,
+          numeroCuota: numeroCuotaExtra,
           fechaVencimiento,
           valorCuota: financiamiento.valorCuota, // O el valor específico si está disponible
           esExtra: true,
-          pagada,
+          pagada: montoPagadoExtra >= financiamiento.valorCuota,
+          montoPagado: montoPagadoExtra,
+          montoPendiente: montoPendienteExtra,
         });
       }
     }
@@ -843,6 +878,12 @@ export default function FinanciamientoDetailPage() {
                             <TableCell align="right" sx={{ fontWeight: 600 }}>
                               Valor
                             </TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 600 }}>
+                              Pagado
+                            </TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 600 }}>
+                              Pendiente
+                            </TableCell>
                             <TableCell align="center" sx={{ fontWeight: 600 }}>
                               Estado
                             </TableCell>
@@ -914,12 +955,45 @@ export default function FinanciamientoDetailPage() {
                                     {formatCurrency(cuota.valorCuota)}
                                   </Typography>
                                 </TableCell>
+                                <TableCell align="right">
+                                  <Typography
+                                    variant="body2"
+                                    fontWeight={500}
+                                    color={
+                                      cuota.montoPagado > 0
+                                        ? 'success.main'
+                                        : 'text.secondary'
+                                    }
+                                  >
+                                    {formatCurrency(cuota.montoPagado || 0)}
+                                  </Typography>
+                                </TableCell>
+                                <TableCell align="right">
+                                  <Typography
+                                    variant="body2"
+                                    fontWeight={500}
+                                    color={
+                                      cuota.montoPendiente > 0
+                                        ? 'error.main'
+                                        : 'text.secondary'
+                                    }
+                                  >
+                                    {formatCurrency(cuota.montoPendiente || 0)}
+                                  </Typography>
+                                </TableCell>
                                 <TableCell align="center">
                                   {cuota.pagada ? (
                                     <Chip
                                       label="Pagada"
                                       size="small"
                                       color="success"
+                                      variant="filled"
+                                    />
+                                  ) : cuota.montoPagado > 0 ? (
+                                    <Chip
+                                      label="Parcial"
+                                      size="small"
+                                      color="warning"
                                       variant="filled"
                                     />
                                   ) : vencida ? (
@@ -1283,6 +1357,7 @@ export default function FinanciamientoDetailPage() {
           cuotasPagadas={financiamiento.cuotasPagadas}
           cuotasTotal={financiamiento.cuotas}
           cuotasExtras={financiamiento.cuotasExtras || 0}
+          pagos={pagos}
           onPagoRegistrado={handlePagoRegistrado}
         />
 

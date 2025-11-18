@@ -76,19 +76,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar duplicados solo si no es extra
-    if (!body.esExtra) {
-      const pagoExistente = await PagoCuota.findOne({
-        financiamiento: body.financiamiento,
-        numeroCuota: body.numeroCuota,
-      });
-      if (pagoExistente) {
-        return NextResponse.json(
-          { error: `La cuota ${body.numeroCuota} ya fue registrada` },
-          { status: 400 }
-        );
-      }
-    }
+    // Permitir múltiples pagos de la misma cuota (pagos parciales)
+    // No verificamos duplicados, ya que una cuota puede pagarse en múltiples pagos
 
     // Crear nuevo pago
     const nuevoPago = new PagoCuota({
@@ -103,11 +92,39 @@ export async function POST(request: NextRequest) {
 
     const pagoGuardado = await nuevoPago.save();
 
-    // Actualizar el financiamiento con el nuevo pago
-    const cuotasPagadas = body.esExtra
-      ? financiamiento.cuotasPagadas
-      : financiamiento.cuotasPagadas + 1;
-    const montoPagado = financiamiento.montoPagado + body.montoPago;
+    // Calcular el total pagado sumando todos los pagos confirmados
+    const todosLosPagos = await PagoCuota.find({
+      financiamiento: body.financiamiento,
+      estadoPago: 'confirmado',
+    });
+    
+    const montoPagado = todosLosPagos.reduce(
+      (sum, pago) => sum + pago.montoPago,
+      0
+    );
+
+    // Calcular cuotas completamente pagadas
+    // Para cada cuota normal, sumar todos sus pagos y verificar si >= valorCuota
+    const pagosPorCuota: { [key: number]: number } = {};
+    todosLosPagos
+      .filter(pago => !pago.esExtra && pago.numeroCuota)
+      .forEach(pago => {
+        const numCuota = pago.numeroCuota!;
+        if (!pagosPorCuota[numCuota]) {
+          pagosPorCuota[numCuota] = 0;
+        }
+        pagosPorCuota[numCuota] += pago.montoPago;
+      });
+
+    // Contar cuántas cuotas están completamente pagadas
+    let cuotasPagadas = 0;
+    for (let i = 1; i <= financiamiento.cuotas; i++) {
+      const totalPagadoCuota = pagosPorCuota[i] || 0;
+      if (totalPagadoCuota >= financiamiento.valorCuota) {
+        cuotasPagadas++;
+      }
+    }
+
     const cuotasPendientes = financiamiento.cuotas - cuotasPagadas;
     const saldoPendiente = financiamiento.montoTotal - montoPagado;
 
@@ -185,14 +202,41 @@ export async function DELETE(request: NextRequest) {
     // Eliminar el pago
     await PagoCuota.findByIdAndDelete(id);
 
-    // Actualizar el financiamiento restando este pago
+    // Recalcular el financiamiento después de eliminar el pago
     const financiamiento = await Financiamiento.findById(pago.financiamiento);
     if (financiamiento) {
-      const cuotasPagadas = Math.max(0, financiamiento.cuotasPagadas - 1);
-      const montoPagado = Math.max(
-        0,
-        financiamiento.montoPagado - pago.montoPago
+      // Calcular el total pagado sumando todos los pagos confirmados restantes
+      const todosLosPagos = await PagoCuota.find({
+        financiamiento: pago.financiamiento,
+        estadoPago: 'confirmado',
+      });
+      
+      const montoPagado = todosLosPagos.reduce(
+        (sum, p) => sum + p.montoPago,
+        0
       );
+
+      // Calcular cuotas completamente pagadas
+      const pagosPorCuota: { [key: number]: number } = {};
+      todosLosPagos
+        .filter(p => !p.esExtra && p.numeroCuota)
+        .forEach(p => {
+          const numCuota = p.numeroCuota!;
+          if (!pagosPorCuota[numCuota]) {
+            pagosPorCuota[numCuota] = 0;
+          }
+          pagosPorCuota[numCuota] += p.montoPago;
+        });
+
+      // Contar cuántas cuotas están completamente pagadas
+      let cuotasPagadas = 0;
+      for (let i = 1; i <= financiamiento.cuotas; i++) {
+        const totalPagadoCuota = pagosPorCuota[i] || 0;
+        if (totalPagadoCuota >= financiamiento.valorCuota) {
+          cuotasPagadas++;
+        }
+      }
+
       const cuotasPendientes = financiamiento.cuotas - cuotasPagadas;
       const saldoPendiente = financiamiento.montoTotal - montoPagado;
 
@@ -204,7 +248,7 @@ export async function DELETE(request: NextRequest) {
         estadoFinanciamiento = 'finalizado';
       }
 
-      // Actualizar el financiamiento restando el pago y registrando el usuario que lo modificó
+      // Actualizar el financiamiento y registrando el usuario que lo modificó
       await Financiamiento.findByIdAndUpdate(pago.financiamiento, {
         cuotasPagadas,
         montoPagado,
