@@ -4,8 +4,8 @@ const vehiculoSchema = new Schema(
   {
     Modelo: { type: String, require: true, unique: false, trim: true },
     Marca: { type: String, require: true, unique: false, trim: true },
-    Matricula: { type: String, require: true, unique: true, trim: false },
-    Padron: { type: String, require: true, unique: true, trim: true },
+    Matricula: { type: String, require: false, unique: true, trim: false },
+    Padron: { type: String, require: false, trim: true },
     Descripcion: { type: String, require: false, unique: false, trim: true },
     Año: { type: Number, require: false, unique: false },
     Color: { type: String, require: false, unique: false, trim: true },
@@ -38,8 +38,6 @@ const vehiculoSchema = new Schema(
 
 // Índices para mejorar rendimiento
 vehiculoSchema.index({ disponible: 1 });
-vehiculoSchema.index({ Matricula: 1 });
-vehiculoSchema.index({ Padron: 1 });
 
 // Limpiar el modelo si ya existe para forzar la recreación
 if (models.Vehiculo) {

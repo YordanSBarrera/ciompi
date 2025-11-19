@@ -13,8 +13,9 @@ export async function GET(
 
     // Obtener el financiamiento con información poblada
     const financiamiento = await Financiamiento.findById(id)
-      .populate('cliente', 'NOMBRE TELEFONO cedula DIRECCION correo')
-      .populate('vehiculo', 'Marca Modelo Matricula Año Color')
+      .populate('cliente', 'NOMBRE TELEFONO cedula DIRECCION correo profesion')
+      .populate('cliente2', 'NOMBRE TELEFONO cedula DIRECCION correo profesion')
+      .populate('vehiculo', 'Marca Modelo Matricula Año Color Padron Descripcion disponible')
       .populate('empresa', 'nombre descripcion telefono')
       .populate('usuarioRegistro', 'nombre usuario email')
       .populate('usuarioCreacion', 'nombre usuario email')
@@ -157,6 +158,135 @@ function generateFinanciamientoDetailReportHTML(
     0
   );
   
+  // Generar todas las cuotas (normales y extras)
+  const generarTodasLasCuotas = () => {
+    if (!financiamiento) return [];
+
+    // Calcular el monto pagado por cada cuota
+    const pagosPorCuota: { [key: number]: number } = {};
+    pagos
+      .filter(
+        pago =>
+          !pago.esExtra && pago.numeroCuota && pago.estadoPago === 'confirmado'
+      )
+      .forEach(pago => {
+        const numCuota = pago.numeroCuota!;
+        if (!pagosPorCuota[numCuota]) {
+          pagosPorCuota[numCuota] = 0;
+        }
+        pagosPorCuota[numCuota] += pago.montoPago;
+      });
+
+    const todasLasCuotas: Array<{
+      numeroCuota: number;
+      fechaVencimiento: Date;
+      valorCuota: number;
+      esExtra: boolean;
+      pagada: boolean;
+      montoPagado: number;
+      montoPendiente: number;
+    }> = [];
+
+    // Si hay cuotasFuturas definidas, usarlas
+    if (
+      financiamiento.cuotasFuturas &&
+      financiamiento.cuotasFuturas.length > 0
+    ) {
+      financiamiento.cuotasFuturas.forEach(cuota => {
+        const fechaVencimiento = new Date(cuota.fechaVencimiento);
+        const montoPagado = pagosPorCuota[cuota.numeroCuota] || 0;
+        const pagada = montoPagado >= cuota.valorCuota;
+        const montoPendiente = Math.max(0, cuota.valorCuota - montoPagado);
+
+        todasLasCuotas.push({
+          numeroCuota: cuota.numeroCuota,
+          fechaVencimiento,
+          valorCuota: cuota.valorCuota,
+          esExtra: false,
+          pagada,
+          montoPagado,
+          montoPendiente,
+        });
+      });
+    } else {
+      // Si no hay cuotasFuturas, calcular las fechas basándome en fechaPrimeraCuota
+      const fechaPrimera = new Date(financiamiento.fechaPrimeraCuota);
+      for (let i = 1; i <= financiamiento.cuotas; i++) {
+        const fechaVencimiento = new Date(fechaPrimera);
+        fechaVencimiento.setMonth(fechaVencimiento.getMonth() + i - 1);
+
+        const montoPagado = pagosPorCuota[i] || 0;
+        const pagada = montoPagado >= financiamiento.valorCuota;
+        const montoPendiente = Math.max(
+          0,
+          financiamiento.valorCuota - montoPagado
+        );
+
+        todasLasCuotas.push({
+          numeroCuota: i,
+          fechaVencimiento,
+          valorCuota: financiamiento.valorCuota,
+          esExtra: false,
+          pagada,
+          montoPagado,
+          montoPendiente,
+        });
+      }
+    }
+
+    // Agregar cuotas extras si existen
+    if (financiamiento.cuotasExtras && financiamiento.cuotasExtras > 0) {
+      const fechaUltima =
+        todasLasCuotas.length > 0
+          ? new Date(todasLasCuotas[todasLasCuotas.length - 1].fechaVencimiento)
+          : financiamiento.cuotasFuturas &&
+              financiamiento.cuotasFuturas.length > 0
+            ? new Date(
+                financiamiento.cuotasFuturas[
+                  financiamiento.cuotasFuturas.length - 1
+                ].fechaVencimiento
+              )
+            : new Date(financiamiento.fechaUltimaCuota);
+
+      const pagosExtras = pagos.filter(
+        pago => pago.esExtra && pago.estadoPago === 'confirmado'
+      );
+
+      for (let i = 1; i <= financiamiento.cuotasExtras; i++) {
+        const fechaVencimiento = new Date(fechaUltima);
+        fechaVencimiento.setMonth(fechaVencimiento.getMonth() + i);
+
+        const numeroCuotaExtra = financiamiento.cuotas + i;
+        const montoPagadoExtra = pagos
+          .filter(
+            pago =>
+              pago.esExtra &&
+              pago.numeroCuota === numeroCuotaExtra &&
+              pago.estadoPago === 'confirmado'
+          )
+          .reduce((sum, pago) => sum + pago.montoPago, 0);
+        const montoPendienteExtra = Math.max(
+          0,
+          financiamiento.valorCuota - montoPagadoExtra
+        );
+
+        todasLasCuotas.push({
+          numeroCuota: numeroCuotaExtra,
+          fechaVencimiento,
+          valorCuota: financiamiento.valorCuota,
+          esExtra: true,
+          pagada: montoPagadoExtra >= financiamiento.valorCuota,
+          montoPagado: montoPagadoExtra,
+          montoPendiente: montoPendienteExtra,
+        });
+      }
+    }
+
+    return todasLasCuotas.sort((a, b) => a.numeroCuota - b.numeroCuota);
+  };
+
+  const todasLasCuotas = generarTodasLasCuotas();
+  
   // Asegurar valores por defecto
   const finId = financiamiento?._id?.toString() || 'N/A';
   const finIdShort = finId !== 'N/A' ? finId.slice(-8) : 'N/A';
@@ -178,12 +308,13 @@ function generateFinanciamientoDetailReportHTML(
     @media print {
       @page {
         size: A4;
-        margin: 1.5cm;
+        margin: 0.8cm;
       }
       
       body {
         print-color-adjust: exact;
         -webkit-print-color-adjust: exact;
+        padding: 0;
       }
       
       .no-print {
@@ -196,118 +327,124 @@ function generateFinanciamientoDetailReportHTML(
       
       .section {
         page-break-inside: avoid;
+        break-inside: avoid;
       }
     }
     
     body {
       font-family: Arial, sans-serif;
-      font-size: 11px;
+      font-size: 8px;
       color: #333;
       background: white;
-      padding: 20px;
-      line-height: 1.6;
+      padding: 0;
+      line-height: 1.3;
+      margin: 0;
     }
     
     .header {
       text-align: center;
-      margin-bottom: 30px;
-      border-bottom: 4px solid #1e88e5;
-      padding-bottom: 20px;
+      margin-bottom: 8px;
+      border-bottom: 2px solid #1e88e5;
+      padding-bottom: 6px;
     }
     
     .header h1 {
-      font-size: 28px;
+      font-size: 14px;
       color: #1e88e5;
-      margin-bottom: 10px;
+      margin: 0 0 3px 0;
+      font-weight: 700;
     }
     
     .header .subtitle {
-      font-size: 14px;
+      font-size: 10px;
       color: #666;
+      margin: 0;
     }
     
     .header .fecha {
-      font-size: 12px;
+      font-size: 8px;
       color: #999;
-      margin-top: 5px;
+      margin: 2px 0 0 0;
     }
     
     .estado-badge {
       display: inline-block;
-      padding: 5px 15px;
-      border-radius: 5px;
-      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 8px;
       font-weight: 600;
       text-transform: uppercase;
-      margin-top: 10px;
+      margin-top: 3px;
     }
     
     .section {
-      margin-bottom: 25px;
-      padding: 15px;
+      margin-bottom: 6px;
+      padding: 6px;
       background: #f9f9f9;
-      border-radius: 5px;
-      border-left: 4px solid #1e88e5;
+      border-radius: 3px;
+      border-left: 3px solid #1e88e5;
+      break-inside: avoid;
     }
     
     .section-title {
-      font-size: 18px;
+      font-size: 10px;
       color: #1e88e5;
       font-weight: 600;
-      margin-bottom: 15px;
-      padding-bottom: 8px;
-      border-bottom: 2px solid #e0e0e0;
+      margin: 0 0 5px 0;
+      padding-bottom: 3px;
+      border-bottom: 1px solid #e0e0e0;
     }
     
     .info-grid {
       display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 15px;
-      margin-bottom: 15px;
-    }
-    
-    .info-item {
-      padding: 10px;
-      background: white;
-      border-radius: 3px;
-    }
-    
-    .info-label {
-      font-size: 10px;
-      color: #666;
-      text-transform: uppercase;
-      font-weight: 600;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 5px;
       margin-bottom: 5px;
     }
     
+    .info-item {
+      padding: 4px;
+      background: white;
+      border-radius: 2px;
+    }
+    
+    .info-label {
+      font-size: 7px;
+      color: #666;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    
     .info-value {
-      font-size: 12px;
+      font-size: 9px;
       color: #333;
       font-weight: 500;
+      line-height: 1.2;
     }
     
     .info-value.monospace {
       font-family: monospace;
-      font-size: 11px;
+      font-size: 8px;
     }
     
     .info-value.large {
-      font-size: 16px;
+      font-size: 10px;
       font-weight: 600;
     }
     
     .financial-summary {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 15px;
-      margin-bottom: 20px;
+      gap: 4px;
+      margin-bottom: 6px;
     }
     
     .financial-box {
       background: white;
-      padding: 15px;
-      border-radius: 5px;
-      border-left: 4px solid #1e88e5;
+      padding: 5px;
+      border-radius: 3px;
+      border-left: 3px solid #1e88e5;
       text-align: center;
     }
     
@@ -328,25 +465,27 @@ function generateFinanciamientoDetailReportHTML(
     }
     
     .financial-box h3 {
-      font-size: 10px;
+      font-size: 7px;
       color: #666;
-      margin-bottom: 8px;
+      margin: 0 0 3px 0;
       text-transform: uppercase;
+      font-weight: 600;
     }
     
     .financial-box .value {
-      font-size: 18px;
+      font-size: 11px;
       font-weight: 600;
       color: #333;
+      margin: 0;
     }
     
     .progress-bar {
       width: 100%;
-      height: 20px;
+      height: 12px;
       background: #e0e0e0;
-      border-radius: 10px;
+      border-radius: 6px;
       overflow: hidden;
-      margin: 10px 0;
+      margin: 4px 0;
     }
     
     .progress-fill {
@@ -356,15 +495,15 @@ function generateFinanciamientoDetailReportHTML(
       align-items: center;
       justify-content: center;
       color: white;
-      font-size: 10px;
+      font-size: 7px;
       font-weight: 600;
     }
     
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 15px;
-      font-size: 9px;
+      margin-top: 4px;
+      font-size: 7px;
       background: white;
     }
     
@@ -374,17 +513,19 @@ function generateFinanciamientoDetailReportHTML(
     }
     
     th {
-      padding: 10px 8px;
+      padding: 4px 3px;
       text-align: left;
       font-weight: 600;
       border: 1px solid #1565c0;
-      font-size: 9px;
+      font-size: 7px;
+      line-height: 1.2;
     }
     
     td {
-      padding: 8px;
+      padding: 3px;
       border: 1px solid #ddd;
-      font-size: 9px;
+      font-size: 7px;
+      line-height: 1.2;
     }
     
     tbody tr:nth-child(even) {
@@ -400,21 +541,28 @@ function generateFinanciamientoDetailReportHTML(
     }
     
     .footer {
-      margin-top: 30px;
-      padding-top: 15px;
-      border-top: 2px solid #ddd;
+      margin-top: 8px;
+      padding-top: 5px;
+      border-top: 1px solid #ddd;
       text-align: center;
-      font-size: 9px;
+      font-size: 7px;
       color: #666;
     }
     
     .no-data {
       text-align: center;
-      padding: 30px;
+      padding: 10px;
       color: #999;
-      font-size: 12px;
+      font-size: 8px;
       background: white;
-      border-radius: 5px;
+      border-radius: 3px;
+    }
+    
+    .compact-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+      margin-bottom: 6px;
     }
   </style>
 </head>
@@ -428,50 +576,77 @@ function generateFinanciamientoDetailReportHTML(
     </span>
   </div>
   
-  <!-- Información del Cliente -->
-  <div class="section">
-    <div class="section-title">Información del Cliente</div>
-    <div class="info-grid">
-      <div class="info-item">
-        <div class="info-label">Nombre Completo</div>
-        <div class="info-value large">${clienteNombre}</div>
-      </div>
-      <div class="info-item">
-        <div class="info-label">Teléfono</div>
-        <div class="info-value monospace">
-          ${escapeHtml(
-            typeof financiamiento?.cliente === 'object' && financiamiento.cliente?.TELEFONO
-              ? financiamiento.cliente.TELEFONO
-              : 'N/A'
-          )}
-        </div>
-      </div>
-      <div class="info-item">
-        <div class="info-label">Cédula</div>
-        <div class="info-value monospace">
-          ${escapeHtml(
-            typeof financiamiento?.cliente === 'object' && financiamiento.cliente?.cedula
-              ? financiamiento.cliente.cedula
-              : 'N/A'
-          )}
-        </div>
-      </div>
-      <div class="info-item">
-        <div class="info-label">Dirección</div>
-        <div class="info-value">
-          ${escapeHtml(
-            typeof financiamiento?.cliente === 'object' && financiamiento.cliente?.DIRECCION
-              ? financiamiento.cliente.DIRECCION
-              : 'N/A'
-          )}
-        </div>
-      </div>
+  <!-- Información de Clientes y Vehículo -->
+  <div class="compact-row">
+    <div class="section">
+      <div class="section-title">Cliente Principal</div>
+      <div style="font-size: 9px; font-weight: 600; margin-bottom: 4px;">${clienteNombre}</div>
+      <div style="font-size: 7px; margin: 2px 0;"><strong>Cédula:</strong> ${escapeHtml(
+        typeof financiamiento?.cliente === 'object' && financiamiento.cliente?.cedula
+          ? financiamiento.cliente.cedula
+          : 'N/A'
+      )}</div>
+      <div style="font-size: 7px; margin: 2px 0;"><strong>Prof:</strong> ${escapeHtml(
+        typeof financiamiento?.cliente === 'object' && financiamiento.cliente?.profesion
+          ? financiamiento.cliente.profesion
+          : 'N/A'
+      )}</div>
+      <div style="font-size: 7px; margin: 2px 0;"><strong>Tel:</strong> ${escapeHtml(
+        typeof financiamiento?.cliente === 'object' && financiamiento.cliente?.TELEFONO
+          ? financiamiento.cliente.TELEFONO
+          : 'N/A'
+      )}</div>
+      <div style="font-size: 7px; margin: 2px 0;"><strong>Email:</strong> ${escapeHtml(
+        typeof financiamiento?.cliente === 'object' && financiamiento.cliente?.correo
+          ? financiamiento.cliente.correo
+          : 'N/A'
+      )}</div>
+      <div style="font-size: 7px; margin: 2px 0;"><strong>Dir:</strong> ${escapeHtml(
+        typeof financiamiento?.cliente === 'object' && financiamiento.cliente?.DIRECCION
+          ? financiamiento.cliente.DIRECCION
+          : 'N/A'
+      )}</div>
     </div>
+    
+    ${financiamiento?.cliente2 && typeof financiamiento.cliente2 === 'object' ? `
+    <div class="section">
+      <div class="section-title">Segundo Cliente</div>
+      <div style="font-size: 9px; font-weight: 600; margin-bottom: 4px;">${escapeHtml(financiamiento.cliente2.NOMBRE || 'N/A')}</div>
+      <div style="font-size: 7px; margin: 2px 0;"><strong>Cédula:</strong> ${escapeHtml(financiamiento.cliente2.cedula || 'N/A')}</div>
+      <div style="font-size: 7px; margin: 2px 0;"><strong>Prof:</strong> ${escapeHtml(financiamiento.cliente2.profesion || 'N/A')}</div>
+      <div style="font-size: 7px; margin: 2px 0;"><strong>Tel:</strong> ${escapeHtml(financiamiento.cliente2.TELEFONO || 'N/A')}</div>
+      <div style="font-size: 7px; margin: 2px 0;"><strong>Email:</strong> ${escapeHtml(financiamiento.cliente2.correo || 'N/A')}</div>
+      <div style="font-size: 7px; margin: 2px 0;"><strong>Dir:</strong> ${escapeHtml(financiamiento.cliente2.DIRECCION || 'N/A')}</div>
+    </div>
+    ` : `
+    <div class="section">
+      <div class="section-title">Vehículo</div>
+      <div style="font-size: 9px; font-weight: 600; margin-bottom: 4px;">${vehiculoInfo}</div>
+      <div style="font-size: 7px; margin: 2px 0;"><strong>Matrícula:</strong> ${matricula}</div>
+      ${typeof financiamiento?.vehiculo === 'object' && financiamiento.vehiculo?.Padron ? `
+      <div style="font-size: 7px; margin: 2px 0;"><strong>Padrón:</strong> ${escapeHtml(financiamiento.vehiculo.Padron.toString())}</div>
+      ` : ''}
+      <div style="font-size: 7px; margin: 2px 0;"><strong>Año:</strong> ${escapeHtml(
+        typeof financiamiento?.vehiculo === 'object' && financiamiento.vehiculo?.Año
+          ? financiamiento.vehiculo.Año
+          : 'N/A'
+      )}</div>
+      <div style="font-size: 7px; margin: 2px 0;"><strong>Color:</strong> ${escapeHtml(
+        typeof financiamiento?.vehiculo === 'object' && financiamiento.vehiculo?.Color
+          ? financiamiento.vehiculo.Color
+          : 'N/A'
+      )}</div>
+      ${typeof financiamiento?.vehiculo === 'object' && financiamiento.vehiculo?.Descripcion ? `
+      <div style="font-size: 7px; margin: 2px 0;"><strong>Desc:</strong> ${escapeHtml(financiamiento.vehiculo.Descripcion)}</div>
+      ` : ''}
+    </div>
+    `}
   </div>
   
-  <!-- Información del Vehículo -->
+  ${financiamiento?.cliente2 && typeof financiamiento.cliente2 === 'object' ? `
+  <!-- Información del Vehículo (si hay 2 clientes, va en nueva fila) -->
   <div class="section">
-    <div class="section-title">Información del Vehículo</div>
+    <div class="section-title">Vehículo</div>
     <div class="info-grid">
       <div class="info-item">
         <div class="info-label">Marca y Modelo</div>
@@ -481,67 +656,84 @@ function generateFinanciamientoDetailReportHTML(
         <div class="info-label">Matrícula</div>
         <div class="info-value monospace large">${matricula}</div>
       </div>
+      ${typeof financiamiento?.vehiculo === 'object' && financiamiento.vehiculo?.Padron ? `
+      <div class="info-item">
+        <div class="info-label">Padrón</div>
+        <div class="info-value">${escapeHtml(financiamiento.vehiculo.Padron.toString())}</div>
+      </div>
+      ` : ''}
       <div class="info-item">
         <div class="info-label">Año</div>
-        <div class="info-value">
-          ${escapeHtml(
-            typeof financiamiento?.vehiculo === 'object' && financiamiento.vehiculo?.Año
-              ? financiamiento.vehiculo.Año
-              : 'N/A'
-          )}
-        </div>
+        <div class="info-value">${escapeHtml(
+          typeof financiamiento?.vehiculo === 'object' && financiamiento.vehiculo?.Año
+            ? financiamiento.vehiculo.Año
+            : 'N/A'
+        )}</div>
       </div>
       <div class="info-item">
         <div class="info-label">Color</div>
-        <div class="info-value">
-          ${escapeHtml(
-            typeof financiamiento?.vehiculo === 'object' && financiamiento.vehiculo?.Color
-              ? financiamiento.vehiculo.Color
-              : 'N/A'
-          )}
-        </div>
+        <div class="info-value">${escapeHtml(
+          typeof financiamiento?.vehiculo === 'object' && financiamiento.vehiculo?.Color
+            ? financiamiento.vehiculo.Color
+            : 'N/A'
+        )}</div>
       </div>
+      ${typeof financiamiento?.vehiculo === 'object' && financiamiento.vehiculo?.Descripcion ? `
+      <div class="info-item" style="grid-column: 1 / -1;">
+        <div class="info-label">Descripción</div>
+        <div class="info-value">${escapeHtml(financiamiento.vehiculo.Descripcion)}</div>
+      </div>
+      ` : ''}
     </div>
   </div>
+  ` : ''}
+  
+  <!-- Información de Empresa -->
+  ${typeof financiamiento?.empresa === 'object' && financiamiento.empresa ? `
+  <div class="section">
+    <div class="section-title">Empresa</div>
+    <div style="font-size: 8px;">
+      <strong>Nombre:</strong> ${escapeHtml(financiamiento.empresa.nombre || 'N/A')} | 
+      <strong>Tel:</strong> ${escapeHtml(financiamiento.empresa.telefono || 'N/A')}
+      ${financiamiento.empresa.descripcion ? ` | <strong>Desc:</strong> ${escapeHtml(financiamiento.empresa.descripcion)}` : ''}
+    </div>
+  </div>
+  ` : ''}
   
   <!-- Información Financiera -->
   <div class="section">
     <div class="section-title">Información Financiera</div>
     <div class="financial-summary">
       <div class="financial-box primary">
-        <h3>Costo del Vehículo</h3>
+        <h3>Costo</h3>
         <div class="value">${formatCurrency(financiamiento?.costoVehiculo)}</div>
       </div>
       <div class="financial-box error">
-        <h3>Interés Total</h3>
+        <h3>Interés</h3>
         <div class="value">${formatCurrency(financiamiento?.interesTotal)}</div>
       </div>
       <div class="financial-box success">
-        <h3>Monto Total</h3>
+        <h3>Total</h3>
         <div class="value">${formatCurrency(financiamiento?.montoTotal)}</div>
       </div>
       <div class="financial-box warning">
-        <h3>Valor de Cuota</h3>
+        <h3>Cuota</h3>
         <div class="value">${formatCurrency(financiamiento?.valorCuota)}</div>
       </div>
     </div>
     
-    <div class="info-grid">
+    <div class="info-grid" style="margin-top: 4px;">
       <div class="info-item">
-        <div class="info-label">Cuotas Totales</div>
-        <div class="info-value large">${financiamiento?.cuotas || 0}</div>
-      </div>
-      <div class="info-item">
-        <div class="info-label">Cuotas Pagadas</div>
-        <div class="info-value large">${financiamiento?.cuotasPagadas || 0}</div>
-      </div>
-      <div class="info-item">
-        <div class="info-label">Cuotas Pendientes</div>
-        <div class="info-value large">${financiamiento?.cuotasPendientes || 0}</div>
+        <div class="info-label">Cuotas</div>
+        <div class="info-value">${financiamiento?.cuotas || 0} total | ${financiamiento?.cuotasPagadas || 0} pagadas</div>
       </div>
       <div class="info-item">
         <div class="info-label">Progreso</div>
-        <div class="info-value large">${financiamiento?.progresoFinanciamiento || 0}%</div>
+        <div class="info-value">${financiamiento?.progresoFinanciamiento || 0}%</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Montos</div>
+        <div class="info-value">Pagado: <span style="color: #4caf50;">${formatCurrency(financiamiento?.montoPagado)}</span> | Pendiente: <span style="color: #ff9800;">${formatCurrency(financiamiento?.saldoPendiente)}</span></div>
       </div>
     </div>
     
@@ -551,55 +743,122 @@ function generateFinanciamientoDetailReportHTML(
       </div>
     </div>
     
-    <div class="info-grid" style="margin-top: 15px;">
+    <div style="font-size: 7px; margin-top: 4px; color: #666;">
+      <strong>Fechas:</strong> Venta: ${formatDate(financiamiento?.fechaVenta)} | 
+      Primera: ${formatDate(financiamiento?.fechaPrimeraCuota)} | 
+      Última: ${formatDate(financiamiento?.fechaUltimaCuota)}
+    </div>
+    ${financiamiento?.observaciones ? `
+    <div style="font-size: 7px; margin-top: 4px; padding: 4px; background: white; border-radius: 2px;">
+      <strong>Observaciones:</strong> ${escapeHtml(financiamiento.observaciones)}
+    </div>
+    ` : ''}
+  </div>
+  
+  <!-- Progreso del Financiamiento -->
+  <div class="section">
+    <div class="section-title">Progreso del Financiamiento</div>
+    <div class="info-grid">
       <div class="info-item">
-        <div class="info-label">Monto Pagado</div>
-        <div class="info-value large" style="color: #4caf50;">
-          ${formatCurrency(financiamiento?.montoPagado)}
-        </div>
+        <div class="info-label">Cuotas Pagadas / Total</div>
+        <div class="info-value large">${financiamiento?.cuotasPagadas || 0} / ${financiamiento?.cuotas || 0}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Progreso</div>
+        <div class="info-value large">${financiamiento?.progresoFinanciamiento || 0}%</div>
       </div>
       <div class="info-item">
         <div class="info-label">Saldo Pendiente</div>
-        <div class="info-value large" style="color: #ff9800;">
-          ${formatCurrency(financiamiento?.saldoPendiente)}
-        </div>
+        <div class="info-value large" style="color: #ff9800;">${formatCurrency(financiamiento?.saldoPendiente)}</div>
       </div>
-      <div class="info-item">
-        <div class="info-label">Fecha Primera Cuota</div>
-        <div class="info-value">${formatDate(financiamiento?.fechaPrimeraCuota)}</div>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" style="width: ${Math.min(100, Math.max(0, financiamiento?.progresoFinanciamiento || 0))}%;">
+        ${financiamiento?.progresoFinanciamiento || 0}%
       </div>
-      <div class="info-item">
-        <div class="info-label">Fecha Última Cuota</div>
-        <div class="info-value">${formatDate(financiamiento?.fechaUltimaCuota)}</div>
-      </div>
-      <div class="info-item">
-        <div class="info-label">Fecha de Venta</div>
-        <div class="info-value">${formatDate(financiamiento?.fechaVenta)}</div>
-      </div>
-      ${financiamiento?.observaciones ? `
-      <div class="info-item" style="grid-column: 1 / -1;">
-        <div class="info-label">Observaciones</div>
-        <div class="info-value">${escapeHtml(financiamiento.observaciones)}</div>
-      </div>
-      ` : ''}
+    </div>
+    <div style="font-size: 7px; margin-top: 4px; color: #666;">
+      <strong>Monto Pagado:</strong> <span style="color: #4caf50;">${formatCurrency(financiamiento?.montoPagado)}</span>
     </div>
   </div>
+  
+  <!-- Fechas de Cuotas -->
+  ${todasLasCuotas.length > 0 ? `
+  <div class="section">
+    <div class="section-title">Fechas de Cuotas</div>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 8%;" class="text-center">Cuota</th>
+          <th style="width: 15%;" class="text-center">Fecha Vencimiento</th>
+          <th style="width: 12%;" class="text-right">Valor</th>
+          <th style="width: 12%;" class="text-right">Pagado</th>
+          <th style="width: 12%;" class="text-right">Pendiente</th>
+          <th style="width: 10%;" class="text-center">Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${todasLasCuotas
+          .map(cuota => {
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+            const fechaVenc = new Date(cuota.fechaVencimiento);
+            fechaVenc.setHours(0, 0, 0, 0);
+            const vencida = !cuota.pagada && fechaVenc < hoy;
+            const estadoText = cuota.pagada
+              ? 'Pagada'
+              : cuota.montoPagado > 0
+                ? 'Parcial'
+                : vencida
+                  ? 'Vencida'
+                  : 'Pendiente';
+            const estadoColor = cuota.pagada
+              ? '#4caf50'
+              : cuota.montoPagado > 0
+                ? '#ff9800'
+                : vencida
+                  ? '#f44336'
+                  : '#666';
+            
+            return `
+        <tr style="background-color: ${cuota.pagada ? '#e8f5e9' : vencida ? '#ffebee' : 'transparent'};">
+          <td class="text-center">
+            <strong>#${cuota.numeroCuota}</strong>
+            ${cuota.esExtra ? ' <span style="font-size: 6px; color: #999;">(Extra)</span>' : ''}
+          </td>
+          <td class="text-center" style="${vencida && !cuota.pagada ? 'color: #f44336; font-weight: 600;' : ''}">${formatDate(cuota.fechaVencimiento)}</td>
+          <td class="text-right"><strong>${formatCurrency(cuota.valorCuota)}</strong></td>
+          <td class="text-right" style="${cuota.montoPagado > 0 ? 'color: #4caf50;' : ''}">${formatCurrency(cuota.montoPagado || 0)}</td>
+          <td class="text-right" style="${cuota.montoPendiente > 0 ? 'color: #f44336;' : ''}">${formatCurrency(cuota.montoPendiente || 0)}</td>
+          <td class="text-center">
+            <span style="font-size: 6px; padding: 2px 6px; border-radius: 3px; background: ${estadoColor}20; color: ${estadoColor}; font-weight: 600;">
+              ${estadoText}
+            </span>
+          </td>
+        </tr>
+      `;
+          })
+          .join('')}
+      </tbody>
+    </table>
+  </div>
+  ` : ''}
   
   <!-- Historial de Pagos -->
   ${pagos.length > 0 ? `
   <div class="section">
-    <div class="section-title">Historial de Pagos (${totalPagos} pagos - Total: ${formatCurrency(montoTotalPagado)})</div>
+    <div class="section-title">Pagos (${totalPagos} - Total: ${formatCurrency(montoTotalPagado)})</div>
     <table>
       <thead>
         <tr>
-          <th style="width: 5%;">#</th>
-          <th style="width: 12%;" class="text-center">Número Cuota</th>
-          <th style="width: 12%;" class="text-center">Fecha Pago</th>
-          <th style="width: 12%;" class="text-right">Monto</th>
-          <th style="width: 12%;" class="text-center">Método</th>
-          <th style="width: 12%;">N° Comprobante</th>
+          <th style="width: 4%;">#</th>
+          <th style="width: 8%;" class="text-center">Cuota</th>
+          <th style="width: 10%;" class="text-center">Fecha</th>
+          <th style="width: 10%;" class="text-right">Monto</th>
+          <th style="width: 10%;" class="text-center">Método</th>
+          <th style="width: 12%;">Comprobante</th>
           <th style="width: 12%;">Banco</th>
-          <th style="width: 15%;">Registrado por</th>
+          <th style="width: 10%;">Registrado</th>
         </tr>
       </thead>
       <tbody>
@@ -612,12 +871,12 @@ function generateFinanciamientoDetailReportHTML(
           <td class="text-center">${formatDate(pago?.fechaPago)}</td>
           <td class="text-right"><strong>${formatCurrency(pago?.montoPago)}</strong></td>
           <td class="text-center">${escapeHtml(pago?.metodoPago || '-')}</td>
-          <td>${escapeHtml(pago?.numeroComprobante || '-')}</td>
-          <td>${escapeHtml(pago?.banco || '-')}</td>
-          <td>
+          <td style="font-size: 6px;">${escapeHtml(pago?.numeroComprobante || '-')}</td>
+          <td style="font-size: 6px;">${escapeHtml(pago?.banco || '-')}</td>
+          <td style="font-size: 6px;">
             ${escapeHtml(
               typeof pago?.usuarioRegistro === 'object' && pago.usuarioRegistro?.nombre
-                ? pago.usuarioRegistro.nombre
+                ? pago.usuarioRegistro.nombre.split(' ')[0]
                 : '-'
             )}
           </td>
@@ -630,57 +889,13 @@ function generateFinanciamientoDetailReportHTML(
   </div>
   ` : `
   <div class="section">
-    <div class="section-title">Historial de Pagos</div>
-    <div class="no-data">No se han registrado pagos para este financiamiento</div>
+    <div class="section-title">Pagos</div>
+    <div class="no-data">No hay pagos registrados</div>
   </div>
   `}
   
-  <!-- Información del Sistema -->
-  <div class="section">
-    <div class="section-title">Información del Sistema</div>
-    <div class="info-grid">
-      <div class="info-item">
-        <div class="info-label">Registrado por</div>
-        <div class="info-value">
-          ${escapeHtml(
-            typeof financiamiento?.usuarioRegistro === 'object' && financiamiento.usuarioRegistro?.nombre
-              ? financiamiento.usuarioRegistro.nombre
-              : '-'
-          )}
-        </div>
-      </div>
-      <div class="info-item">
-        <div class="info-label">Fecha de Creación</div>
-        <div class="info-value">
-          ${formatDateTime(financiamiento?.createdAt)}
-        </div>
-      </div>
-      <div class="info-item">
-        <div class="info-label">Modificado por</div>
-        <div class="info-value">
-          ${escapeHtml(
-            typeof financiamiento?.usuarioModificacion === 'object' && financiamiento.usuarioModificacion?.nombre
-              ? financiamiento.usuarioModificacion.nombre
-              : '-'
-          )}
-        </div>
-      </div>
-      <div class="info-item">
-        <div class="info-label">Última Actualización</div>
-        <div class="info-value">
-          ${formatDateTime(financiamiento?.updatedAt)}
-        </div>
-      </div>
-      <div class="info-item" style="grid-column: 1 / -1;">
-        <div class="info-label">ID de Base de Datos</div>
-        <div class="info-value monospace" style="font-size: 9px;">${escapeHtml(finId)}</div>
-      </div>
-    </div>
-  </div>
-  
   <div class="footer">
-    <p>CIOMPI - Sistema de Gestión de Financiamientos</p>
-    <p>Página generada automáticamente</p>
+    <p>CIOMPI - ${fechaActual}</p>
   </div>
   
   <script>

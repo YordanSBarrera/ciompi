@@ -119,15 +119,15 @@ export default function FiltrosAvanzadosVehiculos({
   };
 
   const handleClearFilters = () => {
-    const filtrosVacios = {
+    const filtrosVacios: FiltrosVehiculos = {
       marca: '',
       modelo: '',
       matricula: '',
       color: '',
-      añoMin: '',
-      añoMax: '',
-      padronMin: '',
-      padronMax: '',
+      añoMin: '' as const,
+      añoMax: '' as const,
+      padronMin: '' as const,
+      padronMax: '' as const,
     };
     setFiltros(filtrosVacios);
     onClearFilters();
@@ -193,7 +193,7 @@ export default function FiltrosAvanzadosVehiculos({
       <DialogContent sx={{ p: 3 }}>
         <Grid container spacing={3}>
           {/* Marca */}
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <FormControl fullWidth>
               <InputLabel>Marca</InputLabel>
               <Select
@@ -214,7 +214,7 @@ export default function FiltrosAvanzadosVehiculos({
           </Grid>
 
           {/* Modelo */}
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
               label="Modelo"
@@ -225,7 +225,7 @@ export default function FiltrosAvanzadosVehiculos({
           </Grid>
 
           {/* Matrícula */}
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
               label="Matrícula"
@@ -238,7 +238,7 @@ export default function FiltrosAvanzadosVehiculos({
           </Grid>
 
           {/* Color */}
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <FormControl fullWidth>
               <InputLabel>Color</InputLabel>
               <Select
@@ -309,12 +309,17 @@ export default function FiltrosAvanzadosVehiculos({
           </Grid>
 
           {/* Año Mínimo */}
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <FormControl fullWidth>
               <InputLabel>Año Mínimo</InputLabel>
               <Select
                 value={filtros.añoMin}
-                onChange={e => handleInputChange('añoMin', e.target.value)}
+                onChange={e =>
+                  handleInputChange(
+                    'añoMin',
+                    e.target.value ? Number(e.target.value) : ''
+                  )
+                }
                 label="Año Mínimo"
               >
                 <MenuItem value="">
@@ -330,12 +335,17 @@ export default function FiltrosAvanzadosVehiculos({
           </Grid>
 
           {/* Año Máximo */}
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <FormControl fullWidth>
               <InputLabel>Año Máximo</InputLabel>
               <Select
                 value={filtros.añoMax}
-                onChange={e => handleInputChange('añoMax', e.target.value)}
+                onChange={e =>
+                  handleInputChange(
+                    'añoMax',
+                    e.target.value ? Number(e.target.value) : ''
+                  )
+                }
                 label="Año Máximo"
               >
                 <MenuItem value="">
@@ -351,7 +361,7 @@ export default function FiltrosAvanzadosVehiculos({
           </Grid>
 
           {/* Padrón Mínimo */}
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
               label="Padrón Mínimo"
@@ -368,7 +378,7 @@ export default function FiltrosAvanzadosVehiculos({
           </Grid>
 
           {/* Padrón Máximo */}
-          <Grid item xs={12} sm={6}>
+          <Grid size={{ xs: 12, sm: 6 }}>
             <TextField
               fullWidth
               label="Padrón Máximo"
