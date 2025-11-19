@@ -6,12 +6,13 @@ import Empresa from '@/models/empresa';
 // GET - Obtener empresa por ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
+    const { id } = await params;
 
-    const empresa = await Empresa.findById(params.id)
+    const empresa = await Empresa.findById(id)
       .populate('usuarioRegistro', 'nombre usuario email')
       .populate('usuarioModificacion', 'nombre usuario email');
 
@@ -38,10 +39,11 @@ export async function GET(
 // PUT - Actualizar empresa
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
+    const { id } = await params;
 
     const body = await request.json();
     const { nombre, descripcion, telefono, estado } = body;
@@ -55,7 +57,7 @@ export async function PUT(
     }
 
     // Verificar si la empresa existe
-    const empresa = await Empresa.findById(params.id);
+    const empresa = await Empresa.findById(id);
     if (!empresa) {
       return NextResponse.json(
         { success: false, error: 'Empresa no encontrada' },
@@ -66,7 +68,7 @@ export async function PUT(
     // Verificar si ya existe otra empresa con el mismo nombre
     const empresaExistente = await Empresa.findOne({
       nombre: { $regex: new RegExp(`^${nombre.trim()}$`, 'i') },
-      _id: { $ne: params.id },
+      _id: { $ne: id },
     });
 
     if (empresaExistente) {
@@ -108,12 +110,13 @@ export async function PUT(
 // DELETE - Eliminar empresa
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
+    const { id } = await params;
 
-    const empresa = await Empresa.findById(params.id);
+    const empresa = await Empresa.findById(id);
     if (!empresa) {
       return NextResponse.json(
         { success: false, error: 'Empresa no encontrada' },

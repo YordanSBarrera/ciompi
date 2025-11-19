@@ -2,15 +2,17 @@ import { connectDB } from '@/db/dbConnection';
 import { getUserIdFromToken } from '@/lib/server-utils';
 import Usuario from '@/models/Usuario';
 import { NextResponse } from 'next/server';
+import bcrypt from 'bcryptjs';
 
 // GET - Obtener usuario por ID
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
-    const usuario = await Usuario.findById(params.id).select('-password');
+    const { id } = await params;
+    const usuario = await Usuario.findById(id).select('-password');
 
     if (!usuario) {
       return NextResponse.json(
@@ -49,10 +51,11 @@ export async function GET(
 // PUT - Actualizar usuario
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
+    const { id } = await params;
 
     // Obtener ID del usuario desde el token con fallback
     const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb';
@@ -67,7 +70,7 @@ export async function PUT(
     }
 
     // Verificar si el usuario existe
-    const usuarioExistente = await Usuario.findById(params.id);
+    const usuarioExistente = await Usuario.findById(id);
     if (!usuarioExistente) {
       return NextResponse.json(
         { error: 'Usuario no encontrado' },
@@ -77,7 +80,7 @@ export async function PUT(
 
     // Verificar si el usuario o email ya existe en otro registro
     const usuarioDuplicado = await Usuario.findOne({
-      _id: { $ne: params.id },
+      _id: { $ne: id },
       $or: [{ usuario: body.usuario }, { email: body.email }],
     });
 
@@ -88,10 +91,23 @@ export async function PUT(
       );
     }
 
+    // Preparar los datos de actualización
+    const updateData: any = {
+      ...body,
+      usuarioModificacion: userId,
+      fechaActualizacion: new Date(),
+    };
+
+    // Si viene un password nuevo, encriptarlo antes de guardar
+    if (body.password) {
+      const salt = await bcrypt.genSalt(10);
+      updateData.password = await bcrypt.hash(body.password, salt);
+    }
+
     // Actualizar usuario con usuarioModificacion
     const usuarioActualizado = await Usuario.findByIdAndUpdate(
-      params.id,
-      { ...body, usuarioModificacion: userId, fechaActualizacion: new Date() },
+      id,
+      updateData,
       { new: true, runValidators: true }
     ).select('-password');
 
@@ -129,12 +145,13 @@ export async function PUT(
 // DELETE - Eliminar usuario
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
+    const { id } = await params;
 
-    const usuarioEliminado = await Usuario.findByIdAndDelete(params.id);
+    const usuarioEliminado = await Usuario.findByIdAndDelete(id);
 
     if (!usuarioEliminado) {
       return NextResponse.json(

@@ -27,6 +27,8 @@ import {
   Add as AddIcon,
   Print as PrintIcon,
 } from '@mui/icons-material';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import { Menu, MenuItem } from '@mui/material';
 import { FinanciamientoType } from '@/lib/types';
 import {
   azulBase,
@@ -52,6 +54,11 @@ interface ListaFinanciamientosProps {
   onImprimir?: (id: string) => void;
 }
 
+interface MenuState {
+  anchorEl: HTMLElement | null;
+  financiamientoId: string | null;
+}
+
 export default function ListaFinanciamientos({
   financiamientos,
   onFinanciamientoEliminado,
@@ -60,6 +67,10 @@ export default function ListaFinanciamientos({
   onImprimir,
 }: ListaFinanciamientosProps) {
   const [filter, setFilter] = React.useState('');
+  const [menuState, setMenuState] = React.useState<MenuState>({
+    anchorEl: null,
+    financiamientoId: null,
+  });
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -91,8 +102,33 @@ export default function ListaFinanciamientos({
     }
   };
 
+  const handleMenuOpen = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    financiamientoId: string
+  ) => {
+    setMenuState({
+      anchorEl: event.currentTarget,
+      financiamientoId,
+    });
+  };
+
+  const handleMenuClose = () => {
+    setMenuState({
+      anchorEl: null,
+      financiamientoId: null,
+    });
+  };
+
   const handleClickVerDetalles = (id: string) => {
+    handleMenuClose();
     router.push(`/ciompi/financiamiento/${id}`);
+  };
+
+  const handleClickImprimir = (id: string) => {
+    handleMenuClose();
+    if (onImprimir) {
+      onImprimir(id);
+    }
   };
 
   const filteredFinanciamientos = financiamientos.filter(fin => {
@@ -503,7 +539,81 @@ export default function ListaFinanciamientos({
                     },
                   }}
                 >
-                  <Box sx={{ display: 'flex', gap: 1 }}>
+                  {mostrarAtrasos ? (
+                    <Box>
+                      <Tooltip title="Acciones" placement="top">
+                        <IconButton
+                          onClick={event =>
+                            handleMenuOpen(event, fin._id || '')
+                          }
+                          size="small"
+                          sx={{
+                            color: azulBase,
+                            '&:hover': {
+                              backgroundColor: azulBase + '20',
+                            },
+                          }}
+                        >
+                          <MoreVertIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                      <Menu
+                        anchorEl={menuState.anchorEl}
+                        open={Boolean(
+                          menuState.anchorEl &&
+                            menuState.financiamientoId === fin._id
+                        )}
+                        onClose={handleMenuClose}
+                        anchorOrigin={{
+                          vertical: 'bottom',
+                          horizontal: 'right',
+                        }}
+                        transformOrigin={{
+                          vertical: 'top',
+                          horizontal: 'right',
+                        }}
+                        sx={{
+                          '& .MuiPaper-root': {
+                            borderRadius: '8px !important',
+                            border: `1px solid ${grisClaro} !important`,
+                            boxShadow: '0px 4px 12px rgba(0,0,0,0.15) !important',
+                            minWidth: '160px !important',
+                            outline: 'none !important',
+                            zIndex: 1300,
+                          },
+                          '& .MuiMenu-list': {
+                            padding: '4px 0 !important',
+                          },
+                          '& .MuiMenuItem-root': {
+                            fontSize: '0.875rem',
+                            minHeight: '36px',
+                            '&:hover': {
+                              backgroundColor: grisClaro,
+                            },
+                          },
+                        }}
+                      >
+                        <MenuItem
+                          onClick={() => handleClickVerDetalles(fin._id || '')}
+                        >
+                          <ViewIcon
+                            sx={{ fontSize: 18, mr: 1, color: azulBase }}
+                          />
+                          Ver Detalles
+                        </MenuItem>
+                        {onImprimir && (
+                          <MenuItem
+                            onClick={() => handleClickImprimir(fin._id || '')}
+                          >
+                            <PrintIcon
+                              sx={{ fontSize: 18, mr: 1, color: azulOscuro }}
+                            />
+                            Imprimir
+                          </MenuItem>
+                        )}
+                      </Menu>
+                    </Box>
+                  ) : (
                     <Tooltip title="Ver Detalles">
                       <IconButton
                         onClick={() => handleClickVerDetalles(fin._id || '')}
@@ -518,23 +628,7 @@ export default function ListaFinanciamientos({
                         <ViewIcon />
                       </IconButton>
                     </Tooltip>
-                    {mostrarAtrasos && onImprimir && (
-                      <Tooltip title="Imprimir">
-                        <IconButton
-                          onClick={() => onImprimir(fin._id || '')}
-                          size="small"
-                          sx={{
-                            color: azulOscuro,
-                            '&:hover': {
-                              backgroundColor: azulOscuro + '20',
-                            },
-                          }}
-                        >
-                          <PrintIcon />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                  </Box>
+                  )}
                 </TableCell>
               </TableRow>
             ))}
