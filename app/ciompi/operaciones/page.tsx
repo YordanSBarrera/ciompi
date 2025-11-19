@@ -34,7 +34,7 @@ import {
 } from '@mui/icons-material';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import EstadoDeCuentaPage from './EstadoDeCuentaPage';
+import EstadoDeCuentaPage from '../../components/EstadoDeCuentaPage';
 
 // Función para buscar financiamientos por nombre de cliente
 async function buscarFinanciamientosPorCliente(
