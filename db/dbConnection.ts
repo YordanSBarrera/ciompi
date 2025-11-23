@@ -5,10 +5,7 @@ const conn = { isConnected: false };
 export async function connectDB() {
   if (conn.isConnected) return;
 
-  const mongoUri =
-    process.env.MONGO_URI ||
-    process.env.MONGODB_URI ||
-    'mongodb://localhost:27017/ciompi';
+  const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/ciompi';
 
   try {
     console.log('Intentando conectar a MongoDB...');
