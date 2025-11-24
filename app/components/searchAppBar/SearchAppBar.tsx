@@ -119,10 +119,6 @@ export default function SearchAppBar() {
     // No cerrar inmediatamente - esperar a ver si el mouse entra al submenú
     // El submenú cancelará este timeout si el mouse entra
     operacionesTimeoutRef.current = setTimeout(() => {
-      console.log(
-        'isMouseOverSubmenuRef.current',
-        isMouseOverSubmenuRef.current
-      );
       // Solo cerrar si el mouse no está sobre el submenú
       if (!isMouseOverSubmenuRef.current) {
         setOperacionesAnchorEl(null);
