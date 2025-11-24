@@ -305,6 +305,12 @@ export async function GET(request: NextRequest) {
         });
       });
 
+      // Calcular progreso del financiamiento
+      const totalCuotas = financiamiento.cuotas + (financiamiento.cuotasExtras || 0);
+      const progreso = totalCuotas > 0 
+        ? Math.round(((financiamiento.cuotasPagadas || 0) / totalCuotas) * 100)
+        : 0;
+
       // Crear resumen del financiamiento
       resumenesFinanciamientos.push({
         financiamientoId: financiamiento._id?.toString() || '',
@@ -316,11 +322,11 @@ export async function GET(request: NextRequest) {
         montoTotal: financiamiento.montoTotal,
         montoPagado: financiamiento.montoPagado || 0,
         saldoPendiente: financiamiento.saldoPendiente || 0,
-        cuotasTotal: financiamiento.cuotas + (financiamiento.cuotasExtras || 0),
+        cuotasTotal: totalCuotas,
         cuotasPagadas: financiamiento.cuotasPagadas || 0,
         cuotasPendientes: cuotas.length - (financiamiento.cuotasPagadas || 0),
         cuotasVencidas: cuotasVencidasFin,
-        progreso: financiamiento.progresoFinanciamiento || 0,
+        progreso,
       });
     }
 

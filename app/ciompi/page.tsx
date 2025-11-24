@@ -1,401 +1,300 @@
 'use client';
-import { useAuth } from '@/app/hook/useAuth';
-import AuthGuard from '@/app/components/AuthGuard';
-import { useState, useEffect } from 'react';
+
 import {
   Box,
   Container,
-  Typography,
-  Paper,
-  Grid,
   Card,
   CardContent,
-  Avatar,
-  Chip,
-  CircularProgress,
-  IconButton,
+  Typography,
+  Stack,
+  useTheme,
+  alpha,
+  Fade,
+  Grow,
 } from '@mui/material';
 import {
   People as PeopleIcon,
   Business as BusinessIcon,
-  Settings as SettingsIcon,
-  Assessment as AssessmentIcon,
   DirectionsCar as CarIcon,
-  AccountBalance as AccountBalanceIcon,
-  Refresh as RefreshIcon,
+  AccountBalance as FinanceIcon,
   Person as PersonIcon,
+  Assignment as OperationsIcon,
+  Dashboard as DashboardIcon,
 } from '@mui/icons-material';
+import Link from 'next/link';
+import { routes } from '@/lib/rutas';
 import {
   azulBase,
   azulClaro,
+  azulOscuro,
+  blanco,
+  grisClaro,
   naranja,
   turquesa,
-  grisClaro,
-  verde,
+  grisTexto,
 } from '@/lib/color';
-import { routes } from '@/lib/rutas';
 
-interface StatsData {
-  clientes: {
-    total: number;
-    hoy: number;
-  };
-  vehiculos: {
-    total: number;
-    hoy: number;
-  };
-  financiamientos: {
-    total: number;
-    activos: number;
-    completados: number;
-    hoy: number;
-    montoTotal: number;
-    saldoPendiente: number;
-    montoRecaudado: number;
-  };
-  empresas: {
-    total: number;
-  };
-  usuarios: {
-    total: number;
-  };
+interface ModuleCardProps {
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  href: string;
+  color: string;
+  delay?: number;
 }
 
+const ModuleCard = ({
+  title,
+  description,
+  icon,
+  href,
+  color,
+  delay = 0,
+}: ModuleCardProps) => {
+  const theme = useTheme();
+
+  return (
+    <Grow in={true} timeout={800} style={{ transitionDelay: `${delay}ms` }}>
+      <Card
+        component={Link}
+        href={href}
+        sx={{
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          textDecoration: 'none',
+          background: `linear-gradient(135deg, ${alpha(color, 0.1)} 0%, ${alpha(color, 0.05)} 100%)`,
+          border: `1px solid ${alpha(color, 0.2)}`,
+          borderRadius: 3,
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          cursor: 'pointer',
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '4px',
+            background: `linear-gradient(90deg, ${color}, ${alpha(color, 0.6)})`,
+            transform: 'scaleX(0)',
+            transformOrigin: 'left',
+            transition: 'transform 0.3s ease',
+          },
+          '&:hover': {
+            transform: 'translateY(-8px)',
+            boxShadow: `0 12px 24px ${alpha(color, 0.3)}`,
+            borderColor: color,
+            '&::before': {
+              transform: 'scaleX(1)',
+            },
+            '& .icon-container': {
+              transform: 'scale(1.1) rotate(5deg)',
+              backgroundColor: alpha(color, 0.15),
+            },
+          },
+        }}
+      >
+        <CardContent sx={{ flex: 1, p: 3 }}>
+          <Stack spacing={2}>
+            <Box
+              className="icon-container"
+              sx={{
+                width: 64,
+                height: 64,
+                borderRadius: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: alpha(color, 0.1),
+                color: color,
+                transition: 'all 0.3s ease',
+                mb: 1,
+              }}
+            >
+              {icon}
+            </Box>
+            <Typography
+              variant="h5"
+              component="h2"
+              sx={{
+                fontWeight: 600,
+                color: azulOscuro,
+                mb: 1,
+              }}
+            >
+              {title}
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                color: grisTexto,
+                lineHeight: 1.6,
+              }}
+            >
+              {description}
+            </Typography>
+          </Stack>
+        </CardContent>
+      </Card>
+    </Grow>
+  );
+};
+
 export default function CiompiHomePage() {
-  const { user } = useAuth();
-  const [stats, setStats] = useState<StatsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const theme = useTheme();
 
-  const loadStats = async () => {
-    try {
-      const response = await fetch('/api/stats');
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setStats(data.data);
-        }
-      }
-    } catch (error) {
-      console.error('Error cargando estadísticas:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
-
-  useEffect(() => {
-    loadStats();
-  }, []);
-
-  const handleRefresh = () => {
-    setRefreshing(true);
-    loadStats();
-  };
-
-  const menuItems = [
+  const modules = [
     {
       title: 'Clientes',
-      description: 'Gestionar información de clientes',
-      icon: <PeopleIcon sx={{ fontSize: 40 }} />,
+      description:
+        'Gestiona la información de tus clientes, consulta historiales y administra sus datos de contacto.',
+      icon: <PeopleIcon sx={{ fontSize: 32 }} />,
       href: `/${routes.clientes}`,
       color: azulBase,
-      count: stats?.clientes.total || 0,
-      newToday: stats?.clientes.hoy || 0,
-    },
-    {
-      title: 'Vehículos',
-      description: 'Administrar vehículos',
-      icon: <CarIcon sx={{ fontSize: 40 }} />,
-      href: `/${routes.vehiculos}`,
-      color: naranja,
-      count: stats?.vehiculos.total || 0,
-      newToday: stats?.vehiculos.hoy || 0,
-    },
-    {
-      title: 'Financiamiento',
-      description: 'Gestionar ventas financiadas',
-      icon: <AccountBalanceIcon sx={{ fontSize: 40 }} />,
-      href: `/${routes.financiamiento}`,
-      color: verde,
-      count: stats?.financiamientos.total || 0,
-      newToday: stats?.financiamientos.hoy || 0,
+      delay: 0,
     },
     {
       title: 'Empresas',
-      description: 'Administrar empresas',
-      icon: <BusinessIcon sx={{ fontSize: 40 }} />,
+      description:
+        'Administra las empresas asociadas y su información corporativa de manera centralizada.',
+      icon: <BusinessIcon sx={{ fontSize: 32 }} />,
       href: `/${routes.empresas}`,
       color: azulClaro,
-      count: stats?.empresas.total || 0,
+      delay: 100,
     },
     {
-      title: 'Operaciones',
-      description: 'Gestionar operaciones',
-      icon: <AssessmentIcon sx={{ fontSize: 40 }} />,
-      href: `/${routes.operaciones}`,
+      title: 'Vehículos',
+      description:
+        'Consulta y gestiona el inventario de vehículos, sus características y estado actual.',
+      icon: <CarIcon sx={{ fontSize: 32 }} />,
+      href: `/${routes.vehiculos}`,
       color: turquesa,
+      delay: 200,
+    },
+    {
+      title: 'Financiamientos',
+      description:
+        'Controla los financiamientos activos, pagos, cuotas y estados de cuenta de tus clientes.',
+      icon: <FinanceIcon sx={{ fontSize: 32 }} />,
+      href: `/${routes.financiamiento}`,
+      color: naranja,
+      delay: 300,
     },
     {
       title: 'Usuarios',
-      description: 'Administrar usuarios del sistema',
-      icon: <PersonIcon sx={{ fontSize: 40 }} />,
+      description:
+        'Administra los usuarios del sistema, sus permisos y configuraciones de acceso.',
+      icon: <PersonIcon sx={{ fontSize: 32 }} />,
       href: `/${routes.usuarios}`,
-      color: '#666666',
-      count: stats?.usuarios.total || 0,
+      color: azulOscuro,
+      delay: 400,
     },
     {
-      title: 'Configuración',
-      description: 'Configuración del sistema',
-      icon: <SettingsIcon sx={{ fontSize: 40 }} />,
-      href: `/${routes.datosGenerales}`,
-      color: '#999999',
+      title: 'Operaciones',
+      description:
+        'Accede a las operaciones del sistema, reportes y herramientas de gestión avanzada.',
+      icon: <OperationsIcon sx={{ fontSize: 32 }} />,
+      href: `/${routes.operaciones}`,
+      color: azulClaro,
+      delay: 500,
     },
   ];
 
   return (
-    <AuthGuard>
-      <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
-        {/* Header */}
-        <Paper
-          elevation={2}
-          sx={{
-            p: 3,
-            mb: 4,
-            background: `linear-gradient(135deg, ${azulBase} 0%, ${azulClaro} 100%)`,
-            color: 'white',
-            borderRadius: 2,
-          }}
-        >
+    <Container maxWidth="xl" sx={{ py: 6 }}>
+      <Fade in={true} timeout={600}>
+        <Stack spacing={6}>
+          {/* Hero Section */}
           <Box
             sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: 2,
+              textAlign: 'center',
+              mb: 2,
             }}
           >
-            <Box>
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="center"
+              spacing={2}
+              sx={{ mb: 2 }}
+            >
+              <DashboardIcon
+                sx={{
+                  fontSize: 48,
+                  color: azulBase,
+                }}
+              />
               <Typography
-                variant="h4"
+                variant="h3"
                 component="h1"
-                gutterBottom
-                sx={{ fontWeight: 600 }}
-              >
-                Bienvenido, {user?.nombre || 'Usuario'}
-              </Typography>
-              <Typography variant="body1" sx={{ opacity: 0.9 }}>
-                Panel de Control - CIOMPI
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <IconButton
-                onClick={handleRefresh}
-                disabled={refreshing}
-                sx={{ color: 'white' }}
-              >
-                <RefreshIcon />
-              </IconButton>
-              <Avatar
-                src={user?.avatar}
-                sx={{ width: 56, height: 56, bgcolor: 'rgba(255,255,255,0.2)' }}
-              >
-                {user?.nombre?.charAt(0) || 'U'}
-              </Avatar>
-              <Box>
-                <Typography
-                  variant="body1"
-                  fontWeight={600}
-                  sx={{ color: 'white' }}
-                >
-                  {user?.usuario || 'Usuario'}
-                </Typography>
-                <Chip
-                  label={user?.rol === 'admin' ? 'Administrador' : 'Usuario'}
-                  size="small"
-                  sx={{
-                    backgroundColor: 'rgba(255,255,255,0.2)',
-                    color: 'white',
-                    mt: 0.5,
-                  }}
-                />
-              </Box>
-            </Box>
-          </Box>
-        </Paper>
-
-        {/* Estadísticas Principales */}
-        {loading ? (
-          <Box display="flex" justifyContent="center" my={4}>
-            <CircularProgress />
-          </Box>
-        ) : (
-          <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Card
                 sx={{
+                  fontWeight: 700,
                   background: `linear-gradient(135deg, ${azulBase} 0%, ${azulClaro} 100%)`,
-                  color: 'white',
-                  height: '100%',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  mb: 1,
                 }}
               >
-                <CardContent>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'flex-start',
-                    }}
-                  >
-                    <Box>
-                      <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                        Total Clientes
-                      </Typography>
-                      <Typography variant="h3" sx={{ fontWeight: 600, mt: 1 }}>
-                        {stats?.clientes.total || 0}
-                      </Typography>
-                      {stats && stats.clientes.hoy > 0 && (
-                        <Chip
-                          label={`+${stats.clientes.hoy} hoy`}
-                          size="small"
-                          sx={{
-                            mt: 1,
-                            backgroundColor: 'rgba(255,255,255,0.2)',
-                            color: 'white',
-                          }}
-                        />
-                      )}
-                    </Box>
-                    <PeopleIcon sx={{ fontSize: 48, opacity: 0.3 }} />
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
+                Panel de Control
+              </Typography>
+            </Stack>
+            <Typography
+              variant="h6"
+              sx={{
+                color: grisTexto,
+                fontWeight: 400,
+                maxWidth: 600,
+                mx: 'auto',
+              }}
+            >
+              Bienvenido al sistema de gestión de cobranza. Accede rápidamente a
+              los módulos principales.
+            </Typography>
+          </Box>
 
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Card
-                sx={{
-                  background: `linear-gradient(135deg, ${naranja} 0%, #ff7043 100%)`,
-                  color: 'white',
-                  height: '100%',
-                }}
-              >
-                <CardContent>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'flex-start',
-                    }}
-                  >
-                    <Box>
-                      <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                        Total Vehículos
-                      </Typography>
-                      <Typography variant="h3" sx={{ fontWeight: 600, mt: 1 }}>
-                        {stats?.vehiculos.total || 0}
-                      </Typography>
-                      {stats && stats.vehiculos.hoy > 0 && (
-                        <Chip
-                          label={`+${stats.vehiculos.hoy} hoy`}
-                          size="small"
-                          sx={{
-                            mt: 1,
-                            backgroundColor: 'rgba(255,255,255,0.2)',
-                            color: 'white',
-                          }}
-                        />
-                      )}
-                    </Box>
-                    <CarIcon sx={{ fontSize: 48, opacity: 0.3 }} />
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
+          {/* Modules Grid */}
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: '1fr',
+                sm: 'repeat(2, 1fr)',
+                md: 'repeat(3, 1fr)',
+              },
+              gap: 3,
+            }}
+          >
+            {modules.map(module => (
+              <ModuleCard key={module.title} {...module} />
+            ))}
+          </Box>
 
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Card
-                sx={{
-                  background: `linear-gradient(135deg, ${verde} 0%, #66bb6a 100%)`,
-                  color: 'white',
-                  height: '100%',
-                }}
-              >
-                <CardContent>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'flex-start',
-                    }}
-                  >
-                    <Box>
-                      <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                        Financiamientos
-                      </Typography>
-                      <Typography variant="h3" sx={{ fontWeight: 600, mt: 1 }}>
-                        {stats?.financiamientos.total || 0}
-                      </Typography>
-                      <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                        <Chip
-                          label={`${stats?.financiamientos.activos || 0} activos`}
-                          size="small"
-                          sx={{
-                            backgroundColor: 'rgba(255,255,255,0.2)',
-                            color: 'white',
-                          }}
-                        />
-                        {stats && stats.financiamientos.hoy > 0 && (
-                          <Chip
-                            label={`+${stats.financiamientos.hoy} hoy`}
-                            size="small"
-                            sx={{
-                              backgroundColor: 'rgba(255,255,255,0.2)',
-                              color: 'white',
-                            }}
-                          />
-                        )}
-                      </Box>
-                    </Box>
-                    <AccountBalanceIcon sx={{ fontSize: 48, opacity: 0.3 }} />
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Card
-                sx={{
-                  background: `linear-gradient(135deg, ${turquesa} 0%, #26a69a 100%)`,
-                  color: 'white',
-                  height: '100%',
-                }}
-              >
-                <CardContent>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'flex-start',
-                    }}
-                  >
-                    <Box>
-                      <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                        Empresas Activas
-                      </Typography>
-                      <Typography variant="h3" sx={{ fontWeight: 600, mt: 1 }}>
-                        {stats?.empresas.total || 0}
-                      </Typography>
-                    </Box>
-                    <BusinessIcon sx={{ fontSize: 48, opacity: 0.3 }} />
-                  </Box>
-                </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        )}
-      </Container>
-    </AuthGuard>
+          {/* Quick Stats Section (Optional - can be expanded later) */}
+          <Box
+            sx={{
+              mt: 4,
+              p: 3,
+              borderRadius: 3,
+              background: `linear-gradient(135deg, ${alpha(azulBase, 0.05)} 0%, ${alpha(azulClaro, 0.05)} 100%)`,
+              border: `1px solid ${alpha(azulBase, 0.1)}`,
+            }}
+          >
+            <Typography
+              variant="body2"
+              sx={{
+                color: grisTexto,
+                textAlign: 'center',
+                fontStyle: 'italic',
+              }}
+            >
+              Selecciona un módulo para comenzar a trabajar
+            </Typography>
+          </Box>
+        </Stack>
+      </Fade>
+    </Container>
   );
 }

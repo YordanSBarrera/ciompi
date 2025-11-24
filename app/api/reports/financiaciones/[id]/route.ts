@@ -192,7 +192,7 @@ function generateFinanciamientoDetailReportHTML(
       financiamiento.cuotasFuturas &&
       financiamiento.cuotasFuturas.length > 0
     ) {
-      financiamiento.cuotasFuturas.forEach(cuota => {
+      financiamiento.cuotasFuturas.forEach((cuota: { numeroCuota: number; fechaVencimiento: Date; valorCuota: number }) => {
         const fechaVencimiento = new Date(cuota.fechaVencimiento);
         const montoPagado = pagosPorCuota[cuota.numeroCuota] || 0;
         const pagada = montoPagado >= cuota.valorCuota;
