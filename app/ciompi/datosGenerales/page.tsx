@@ -54,7 +54,9 @@ interface StatsData {
   financiamientos: {
     total: number;
     activos: number;
-    completados: number;
+    finalizados: number;
+    cancelados: number;
+    enMora: number;
     hoy: number;
     montoTotal: number;
     saldoPendiente: number;
@@ -272,10 +274,17 @@ export default function DatosGeneralesPage() {
                           stats?.financiamientos.saldoPendiente || 0
                         )}
                       </Typography>
-                      <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          gap: 1,
+                          mt: 2,
+                          flexWrap: 'wrap',
+                        }}
+                      >
                         <Chip
                           icon={<CheckCircleIcon />}
-                          label={`${stats?.financiamientos.completados || 0} completados`}
+                          label={`${stats?.financiamientos.finalizados || 0} finalizados`}
                           size="small"
                           color="success"
                         />
@@ -284,6 +293,21 @@ export default function DatosGeneralesPage() {
                           size="small"
                           color="warning"
                         />
+                        {stats && (stats.financiamientos.enMora || 0) > 0 && (
+                          <Chip
+                            label={`${stats.financiamientos.enMora} en mora`}
+                            size="small"
+                            color="error"
+                          />
+                        )}
+                        {stats &&
+                          (stats.financiamientos.cancelados || 0) > 0 && (
+                            <Chip
+                              label={`${stats.financiamientos.cancelados} cancelados`}
+                              size="small"
+                              color="default"
+                            />
+                          )}
                       </Box>
                     </CardContent>
                   </Card>
@@ -546,7 +570,7 @@ export default function DatosGeneralesPage() {
                                   100
                                 : 0
                             }
-                            sx={{ height: 6, borderRadius: 1 }}
+                            sx={{ height: 8, borderRadius: 1 }}
                             color="warning"
                           />
                         </Box>
@@ -558,24 +582,86 @@ export default function DatosGeneralesPage() {
                               mb: 0.5,
                             }}
                           >
-                            <Typography variant="body2">Completados</Typography>
+                            <Typography variant="body2">Finalizados</Typography>
                             <Typography variant="body2" fontWeight={600}>
-                              {stats?.financiamientos.completados || 0}
+                              {stats?.financiamientos.finalizados || 0}
                             </Typography>
                           </Box>
                           <LinearProgress
                             variant="determinate"
                             value={
                               stats && stats.financiamientos.total > 0
-                                ? (stats.financiamientos.completados /
+                                ? (stats.financiamientos.finalizados /
                                     stats.financiamientos.total) *
                                   100
                                 : 0
                             }
-                            sx={{ height: 6, borderRadius: 1 }}
+                            sx={{ height: 8, borderRadius: 1 }}
                             color="success"
                           />
                         </Box>
+                        {stats && (stats.financiamientos.enMora || 0) > 0 && (
+                          <Box>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                mb: 0.5,
+                              }}
+                            >
+                              <Typography variant="body2">En Mora</Typography>
+                              <Typography variant="body2" fontWeight={600}>
+                                {stats.financiamientos.enMora}
+                              </Typography>
+                            </Box>
+                            <LinearProgress
+                              variant="determinate"
+                              value={
+                                stats.financiamientos.total > 0
+                                  ? (stats.financiamientos.enMora /
+                                      stats.financiamientos.total) *
+                                    100
+                                  : 0
+                              }
+                              sx={{ height: 8, borderRadius: 1 }}
+                              color="error"
+                            />
+                          </Box>
+                        )}
+                        {stats &&
+                          (stats.financiamientos.cancelados || 0) > 0 && (
+                            <Box>
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  mb: 0.5,
+                                }}
+                              >
+                                <Typography variant="body2">
+                                  Cancelados
+                                </Typography>
+                                <Typography variant="body2" fontWeight={600}>
+                                  {stats.financiamientos.cancelados}
+                                </Typography>
+                              </Box>
+                              <LinearProgress
+                                variant="determinate"
+                                value={
+                                  stats.financiamientos.total > 0
+                                    ? (stats.financiamientos.cancelados /
+                                        stats.financiamientos.total) *
+                                      100
+                                    : 0
+                                }
+                                sx={{
+                                  height: 8,
+                                  borderRadius: 1,
+                                  bgcolor: grisMedio,
+                                }}
+                              />
+                            </Box>
+                          )}
                       </Box>
                     </CardContent>
                   </Card>

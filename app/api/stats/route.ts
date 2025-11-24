@@ -18,7 +18,9 @@ export async function GET() {
       totalEmpresas,
       totalUsuarios,
       financiamientosActivos,
-      financiamientosCompletados,
+      financiamientosFinalizados,
+      financiamientosCancelados,
+      financiamientosEnMora,
     ] = await Promise.all([
       Cliente.countDocuments(),
       Vehiculo.countDocuments(),
@@ -26,7 +28,9 @@ export async function GET() {
       Empresa.countDocuments({ estado: 'activa' }),
       Usuario.countDocuments({ estado: 'activo' }),
       Financiamiento.countDocuments({ estadoFinanciamiento: 'activo' }),
-      Financiamiento.countDocuments({ estadoFinanciamiento: 'completado' }),
+      Financiamiento.countDocuments({ estadoFinanciamiento: 'finalizado' }),
+      Financiamiento.countDocuments({ estadoFinanciamiento: 'cancelado' }),
+      Financiamiento.countDocuments({ estadoFinanciamiento: 'en_mora' }),
     ]);
 
     // Estadísticas de financiamientos
@@ -72,7 +76,9 @@ export async function GET() {
         financiamientos: {
           total: totalFinanciamientos,
           activos: financiamientosActivos,
-          completados: financiamientosCompletados,
+          finalizados: financiamientosFinalizados,
+          cancelados: financiamientosCancelados,
+          enMora: financiamientosEnMora,
           hoy: financiamientosHoy,
           montoTotal: montoTotalFinanciado,
           saldoPendiente: saldoPendienteTotal,
