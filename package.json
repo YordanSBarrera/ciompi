@@ -8,7 +8,8 @@
     "start": "next start",
     "create-admin": "node scripts/createAdminUser.js",
     "test-db": "node scripts/testConnection.js",
-    "reset-usuarios": "node scripts/resetUsuarios.js"
+    "reset-usuarios": "node scripts/resetUsuarios.js",
+    "migrate-data": "node scripts/migrateData.js"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
