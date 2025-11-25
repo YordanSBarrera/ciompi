@@ -1,0 +1,756 @@
+{
+  "database": "ciompi",
+  "description": "Modelo completo de la base de datos del sistema CIOMPI - Sistema de Gestión de Cobranza",
+  "version": "1.0.0",
+  "models": {
+    "Usuario": {
+      "collection": "usuarios",
+      "description": "Modelo de usuarios del sistema",
+      "fields": {
+        "_id": {
+          "type": "ObjectId",
+          "required": true,
+          "description": "Identificador único del usuario"
+        },
+        "usuario": {
+          "type": "String",
+          "required": true,
+          "unique": true,
+          "trim": true,
+          "minlength": 3,
+          "maxlength": 50,
+          "description": "Nombre de usuario para login"
+        },
+        "password": {
+          "type": "String",
+          "required": true,
+          "minlength": 6,
+          "description": "Contraseña hasheada con bcrypt"
+        },
+        "email": {
+          "type": "String",
+          "required": false,
+          "unique": true,
+          "trim": true,
+          "lowercase": true,
+          "description": "Correo electrónico del usuario"
+        },
+        "nombre": {
+          "type": "String",
+          "required": true,
+          "trim": true,
+          "maxlength": 50,
+          "description": "Nombre completo del usuario"
+        },
+        "avatar": {
+          "type": "String",
+          "required": false,
+          "default": "/avatars/default-avatar.png",
+          "description": "Ruta de la imagen de avatar"
+        },
+        "rol": {
+          "type": "String",
+          "required": true,
+          "enum": ["Administrativo", "Usuario"],
+          "default": "Usuario",
+          "description": "Rol del usuario en el sistema"
+        },
+        "estado": {
+          "type": "String",
+          "required": true,
+          "enum": ["activo", "inactivo"],
+          "default": "activo",
+          "description": "Estado del usuario"
+        },
+        "cargo": {
+          "type": "String",
+          "required": false,
+          "trim": true,
+          "maxlength": 100,
+          "description": "Cargo o puesto del usuario"
+        },
+        "usuarioCreacion": {
+          "type": "ObjectId",
+          "ref": "Usuario",
+          "required": false,
+          "description": "Referencia al usuario que creó este registro"
+        },
+        "usuarioModificacion": {
+          "type": "ObjectId",
+          "ref": "Usuario",
+          "required": false,
+          "description": "Referencia al usuario que modificó este registro"
+        },
+        "fechaCreacion": {
+          "type": "Date",
+          "required": true,
+          "default": "Date.now",
+          "description": "Fecha de creación del usuario"
+        },
+        "fechaActualizacion": {
+          "type": "Date",
+          "required": true,
+          "default": "Date.now",
+          "description": "Fecha de última actualización"
+        },
+        "createdAt": {
+          "type": "Date",
+          "auto": true,
+          "description": "Timestamp automático de creación (Mongoose)"
+        },
+        "updatedAt": {
+          "type": "Date",
+          "auto": true,
+          "description": "Timestamp automático de actualización (Mongoose)"
+        }
+      },
+      "indexes": [
+        { "usuario": 1, "unique": true },
+        { "email": 1, "unique": true }
+      ],
+      "methods": {
+        "compararPassword": {
+          "description": "Compara una contraseña con la contraseña hasheada",
+          "parameters": ["password: string"],
+          "returns": "Promise<boolean>"
+        }
+      }
+    },
+    "Cliente": {
+      "collection": "clientes",
+      "description": "Modelo de clientes del sistema",
+      "fields": {
+        "_id": {
+          "type": "ObjectId",
+          "required": true,
+          "description": "Identificador único del cliente"
+        },
+        "NOMBRE": {
+          "type": "String",
+          "required": true,
+          "trim": true,
+          "description": "Nombre completo del cliente"
+        },
+        "DIRECCION": {
+          "type": "String",
+          "required": false,
+          "trim": true,
+          "description": "Dirección del cliente"
+        },
+        "TELEFONO": {
+          "type": "Number",
+          "required": false,
+          "trim": true,
+          "description": "Número de teléfono del cliente"
+        },
+        "cedula": {
+          "type": "String",
+          "required": false,
+          "trim": true,
+          "description": "Cédula de identidad del cliente"
+        },
+        "correo": {
+          "type": "String",
+          "required": false,
+          "trim": true,
+          "description": "Correo electrónico del cliente"
+        },
+        "profesion": {
+          "type": "String",
+          "required": false,
+          "trim": true,
+          "description": "Profesión u ocupación del cliente"
+        },
+        "usuarioCreacion": {
+          "type": "ObjectId",
+          "ref": "Usuario",
+          "required": false,
+          "description": "Referencia al usuario que creó este cliente"
+        },
+        "usuarioModificacion": {
+          "type": "ObjectId",
+          "ref": "Usuario",
+          "required": false,
+          "description": "Referencia al usuario que modificó este cliente"
+        },
+        "createdAt": {
+          "type": "Date",
+          "auto": true,
+          "description": "Timestamp automático de creación (Mongoose)"
+        },
+        "updatedAt": {
+          "type": "Date",
+          "auto": true,
+          "description": "Timestamp automático de actualización (Mongoose)"
+        }
+      }
+    },
+    "Vehiculo": {
+      "collection": "vehiculos",
+      "description": "Modelo de vehículos del sistema",
+      "fields": {
+        "_id": {
+          "type": "ObjectId",
+          "required": true,
+          "description": "Identificador único del vehículo"
+        },
+        "Modelo": {
+          "type": "String",
+          "required": true,
+          "trim": true,
+          "description": "Modelo del vehículo"
+        },
+        "Marca": {
+          "type": "String",
+          "required": true,
+          "trim": true,
+          "description": "Marca del vehículo"
+        },
+        "Matricula": {
+          "type": "String",
+          "required": false,
+          "unique": true,
+          "trim": false,
+          "description": "Matrícula del vehículo (única)"
+        },
+        "Padron": {
+          "type": "String",
+          "required": false,
+          "trim": true,
+          "description": "Número de padrón del vehículo"
+        },
+        "Descripcion": {
+          "type": "String",
+          "required": false,
+          "trim": true,
+          "description": "Descripción adicional del vehículo"
+        },
+        "Año": {
+          "type": "Number",
+          "required": false,
+          "description": "Año del vehículo"
+        },
+        "Color": {
+          "type": "String",
+          "required": false,
+          "trim": true,
+          "description": "Color del vehículo"
+        },
+        "disponible": {
+          "type": "Boolean",
+          "required": false,
+          "default": true,
+          "description": "Indica si el vehículo está disponible para financiamiento"
+        },
+        "usuarioCreacion": {
+          "type": "ObjectId",
+          "ref": "Usuario",
+          "required": false,
+          "description": "Referencia al usuario que creó este vehículo"
+        },
+        "usuarioModificacion": {
+          "type": "ObjectId",
+          "ref": "Usuario",
+          "required": false,
+          "description": "Referencia al usuario que modificó este vehículo"
+        },
+        "fechaCreacion": {
+          "type": "Date",
+          "required": false,
+          "default": "Date.now",
+          "description": "Fecha de creación del registro"
+        },
+        "fechaActualizacion": {
+          "type": "Date",
+          "required": false,
+          "default": "Date.now",
+          "description": "Fecha de última actualización"
+        },
+        "createdAt": {
+          "type": "Date",
+          "auto": true,
+          "description": "Timestamp automático de creación (Mongoose)"
+        },
+        "updatedAt": {
+          "type": "Date",
+          "auto": true,
+          "description": "Timestamp automático de actualización (Mongoose)"
+        }
+      },
+      "indexes": [
+        { "disponible": 1 },
+        { "Matricula": 1, "unique": true }
+      ]
+    },
+    "Empresa": {
+      "collection": "empresas",
+      "description": "Modelo de empresas asociadas",
+      "fields": {
+        "_id": {
+          "type": "ObjectId",
+          "required": true,
+          "description": "Identificador único de la empresa"
+        },
+        "nombre": {
+          "type": "String",
+          "required": true,
+          "trim": true,
+          "maxlength": 100,
+          "description": "Nombre de la empresa"
+        },
+        "descripcion": {
+          "type": "String",
+          "required": false,
+          "trim": true,
+          "maxlength": 500,
+          "description": "Descripción de la empresa"
+        },
+        "telefono": {
+          "type": "String",
+          "required": false,
+          "trim": true,
+          "maxlength": 20,
+          "description": "Teléfono de contacto de la empresa"
+        },
+        "usuarioRegistro": {
+          "type": "ObjectId",
+          "ref": "Usuario",
+          "required": true,
+          "description": "Referencia al usuario que registró la empresa"
+        },
+        "usuarioModificacion": {
+          "type": "ObjectId",
+          "ref": "Usuario",
+          "required": false,
+          "description": "Referencia al usuario que modificó la empresa"
+        },
+        "estado": {
+          "type": "String",
+          "required": true,
+          "enum": ["activa", "inactiva"],
+          "default": "activa",
+          "description": "Estado de la empresa"
+        },
+        "createdAt": {
+          "type": "Date",
+          "auto": true,
+          "description": "Timestamp automático de creación (Mongoose)"
+        },
+        "updatedAt": {
+          "type": "Date",
+          "auto": true,
+          "description": "Timestamp automático de actualización (Mongoose)"
+        }
+      },
+      "indexes": [
+        { "nombre": 1 },
+        { "estado": 1 },
+        { "usuarioRegistro": 1 }
+      ]
+    },
+    "Financiamiento": {
+      "collection": "financiamientos",
+      "description": "Modelo de financiamientos de vehículos",
+      "fields": {
+        "_id": {
+          "type": "ObjectId",
+          "required": true,
+          "description": "Identificador único del financiamiento"
+        },
+        "cliente": {
+          "type": "ObjectId",
+          "ref": "Cliente",
+          "required": true,
+          "description": "Referencia al cliente principal"
+        },
+        "cliente2": {
+          "type": "ObjectId",
+          "ref": "Cliente",
+          "required": false,
+          "description": "Referencia al cliente secundario (codeudor)"
+        },
+        "vehiculo": {
+          "type": "ObjectId",
+          "ref": "Vehiculo",
+          "required": false,
+          "description": "Referencia al vehículo financiado"
+        },
+        "empresa": {
+          "type": "ObjectId",
+          "ref": "Empresa",
+          "required": true,
+          "description": "Referencia a la empresa asociada"
+        },
+        "costoVehiculo": {
+          "type": "Number",
+          "required": true,
+          "min": 0,
+          "description": "Costo del vehículo"
+        },
+        "valorBase": {
+          "type": "Number",
+          "required": false,
+          "min": 0,
+          "description": "Valor base del financiamiento"
+        },
+        "costosDocumentacion": {
+          "type": "Number",
+          "required": false,
+          "default": 0,
+          "min": 0,
+          "description": "Costos de documentación"
+        },
+        "gastosExtras": {
+          "type": "Number",
+          "required": false,
+          "default": 0,
+          "min": 0,
+          "description": "Gastos extras del financiamiento"
+        },
+        "cuotasExtras": {
+          "type": "Number",
+          "required": false,
+          "default": 0,
+          "min": 0,
+          "description": "Número de cuotas extras"
+        },
+        "cuotasFuturas": {
+          "type": "Array",
+          "required": false,
+          "description": "Array de cuotas futuras programadas",
+          "items": {
+            "numeroCuota": {
+              "type": "Number",
+              "required": true,
+              "description": "Número de la cuota"
+            },
+            "fechaVencimiento": {
+              "type": "Date",
+              "required": true,
+              "description": "Fecha de vencimiento de la cuota"
+            },
+            "valorCuota": {
+              "type": "Number",
+              "required": true,
+              "description": "Valor de la cuota"
+            }
+          }
+        },
+        "cuotas": {
+          "type": "Number",
+          "required": true,
+          "min": 1,
+          "max": 120,
+          "description": "Número total de cuotas (máximo 120)"
+        },
+        "valorCuota": {
+          "type": "Number",
+          "required": true,
+          "min": 0,
+          "description": "Valor de cada cuota"
+        },
+        "interesTotal": {
+          "type": "Number",
+          "required": true,
+          "description": "Interés total del financiamiento"
+        },
+        "montoTotal": {
+          "type": "Number",
+          "required": true,
+          "min": 0,
+          "description": "Monto total del financiamiento"
+        },
+        "fechaVenta": {
+          "type": "Date",
+          "required": true,
+          "default": "Date.now",
+          "description": "Fecha de la venta"
+        },
+        "estadoFinanciamiento": {
+          "type": "String",
+          "required": true,
+          "enum": ["activo", "finalizado", "cancelado", "en_mora"],
+          "default": "activo",
+          "description": "Estado del financiamiento"
+        },
+        "usuarioCreacion": {
+          "type": "ObjectId",
+          "ref": "Usuario",
+          "required": false,
+          "description": "Referencia al usuario que creó el financiamiento"
+        },
+        "usuarioRegistro": {
+          "type": "ObjectId",
+          "ref": "Usuario",
+          "required": true,
+          "description": "Referencia al usuario que registró el financiamiento"
+        },
+        "usuarioModificacion": {
+          "type": "ObjectId",
+          "ref": "Usuario",
+          "required": false,
+          "description": "Referencia al usuario que modificó el financiamiento"
+        },
+        "observaciones": {
+          "type": "String",
+          "required": false,
+          "trim": true,
+          "maxlength": 500,
+          "description": "Observaciones adicionales"
+        },
+        "fechaPrimeraCuota": {
+          "type": "Date",
+          "required": true,
+          "description": "Fecha de la primera cuota"
+        },
+        "fechaUltimaCuota": {
+          "type": "Date",
+          "required": true,
+          "description": "Fecha de la última cuota"
+        },
+        "cuotasPagadas": {
+          "type": "Number",
+          "required": false,
+          "default": 0,
+          "min": 0,
+          "description": "Número de cuotas pagadas"
+        },
+        "cuotasPendientes": {
+          "type": "Number",
+          "required": true,
+          "min": 0,
+          "description": "Número de cuotas pendientes"
+        },
+        "montoPagado": {
+          "type": "Number",
+          "required": false,
+          "default": 0,
+          "min": 0,
+          "description": "Monto total pagado"
+        },
+        "saldoPendiente": {
+          "type": "Number",
+          "required": true,
+          "min": 0,
+          "description": "Saldo pendiente por pagar"
+        },
+        "createdAt": {
+          "type": "Date",
+          "auto": true,
+          "description": "Timestamp automático de creación (Mongoose)"
+        },
+        "updatedAt": {
+          "type": "Date",
+          "auto": true,
+          "description": "Timestamp automático de actualización (Mongoose)"
+        }
+      },
+      "indexes": [
+        { "cliente": 1 },
+        { "cliente2": 1 },
+        { "vehiculo": 1 },
+        { "empresa": 1 },
+        { "usuarioRegistro": 1 },
+        { "usuarioCreacion": 1 },
+        { "usuarioModificacion": 1 },
+        { "estadoFinanciamiento": 1 },
+        { "fechaVenta": -1 }
+      ],
+      "virtuals": {
+        "progresoFinanciamiento": {
+          "type": "Number",
+          "description": "Porcentaje de progreso del financiamiento (cuotasPagadas / cuotas * 100)",
+          "calculated": true
+        },
+        "estaAlDia": {
+          "type": "Boolean",
+          "description": "Indica si el financiamiento está al día (fechaUltimaCuota >= hoy)",
+          "calculated": true
+        }
+      }
+    },
+    "PagoCuota": {
+      "collection": "pagocuotas",
+      "description": "Modelo de pagos de cuotas de financiamientos",
+      "fields": {
+        "_id": {
+          "type": "ObjectId",
+          "required": true,
+          "description": "Identificador único del pago"
+        },
+        "financiamiento": {
+          "type": "ObjectId",
+          "ref": "Financiamiento",
+          "required": true,
+          "description": "Referencia al financiamiento"
+        },
+        "numeroCuota": {
+          "type": "Number",
+          "required": false,
+          "min": 0,
+          "default": 0,
+          "description": "Número de cuota (0 indica pago extra)"
+        },
+        "montoPago": {
+          "type": "Number",
+          "required": true,
+          "min": 0,
+          "description": "Monto del pago"
+        },
+        "fechaPago": {
+          "type": "Date",
+          "required": true,
+          "default": "Date.now",
+          "description": "Fecha en que se realizó el pago"
+        },
+        "metodoPago": {
+          "type": "String",
+          "required": true,
+          "enum": ["efectivo", "transferencia", "cheque", "tarjeta", "otro"],
+          "default": "efectivo",
+          "description": "Método de pago utilizado"
+        },
+        "usuarioRegistro": {
+          "type": "ObjectId",
+          "ref": "Usuario",
+          "required": true,
+          "description": "Referencia al usuario que registró el pago"
+        },
+        "observaciones": {
+          "type": "String",
+          "required": false,
+          "trim": true,
+          "maxlength": 500,
+          "description": "Observaciones sobre el pago"
+        },
+        "estadoPago": {
+          "type": "String",
+          "required": true,
+          "enum": ["confirmado", "pendiente", "cancelado"],
+          "default": "confirmado",
+          "description": "Estado del pago"
+        },
+        "esExtra": {
+          "type": "Boolean",
+          "required": false,
+          "default": false,
+          "description": "Indica si es un pago extra (fuera de cuota)"
+        },
+        "numeroComprobante": {
+          "type": "String",
+          "required": false,
+          "trim": true,
+          "description": "Número de comprobante del pago"
+        },
+        "banco": {
+          "type": "String",
+          "required": false,
+          "trim": true,
+          "description": "Banco del cual proviene el pago (si aplica)"
+        },
+        "createdAt": {
+          "type": "Date",
+          "auto": true,
+          "description": "Timestamp automático de creación (Mongoose)"
+        },
+        "updatedAt": {
+          "type": "Date",
+          "auto": true,
+          "description": "Timestamp automático de actualización (Mongoose)"
+        }
+      },
+      "indexes": [
+        { "financiamiento": 1 },
+        { "fechaPago": -1 },
+        { "usuarioRegistro": 1 },
+        { "estadoPago": 1 },
+        { "financiamiento": 1, "numeroCuota": 1, "unique": false }
+      ]
+    }
+  },
+  "relationships": {
+    "Usuario": {
+      "self": {
+        "usuarioCreacion": "Usuario",
+        "usuarioModificacion": "Usuario"
+      }
+    },
+    "Cliente": {
+      "Usuario": {
+        "usuarioCreacion": "Usuario",
+        "usuarioModificacion": "Usuario"
+      }
+    },
+    "Vehiculo": {
+      "Usuario": {
+        "usuarioCreacion": "Usuario",
+        "usuarioModificacion": "Usuario"
+      }
+    },
+    "Empresa": {
+      "Usuario": {
+        "usuarioRegistro": "Usuario",
+        "usuarioModificacion": "Usuario"
+      }
+    },
+    "Financiamiento": {
+      "Cliente": {
+        "cliente": "Cliente",
+        "cliente2": "Cliente"
+      },
+      "Vehiculo": {
+        "vehiculo": "Vehiculo"
+      },
+      "Empresa": {
+        "empresa": "Empresa"
+      },
+      "Usuario": {
+        "usuarioCreacion": "Usuario",
+        "usuarioRegistro": "Usuario",
+        "usuarioModificacion": "Usuario"
+      }
+    },
+    "PagoCuota": {
+      "Financiamiento": {
+        "financiamiento": "Financiamiento"
+      },
+      "Usuario": {
+        "usuarioRegistro": "Usuario"
+      }
+    }
+  },
+  "enums": {
+    "Roles": {
+      "values": ["Administrativo", "Usuario"],
+      "description": "Roles de usuario en el sistema"
+    },
+    "EstadoUsuario": {
+      "values": ["activo", "inactivo"],
+      "description": "Estados posibles de un usuario"
+    },
+    "EstadoEmpresa": {
+      "values": ["activa", "inactiva"],
+      "description": "Estados posibles de una empresa"
+    },
+    "EstadoFinanciamiento": {
+      "values": ["activo", "finalizado", "cancelado", "en_mora"],
+      "description": "Estados posibles de un financiamiento"
+    },
+    "MetodoPago": {
+      "values": ["efectivo", "transferencia", "cheque", "tarjeta", "otro"],
+      "description": "Métodos de pago disponibles"
+    },
+    "EstadoPago": {
+      "values": ["confirmado", "pendiente", "cancelado"],
+      "description": "Estados posibles de un pago"
+    }
+  },
+  "notes": {
+    "timestamps": "Todos los modelos tienen timestamps automáticos (createdAt, updatedAt) excepto donde se especifica lo contrario",
+    "references": "Las referencias ObjectId usan populate() de Mongoose para obtener los documentos relacionados",
+    "password": "Las contraseñas se hashean automáticamente con bcrypt antes de guardar",
+    "virtuals": "Los campos virtuales se calculan en tiempo de ejecución y no se almacenan en la base de datos",
+    "indexes": "Los índices mejoran el rendimiento de las consultas frecuentes"
+  }
+}
+
