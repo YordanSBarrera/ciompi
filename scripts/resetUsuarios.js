@@ -10,14 +10,14 @@ const connectDB = async () => {
       'mongodb://localhost:27017/ciompi';
 
     await mongoose.connect(mongoUri);
-    console.log('✅ Conectado a MongoDB');
+    console.log('✅ Conectado a MongoDB:', mongoose.connection.db.databaseName);
   } catch (error) {
     console.error('❌ Error conectando a MongoDB:', error);
     process.exit(1);
   }
 };
 
-// Esquema de Usuario actualizado
+// Esquema de Usuario (coincide con models/Usuario.ts)
 const usuarioSchema = new mongoose.Schema(
   {
     usuario: {
@@ -35,7 +35,7 @@ const usuarioSchema = new mongoose.Schema(
     },
     email: {
       type: String,
-      required: true,
+      required: false, // Opcional según el modelo actual
       unique: true,
       trim: true,
       lowercase: true,
@@ -44,7 +44,7 @@ const usuarioSchema = new mongoose.Schema(
       type: String,
       required: true,
       trim: true,
-      maxlength: 100,
+      maxlength: 50,
     },
     avatar: {
       type: String,
@@ -52,7 +52,7 @@ const usuarioSchema = new mongoose.Schema(
     },
     rol: {
       type: String,
-      enum: ['admin', 'user', 'Administrativo', 'Usuario'],
+      enum: ['Administrativo', 'Usuario'],
       default: 'Usuario',
     },
     estado: {
@@ -65,24 +65,15 @@ const usuarioSchema = new mongoose.Schema(
       trim: true,
       maxlength: 100,
     },
-    informacionContacto: {
-      telefono: {
-        type: String,
-        trim: true,
-        maxlength: 20,
-      },
+    usuarioCreacion: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Usuario',
+      required: false,
     },
-    preferencias: {
-      tema: {
-        type: String,
-        enum: ['claro', 'oscuro', 'sistema'],
-        default: 'claro',
-      },
-      idioma: {
-        type: String,
-        default: 'es',
-        maxlength: 10,
-      },
+    usuarioModificacion: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Usuario',
+      required: false,
     },
     fechaCreacion: {
       type: Date,
@@ -94,11 +85,23 @@ const usuarioSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: true,
+    timestamps: true, // Crea createdAt y updatedAt automáticamente
+    toJSON: {
+      transform: function (doc, ret) {
+        const { password, ...userWithoutPassword } = ret;
+        return userWithoutPassword;
+      },
+    },
   }
 );
 
-// Middleware para hashear contraseña
+// Middleware para actualizar fechaActualizacion
+usuarioSchema.pre('save', function (next) {
+  this.fechaActualizacion = new Date();
+  next();
+});
+
+// Middleware para hashear contraseña antes de guardar
 usuarioSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
 
@@ -111,50 +114,72 @@ usuarioSchema.pre('save', async function (next) {
   }
 });
 
-const Usuario = mongoose.model('Usuario', usuarioSchema);
+const Usuario =
+  mongoose.models.Usuario || mongoose.model('Usuario', usuarioSchema);
 
 async function resetUsuarios() {
   try {
     await connectDB();
 
-    console.log('🗑️ Eliminando todos los usuarios existentes...');
+    console.log('\n🗑️  Eliminando todos los usuarios existentes...');
     const deleteResult = await Usuario.deleteMany({});
-    console.log(`✅ Eliminados ${deleteResult.deletedCount} usuarios`);
+    console.log(`✅ Eliminados ${deleteResult.deletedCount} usuarios\n`);
 
     console.log('👤 Creando nuevo usuario administrador...');
+
+    // Crear usuario administrador
     const nuevoUsuario = new Usuario({
       usuario: 'admin',
-      password: 'admin123',
+      password: 'admin123', // Se hasheará automáticamente
       email: 'admin@ciompi.com',
       nombre: 'Administrador del Sistema',
-      rol: 'admin',
+      rol: 'Administrativo', // Usar el valor correcto del enum
       estado: 'activo',
       cargo: 'Administrador',
-      informacionContacto: {
-        telefono: '+598 99 123 456',
-      },
-      preferencias: {
-        tema: 'claro',
-        idioma: 'es',
-      },
+      fechaCreacion: new Date(),
+      fechaActualizacion: new Date(),
     });
 
     await nuevoUsuario.save();
-    console.log('✅ Usuario administrador creado exitosamente');
+
+    console.log('✅ Usuario administrador creado exitosamente\n');
     console.log('📋 Datos del usuario:');
     console.log(`   Usuario: ${nuevoUsuario.usuario}`);
+    console.log(`   Contraseña: admin123`);
     console.log(`   Email: ${nuevoUsuario.email}`);
     console.log(`   Nombre: ${nuevoUsuario.nombre}`);
     console.log(`   Rol: ${nuevoUsuario.rol}`);
     console.log(`   Estado: ${nuevoUsuario.estado}`);
-    console.log(`   Cargo: ${nuevoUsuario.cargo}`);
-    console.log(`   Teléfono: ${nuevoUsuario.informacionContacto?.telefono}`);
-    console.log(`   Tema: ${nuevoUsuario.preferencias?.tema}`);
-    console.log(`   Idioma: ${nuevoUsuario.preferencias?.idioma}`);
+    console.log(`   Cargo: ${nuevoUsuario.cargo || 'N/A'}`);
+    console.log(`   Fecha Creación: ${nuevoUsuario.fechaCreacion}`);
+    console.log(`   ID: ${nuevoUsuario._id}\n`);
+
+    // Opcional: Crear un usuario de prueba adicional
+    console.log('👤 Creando usuario de prueba...');
+    const usuarioPrueba = new Usuario({
+      usuario: 'usuario',
+      password: 'usuario123',
+      email: 'usuario@ciompi.com',
+      nombre: 'Usuario de Prueba',
+      rol: 'Usuario',
+      estado: 'activo',
+      cargo: 'Usuario',
+      fechaCreacion: new Date(),
+      fechaActualizacion: new Date(),
+    });
+
+    await usuarioPrueba.save();
+    console.log('✅ Usuario de prueba creado exitosamente');
+    console.log(`   Usuario: ${usuarioPrueba.usuario}`);
+    console.log(`   Contraseña: usuario123\n`);
   } catch (error) {
     console.error('❌ Error:', error);
+    if (error.code === 11000) {
+      console.error('⚠️  Error: Ya existe un usuario con ese nombre o email');
+    }
+    throw error;
   } finally {
-    await mongoose.disconnect();
+    await mongoose.connection.close();
     console.log('🔌 Desconectado de MongoDB');
     process.exit(0);
   }
