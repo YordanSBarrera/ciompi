@@ -6,18 +6,17 @@ import ListaFinanciamientos from '@/app/components/ListaFinanciamientos';
 import { Box, CircularProgress, Alert } from '@mui/material';
 import { useEffect, useState } from 'react';
 
-// Función para cargar financiamientos
-async function cargarFinanciamientos(): Promise<FinanciamientoType[]> {
-  try {
-    const response = await fetch('/api/financiamiento');
-    if (!response.ok) {
-      throw new Error('Error al cargar financiamientos');
-    }
-    return await response.json();
-  } catch (error) {
-    console.error('Error cargando financiamientos:', error);
-    return [];
-  }
+interface PaginationData {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
+interface FinanciamientosResponse {
+  success: boolean;
+  data: FinanciamientoType[];
+  pagination: PaginationData;
 }
 
 export default function FinanciamientoPage() {
@@ -25,15 +24,46 @@ export default function FinanciamientoPage() {
   const [financiamientos, setFinanciamientos] = useState<FinanciamientoType[]>(
     []
   );
+  const [pagination, setPagination] = useState<PaginationData>({
+    page: 1,
+    limit: 20,
+    total: 0,
+    pages: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
 
-  const cargarListaFinanciamientos = async () => {
+  const cargarListaFinanciamientos = async (
+    page: number = 1,
+    searchTerm: string = ''
+  ) => {
     try {
       setLoading(true);
       setError(null);
-      const listaFinanciamientos = await cargarFinanciamientos();
-      setFinanciamientos(listaFinanciamientos);
+      
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: pagination.limit.toString(),
+      });
+      
+      if (searchTerm) {
+        params.append('search', searchTerm);
+      }
+      
+      const response = await fetch(`/api/financiamiento?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error('Error al cargar financiamientos');
+      }
+      
+      const result: FinanciamientosResponse = await response.json();
+      
+      if (result.success) {
+        setFinanciamientos(result.data);
+        setPagination(result.pagination);
+      } else {
+        throw new Error('Error en la respuesta del servidor');
+      }
     } catch (err) {
       setError('Error al cargar la lista de financiamientos');
       console.error('Error:', err);
@@ -43,17 +73,26 @@ export default function FinanciamientoPage() {
   };
 
   useEffect(() => {
-    cargarListaFinanciamientos();
+    cargarListaFinanciamientos(1, search);
   }, []);
 
   const handleFinanciamientoEliminado = () => {
     // Recargar la lista después de eliminar un financiamiento
-    cargarListaFinanciamientos();
+    cargarListaFinanciamientos(pagination.page, search);
   };
 
   const handleAgregarFinanciamiento = () => {
     // Redirigir a la página de crear nuevo financiamiento
     router.push('/ciompi/financiamiento/nuevo');
+  };
+
+  const handlePageChange = (newPage: number) => {
+    cargarListaFinanciamientos(newPage, search);
+  };
+
+  const handleSearchChange = (searchTerm: string) => {
+    setSearch(searchTerm);
+    cargarListaFinanciamientos(1, searchTerm);
   };
 
   if (loading) {
@@ -83,8 +122,13 @@ export default function FinanciamientoPage() {
     <AuthGuard>
       <ListaFinanciamientos
         financiamientos={financiamientos}
+        pagination={pagination}
+        loading={loading}
         onFinanciamientoEliminado={handleFinanciamientoEliminado}
         onAgregarFinanciamiento={handleAgregarFinanciamiento}
+        onPageChange={handlePageChange}
+        onSearchChange={handleSearchChange}
+        initialSearch={search}
       />
     </AuthGuard>
   );

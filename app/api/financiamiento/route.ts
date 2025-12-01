@@ -8,9 +8,97 @@ import { getUserIdFromToken } from '@/lib/server-utils';
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
-    // Obtener todos los financiamientos con información de cliente, vehículo, empresa y usuario
-    const financiamientos = await Financiamiento.find();
-    return NextResponse.json(financiamientos);
+    const { searchParams } = new URL(request.url);
+    
+    // Parámetros de paginación
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '20');
+    const skip = (page - 1) * limit;
+    
+    // Parámetros de búsqueda/filtro
+    const search = searchParams.get('search') || '';
+    const estado = searchParams.get('estado') || '';
+    
+    // Construir query base
+    let query: any = {};
+    
+    // Filtro por estado si existe
+    if (estado) {
+      query.estadoFinanciamiento = estado;
+    }
+    
+    // Si hay búsqueda, necesitamos buscar en campos relacionados
+    if (search) {
+      const searchLower = search.trim().toLowerCase();
+      
+      // Buscar clientes que coincidan
+      const clientesMatch = await Cliente.find({
+        $or: [
+          { NOMBRE: { $regex: searchLower, $options: 'i' } },
+          { cedula: { $regex: searchLower, $options: 'i' } },
+          { TELEFONO: { $regex: searchLower, $options: 'i' } },
+        ],
+      }).select('_id').lean();
+      
+      const clienteIds = clientesMatch.map(c => c._id.toString());
+      
+      // Buscar vehículos que coincidan
+      const vehiculosMatch = await Vehiculo.find({
+        $or: [
+          { Marca: { $regex: searchLower, $options: 'i' } },
+          { Modelo: { $regex: searchLower, $options: 'i' } },
+          { Matricula: { $regex: searchLower, $options: 'i' } },
+        ],
+      }).select('_id').lean();
+      
+      const vehiculoIds = vehiculosMatch.map(v => v._id.toString());
+      
+      // Construir condiciones de búsqueda
+      const searchConditions: any[] = [];
+      
+      if (clienteIds.length > 0) {
+        searchConditions.push({ cliente: { $in: clienteIds } });
+        searchConditions.push({ cliente2: { $in: clienteIds } });
+      }
+      
+      if (vehiculoIds.length > 0) {
+        searchConditions.push({ vehiculo: { $in: vehiculoIds } });
+      }
+      
+      searchConditions.push({
+        estadoFinanciamiento: { $regex: searchLower, $options: 'i' },
+      });
+      
+      // Si hay condiciones de búsqueda, agregarlas al query
+      if (searchConditions.length > 0) {
+        query.$or = searchConditions;
+      }
+    }
+    
+    // Obtener financiamientos con paginación y populate optimizado
+    const financiamientos = await Financiamiento.find(query)
+      .populate('cliente', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
+      .populate('cliente2', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
+      .populate('vehiculo', 'Marca Modelo Matricula Padron Año Color Descripcion disponible')
+      .populate('empresa', 'nombre descripcion telefono')
+      .sort({ fechaVenta: -1, createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(); // Usar lean() para mejor rendimiento
+    
+    // Contar total de documentos que coinciden con el query
+    const total = await Financiamiento.countDocuments(query);
+    
+    return NextResponse.json({
+      success: true,
+      data: financiamientos,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
     console.error('Error obteniendo financiamientos:', error);
     return NextResponse.json(

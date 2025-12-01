@@ -12,6 +12,7 @@ import BuscarClientes from '@/app/components/operaciones/BuscarClientes';
 import FinanciamientosAtrasados from '@/app/components/operaciones/FinanciamientosAtrasados';
 import PagosAtrasados from '@/app/components/operaciones/PagosAtrasados';
 import EstadoDeCuentaPage from '@/app/components/EstadoDeCuentaPage';
+import Vencimientos from '@/app/components/operaciones/Vencimientos';
 
 function OperacionesContent() {
   const searchParams = useSearchParams();
@@ -34,6 +35,8 @@ function OperacionesContent() {
         return <PagosAtrasados />;
       case 'estado-cuenta':
         return <EstadoDeCuentaPage />;
+      case 'vencimientos':
+        return <Vencimientos />;
       default:
         return <BuscarClientes />;
     }
