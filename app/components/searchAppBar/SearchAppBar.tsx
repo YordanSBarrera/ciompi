@@ -5,7 +5,6 @@ import Box from '@mui/material/Box';
 import LogoApp from '../LogoApp';
 import { azulBase } from '@/lib/color';
 import {
-  Avatar,
   Divider,
   IconButton,
   ListItemIcon,
@@ -16,8 +15,6 @@ import {
   Typography,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
-import PersonIcon from '@mui/icons-material/Person';
-import LogoutIcon from '@mui/icons-material/Logout';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import SearchIcon from '@mui/icons-material/Search';
 import WarningIcon from '@mui/icons-material/Warning';
@@ -26,20 +23,17 @@ import { useRouter } from 'next/navigation';
 import { routes } from '@/lib/rutas';
 import MenuItemFormatted from './MenuItemFormatted';
 import { getCurrentUser } from '@/lib/utils';
+import AccountMenu from './AccountMenu';
 
 export default function SearchAppBar() {
   const router = useRouter();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [accountAnchorEl, setAccountAnchorEl] = useState<null | HTMLElement>(
-    null
-  );
   const [operacionesAnchorEl, setOperacionesAnchorEl] =
     useState<null | HTMLElement>(null);
   const operacionesTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isMouseOverSubmenuRef = useRef<boolean>(false);
   const [user, setUser] = useState<any>(null);
   const open = Boolean(anchorEl);
-  const accountMenuOpen = Boolean(accountAnchorEl);
   const operacionesMenuOpen = Boolean(operacionesAnchorEl);
 
   useEffect(() => {
@@ -75,25 +69,10 @@ export default function SearchAppBar() {
     setAnchorEl(null);
   };
 
-  const handleAccountClick = (event: MouseEvent<HTMLElement>) => {
-    setAccountAnchorEl(event.currentTarget);
-  };
-  const handleAccountClose = () => {
-    setAccountAnchorEl(null);
-  };
-
-  const handleDetalles = () => {
-    if (user?.id) {
-      router.push(`/ciompi/usuario/${user.id}`);
-    }
-    handleAccountClose();
-  };
-
   const handleLogout = () => {
     // Cerrar todos los menús abiertos
     handleClose();
     handleOperacionesClose();
-    handleAccountClose();
     // Limpiar localStorage
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -401,60 +380,7 @@ export default function SearchAppBar() {
           </Typography>
 
           {/* Account Menu */}
-          {user && (
-            <>
-              <Tooltip title="Mi cuenta">
-                <IconButton
-                  onClick={handleAccountClick}
-                  size="small"
-                  sx={{ mr: 3 }}
-                  aria-controls={accountMenuOpen ? 'account-menu' : undefined}
-                  aria-haspopup="true"
-                  aria-expanded={accountMenuOpen ? 'true' : undefined}
-                >
-                  <Avatar sx={{ width: 32, height: 32 }}>
-                    {user.nombre
-                      ? user.nombre.charAt(0).toUpperCase()
-                      : user.usuario.charAt(0).toUpperCase()}
-                  </Avatar>
-                </IconButton>
-              </Tooltip>
-              <Menu
-                anchorEl={accountAnchorEl}
-                id="account-menu"
-                open={accountMenuOpen}
-                onClose={handleAccountClose}
-                onClick={handleAccountClose}
-                PaperProps={{
-                  sx: {
-                    backgroundColor: '#1a1a1a',
-                    color: '#ffffff',
-                    border: '1px solid #333333',
-                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-                    borderRadius: '8px',
-                    mt: 1,
-                    minWidth: 200,
-                  },
-                }}
-                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-              >
-                <MenuItem onClick={handleDetalles}>
-                  <ListItemIcon>
-                    <PersonIcon fontSize="small" sx={{ color: '#ffffff' }} />
-                  </ListItemIcon>
-                  Detalles
-                </MenuItem>
-                <Divider sx={{ backgroundColor: '#444444', my: 1 }} />
-                <MenuItem onClick={handleLogout}>
-                  <ListItemIcon>
-                    <LogoutIcon fontSize="small" sx={{ color: '#ffffff' }} />
-                  </ListItemIcon>
-                  Cerrar Sesión
-                </MenuItem>
-              </Menu>
-            </>
-          )}
+          {user && <AccountMenu user={user} handleLogout={handleLogout} />}
         </Toolbar>
       </AppBar>
     </Box>
