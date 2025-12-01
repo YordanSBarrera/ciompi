@@ -25,15 +25,15 @@ import MenuItemFormatted from './MenuItemFormatted';
 import { getCurrentUser } from '@/lib/utils';
 import AccountMenu from './AccountMenu';
 
-export default function SearchAppBar() {
+export default function HeaderAppBar() {
   const router = useRouter();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [operacionesAnchorEl, setOperacionesAnchorEl] =
     useState<null | HTMLElement>(null);
-  const operacionesTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const isMouseOverSubmenuRef = useRef<boolean>(false);
+  // const operacionesTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // const isMouseOverSubmenuRef = useRef<boolean>(false);
   const [user, setUser] = useState<any>(null);
-  const open = Boolean(anchorEl);
+  const openMainMenu = Boolean(anchorEl);
   const operacionesMenuOpen = Boolean(operacionesAnchorEl);
 
   useEffect(() => {
@@ -46,20 +46,20 @@ export default function SearchAppBar() {
       setUser(updatedUser);
     };
 
-    // Escuchar evento personalizado de cambio de usuario
-    window.addEventListener('storage', handleStorageChange);
+    // // Escuchar evento personalizado de cambio de usuario
+    // window.addEventListener('storage', handleStorageChange);
 
-    // Escuchar eventos personalizados para cambios internos
-    window.addEventListener('userChange', handleStorageChange);
+    // // Escuchar eventos personalizados para cambios internos
+    // window.addEventListener('userChange', handleStorageChange);
 
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('userChange', handleStorageChange);
-      // Limpiar timeout al desmontar
-      if (operacionesTimeoutRef.current) {
-        clearTimeout(operacionesTimeoutRef.current);
-      }
-    };
+    // return () => {
+    //   window.removeEventListener('storage', handleStorageChange);
+    //   window.removeEventListener('userChange', handleStorageChange);
+    //   // Limpiar timeout al desmontar
+    //   if (operacionesTimeoutRef.current) {
+    //     clearTimeout(operacionesTimeoutRef.current);
+    //   }
+    // };
   }, []);
 
   const handleClick = (event: MouseEvent<HTMLElement>) => {
@@ -67,12 +67,12 @@ export default function SearchAppBar() {
   };
   const handleClose = () => {
     setAnchorEl(null);
+    setOperacionesAnchorEl(null);
   };
 
   const handleLogout = () => {
     // Cerrar todos los menús abiertos
     handleClose();
-    handleOperacionesClose();
     // Limpiar localStorage
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -84,62 +84,12 @@ export default function SearchAppBar() {
     router.push('/login');
   };
 
-  const handleOperacionesMouseEnter = (event: MouseEvent<HTMLElement>) => {
-    // Limpiar cualquier timeout pendiente
-    if (operacionesTimeoutRef.current) {
-      clearTimeout(operacionesTimeoutRef.current);
-      operacionesTimeoutRef.current = null;
-    }
-    isMouseOverSubmenuRef.current = false;
-    setOperacionesAnchorEl(event.currentTarget);
-  };
-
-  const handleOperacionesMouseLeave = () => {
-    // No cerrar inmediatamente - esperar a ver si el mouse entra al submenú
-    // El submenú cancelará este timeout si el mouse entra
-    operacionesTimeoutRef.current = setTimeout(() => {
-      // Solo cerrar si el mouse no está sobre el submenú
-      if (!isMouseOverSubmenuRef.current) {
-        setOperacionesAnchorEl(null);
-      }
-    }, 400);
-  };
-
-  const handleOperacionesClose = () => {
-    if (operacionesTimeoutRef.current) {
-      clearTimeout(operacionesTimeoutRef.current);
-      operacionesTimeoutRef.current = null;
-    }
-    isMouseOverSubmenuRef.current = false;
-    setOperacionesAnchorEl(null);
-  };
-
-  const handleSubmenuMouseEnter = () => {
-    // Marcar que el mouse está sobre el submenú
-    isMouseOverSubmenuRef.current = true;
-    // Limpiar timeout cuando el mouse entra al submenú
-    if (operacionesTimeoutRef.current) {
-      clearTimeout(operacionesTimeoutRef.current);
-      operacionesTimeoutRef.current = null;
-    }
-  };
-
-  const handleSubmenuMouseLeave = () => {
-    // Marcar que el mouse salió del submenú
-    isMouseOverSubmenuRef.current = false;
-    // Cerrar el submenú cuando el mouse sale completamente
-    operacionesTimeoutRef.current = setTimeout(() => {
-      if (!isMouseOverSubmenuRef.current) {
-        setOperacionesAnchorEl(null);
-      }
-    }, 300);
-  };
-
   const handleOperacionesItemClick = (href: string) => {
     router.push(href);
-    handleOperacionesClose();
+    setOperacionesAnchorEl(null);
     handleClose();
   };
+
   return (
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static" sx={{ backgroundColor: azulBase }}>
@@ -160,10 +110,8 @@ export default function SearchAppBar() {
                 </IconButton>
               </Tooltip>
               <Menu
-                id="demo-positioned-menu"
-                aria-labelledby="demo-positioned-button"
                 anchorEl={anchorEl}
-                open={open}
+                open={openMainMenu}
                 onClose={handleClose}
                 anchorOrigin={{
                   vertical: 'top',
@@ -206,8 +154,8 @@ export default function SearchAppBar() {
                   onHandleClose={handleClose}
                 />
                 <MenuItem
-                  onMouseEnter={handleOperacionesMouseEnter}
-                  onMouseLeave={handleOperacionesMouseLeave}
+                  onMouseEnter={e => setOperacionesAnchorEl(e.currentTarget)}
+                  // onMouseLeave={() => setOperacionesAnchorEl(null)}
                   sx={{
                     color: '#ffffff',
                     '&:hover': {
@@ -246,10 +194,8 @@ export default function SearchAppBar() {
               <Menu
                 anchorEl={operacionesAnchorEl}
                 open={operacionesMenuOpen}
-                onClose={handleOperacionesClose}
+                onClose={() => setOperacionesAnchorEl(null)}
                 MenuListProps={{
-                  onMouseEnter: handleSubmenuMouseEnter,
-                  onMouseLeave: handleSubmenuMouseLeave,
                   sx: {
                     py: 1,
                   },
@@ -263,8 +209,6 @@ export default function SearchAppBar() {
                   horizontal: 'left',
                 }}
                 PaperProps={{
-                  onMouseEnter: handleSubmenuMouseEnter,
-                  onMouseLeave: handleSubmenuMouseLeave,
                   sx: {
                     backgroundColor: '#1a1a1a',
                     color: '#ffffff',
@@ -280,93 +224,41 @@ export default function SearchAppBar() {
                 disableAutoFocusItem
                 disableEnforceFocus
               >
-                <MenuItem
-                  onClick={() =>
-                    handleOperacionesItemClick(
-                      `/${routes.operaciones}?tab=buscar`
-                    )
-                  }
-                  sx={{
-                    color: '#ffffff',
-                    '&:hover': {
-                      backgroundColor: '#333333',
-                      color: '#ffffff',
-                    },
-                    py: 1.5,
-                    px: 2,
-                  }}
-                >
-                  <ListItemIcon>
+                <MenuItemFormatted
+                  title=" Buscar Clientes"
+                  icon={
                     <SearchIcon fontSize="small" sx={{ color: '#ffffff' }} />
-                  </ListItemIcon>
-                  Buscar Clientes
-                </MenuItem>
-                <MenuItem
-                  onClick={() =>
-                    handleOperacionesItemClick(
-                      `/${routes.operaciones}?tab=financiamientos-atrasados`
-                    )
                   }
-                  sx={{
-                    color: '#ffffff',
-                    '&:hover': {
-                      backgroundColor: '#333333',
-                      color: '#ffffff',
-                    },
-                    py: 1.5,
-                    px: 2,
-                  }}
-                >
-                  <ListItemIcon>
+                  href={`/${routes.operaciones}?tab=buscar`}
+                  onHandleClose={handleClose}
+                />
+                <MenuItemFormatted
+                  title="Financiamientos Atrasados"
+                  icon={
                     <WarningIcon fontSize="small" sx={{ color: '#ff9800' }} />
-                  </ListItemIcon>
-                  Financiamientos Atrasados
-                </MenuItem>
-                <MenuItem
-                  onClick={() =>
-                    handleOperacionesItemClick(
-                      `/${routes.operaciones}?tab=pagos-atrasados`
-                    )
                   }
-                  sx={{
-                    color: '#ffffff',
-                    '&:hover': {
-                      backgroundColor: '#333333',
-                      color: '#ffffff',
-                    },
-                    py: 1.5,
-                    px: 2,
-                  }}
-                >
-                  <ListItemIcon>
-                    <WarningIcon fontSize="small" sx={{ color: '#f44336' }} />
-                  </ListItemIcon>
-                  Pagos Atrasados
-                </MenuItem>
-                <MenuItem
-                  onClick={() =>
-                    handleOperacionesItemClick(
-                      `/${routes.operaciones}?tab=estado-cuenta`
-                    )
+                  href={`/${routes.operaciones}?tab=financiamientos-atrasados`}
+                  onHandleClose={handleClose}
+                />
+                <MenuItemFormatted
+                  title="Pagos Atrasados"
+                  icon={
+                    <WarningIcon fontSize="small" sx={{ color: '#ff9800' }} />
                   }
-                  sx={{
-                    color: '#ffffff',
-                    '&:hover': {
-                      backgroundColor: '#333333',
-                      color: '#ffffff',
-                    },
-                    py: 1.5,
-                    px: 2,
-                  }}
-                >
-                  <ListItemIcon>
+                  href={`/${routes.operaciones}?tab=pagos-atrasados`}
+                  onHandleClose={handleClose}
+                />
+                <MenuItemFormatted
+                  title="Estado de Cuenta"
+                  icon={
                     <AccountBalanceIcon
                       fontSize="small"
                       sx={{ color: '#2196f3' }}
                     />
-                  </ListItemIcon>
-                  Estado de Cuenta
-                </MenuItem>
+                  }
+                  href={`/${routes.operaciones}?tab=estado-cuenta`}
+                  onHandleClose={handleClose}
+                />
               </Menu>
             </>
           )}

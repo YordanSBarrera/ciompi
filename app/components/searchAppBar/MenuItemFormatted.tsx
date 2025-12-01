@@ -1,16 +1,18 @@
-import { MenuItem } from '@mui/material';
+import { ListItemIcon, MenuItem } from '@mui/material';
 import Link from 'next/link';
 
 interface MenuItemFormattedProps {
   title: string;
   href: string;
   onHandleClose: () => void;
+  icon?: React.ReactNode;
 }
 
 const MenuItemFormatted = ({
   title,
   href,
   onHandleClose,
+  icon,
 }: MenuItemFormattedProps) => {
   return (
     <Link href={href} style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -29,6 +31,7 @@ const MenuItemFormatted = ({
           px: 2,
         }}
       >
+        {icon && <ListItemIcon>{icon}</ListItemIcon>}
         {title}
       </MenuItem>
     </Link>
