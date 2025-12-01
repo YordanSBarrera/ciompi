@@ -28,6 +28,8 @@ import {
   Snackbar,
   useTheme,
   useMediaQuery,
+  Pagination,
+  CircularProgress,
 } from '@mui/material';
 import {
   Visibility as ViewIcon,
@@ -54,10 +56,22 @@ import {
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { useRouter } from 'next/navigation';
 
+interface PaginationData {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
 interface ListaClientesProps {
   clientes: ClienteType[];
+  pagination?: PaginationData;
+  loading?: boolean;
   onClienteEliminado?: () => void;
   onAgregarCliente?: () => void;
+  onPageChange?: (page: number) => void;
+  onSearchChange?: (search: string) => void;
+  initialSearch?: string;
 }
 
 interface MenuState {
@@ -67,18 +81,31 @@ interface MenuState {
 
 export default function ListaClientes({
   clientes,
+  pagination,
+  loading = false,
   onClienteEliminado,
   onAgregarCliente,
+  onPageChange,
+  onSearchChange,
+  initialSearch = '',
 }: ListaClientesProps) {
-  const [filter, setFilter] = React.useState('');
+  const [filter, setFilter] = React.useState(initialSearch);
   const [menuState, setMenuState] = React.useState<MenuState>({
     anchorEl: null,
     clienteId: null,
   });
+  
+  // Debounce para la búsqueda
+  const searchTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  
+  React.useEffect(() => {
+    setFilter(initialSearch);
+  }, [initialSearch]);
+  
   // Hook personalizado para eliminar cliente
   const {
     confirmDialog,
-    loading,
+    loading: deletingLoading,
     snackbar,
     handleClickEliminar,
     handleConfirmEliminar,
@@ -135,26 +162,34 @@ export default function ListaClientes({
     handleClickEliminar(id, nombre);
   };
 
-  const filteredClientes = clientes.filter(cliente => {
-    const searchTerm = filter.toLowerCase().trim();
-
-    if (!searchTerm) return true;
-
-    // Función helper para buscar en campos de texto
-    const searchInField = (field: string | undefined | null): boolean => {
-      if (!field) return false;
-      return field.toString().toLowerCase().includes(searchTerm);
+  // Manejar cambio en el filtro de búsqueda
+  const handleFilterChange = (value: string) => {
+    setFilter(value);
+    
+    // Limpiar timeout anterior
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    // Debounce: esperar 500ms antes de buscar
+    searchTimeoutRef.current = setTimeout(() => {
+      if (onSearchChange) {
+        onSearchChange(value);
+      }
+    }, 500);
+  };
+  
+  // Limpiar timeout al desmontar
+  React.useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
     };
-
-    return (
-      searchInField(cliente.NOMBRE) ||
-      searchInField(cliente.DIRECCION) ||
-      searchInField(cliente.TELEFONO) ||
-      searchInField(cliente.correo) ||
-      searchInField(cliente.profesion) ||
-      searchInField(cliente.cedula)
-    );
-  });
+  }, []);
+  
+  // Si hay paginación, los datos ya vienen filtrados del servidor
+  const filteredClientes = clientes;
 
   const getStatusColor = (index: number) => {
     return index % 2 === 0 ? blanco : grisClaro;
@@ -184,7 +219,11 @@ export default function ListaClientes({
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Chip
-            label={`${filteredClientes.length} clientes`}
+            label={
+              pagination
+                ? `${pagination.total} clientes (página ${pagination.page} de ${pagination.pages})`
+                : `${filteredClientes.length} clientes`
+            }
             variant="outlined"
             sx={{
               borderColor: turquesa,
@@ -231,7 +270,8 @@ export default function ListaClientes({
       <TextField
         placeholder="Buscar por nombre, código, dirección, teléfono, correo, profesión o cédula..."
         value={filter}
-        onChange={e => setFilter(e.target.value)}
+        onChange={e => handleFilterChange(e.target.value)}
+        disabled={loading}
         sx={{
           maxWidth: 500,
           '& .MuiOutlinedInput-root': {
@@ -663,24 +703,78 @@ export default function ListaClientes({
         )}
       </TableContainer>
 
-      {/* Footer informativo */}
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <Typography variant="caption" color={grisTexto}>
-          Mostrando {filteredClientes.length} de {clientes.length} clientes
-        </Typography>
-
-        {filter && (
-          <Typography variant="caption" color={naranja}>
-            Filtro activo: "{filter}"
+      {/* Controles de paginación */}
+      {pagination && pagination.pages > 1 && (
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            mt: 3,
+            gap: 2,
+          }}
+        >
+          <Pagination
+            count={pagination.pages}
+            page={pagination.page}
+            onChange={(event, value) => {
+              if (onPageChange) {
+                onPageChange(value);
+              }
+            }}
+            color="primary"
+            size="large"
+            showFirstButton
+            showLastButton
+            sx={{
+              '& .MuiPaginationItem-root': {
+                fontSize: '0.95rem',
+                fontWeight: 500,
+              },
+            }}
+          />
+          <Typography variant="body2" color={grisTexto}>
+            Mostrando {(pagination.page - 1) * pagination.limit + 1} -{' '}
+            {Math.min(pagination.page * pagination.limit, pagination.total)} de{' '}
+            {pagination.total}
           </Typography>
-        )}
-      </Box>
+        </Box>
+      )}
+
+      {/* Indicador de carga */}
+      {loading && (
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            py: 3,
+          }}
+        >
+          <CircularProgress size={40} />
+        </Box>
+      )}
+
+      {/* Footer informativo */}
+      {!pagination && (
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <Typography variant="caption" color={grisTexto}>
+            Mostrando {filteredClientes.length} de {clientes.length} clientes
+          </Typography>
+
+          {filter && (
+            <Typography variant="caption" color={naranja}>
+              Filtro activo: "{filter}"
+            </Typography>
+          )}
+        </Box>
+      )}
 
       {/* Diálogo de confirmación */}
       <Dialog
@@ -697,16 +791,16 @@ export default function ListaClientes({
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCancelEliminar} disabled={loading}>
+          <Button onClick={handleCancelEliminar} disabled={deletingLoading}>
             Cancelar
           </Button>
           <Button
             onClick={handleConfirmEliminar}
             color="error"
             variant="contained"
-            disabled={loading}
+            disabled={deletingLoading}
           >
-            {loading ? 'Eliminando...' : 'Eliminar'}
+            {deletingLoading ? 'Eliminando...' : 'Eliminar'}
           </Button>
         </DialogActions>
       </Dialog>

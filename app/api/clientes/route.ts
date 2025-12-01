@@ -1,13 +1,57 @@
 import { connectDB } from '@/db/dbConnection';
 import { getUserIdFromToken } from '@/lib/server-utils';
 import Cliente from '@/models/cliente';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await connectDB();
-    const cliente = await Cliente.find();
-    return NextResponse.json(cliente);
+    const { searchParams } = new URL(request.url);
+    
+    // Parámetros de paginación
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '20');
+    const skip = (page - 1) * limit;
+    
+    // Parámetro de búsqueda
+    const search = searchParams.get('search') || '';
+    
+    // Construir query base
+    let query: any = {};
+    
+    // Si hay búsqueda, buscar en múltiples campos
+    if (search) {
+      const searchLower = search.trim().toLowerCase();
+      query.$or = [
+        { NOMBRE: { $regex: searchLower, $options: 'i' } },
+        { DIRECCION: { $regex: searchLower, $options: 'i' } },
+        { TELEFONO: { $regex: searchLower, $options: 'i' } },
+        { correo: { $regex: searchLower, $options: 'i' } },
+        { profesion: { $regex: searchLower, $options: 'i' } },
+        { cedula: { $regex: searchLower, $options: 'i' } },
+      ];
+    }
+    
+    // Obtener clientes con paginación
+    const clientes = await Cliente.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(); // Usar lean() para mejor rendimiento
+    
+    // Contar total de documentos que coinciden con el query
+    const total = await Cliente.countDocuments(query);
+    
+    return NextResponse.json({
+      success: true,
+      data: clientes,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
     console.error('Error obteniendo clientes:', error);
     return NextResponse.json(
