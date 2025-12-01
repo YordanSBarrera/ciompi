@@ -1,8 +1,8 @@
 import { Container, Stack } from '@mui/material';
 import { ReactNode } from 'react';
-import SearchAppBar from './searchAppBar/SearchAppBar';
 import Footer from './Footer';
 import { imgLocal } from '@/lib/imagenes';
+import HeaderAppBar from './searchAppBar/HeaderAppBar';
 
 type MainWrapperProps = {
   children: ReactNode;
@@ -32,7 +32,7 @@ const MainWrapper = ({ children }: MainWrapperProps) => {
           width: '100%',
         }}
       >
-        <SearchAppBar />
+        <HeaderAppBar />
       </Stack>
 
       {/* Main content area with proper spacing */}
