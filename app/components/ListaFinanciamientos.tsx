@@ -75,6 +75,10 @@ export default function ListaFinanciamientos({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
+  console.log('!!!!!!!!>>>>>>>>&&&&&&&&&&&&&&&&');
+  console.log(financiamientos);
+  console.log('&&&&&&&&&&&&<<<<<<<!!!!!!!!!!');
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -144,7 +148,9 @@ export default function ListaFinanciamientos({
     const clienteNombre =
       typeof fin.cliente === 'object' ? fin.cliente.NOMBRE : '';
     const cliente2Nombre =
-      typeof fin.cliente2 === 'object' ? fin.cliente2.NOMBRE : '';
+      fin.cliente2 && typeof fin.cliente2 === 'object'
+        ? fin.cliente2.NOMBRE
+        : '';
     const vehiculoMarca =
       typeof fin.vehiculo === 'object' ? fin.vehiculo.Marca : '';
     const vehiculoModelo =
@@ -161,6 +167,10 @@ export default function ListaFinanciamientos({
       searchInField(fin.estadoFinanciamiento)
     );
   });
+
+  console.log('&&&&&&&&&&&&&>>>>>>>>&&&&&&&&&&&&&&&&');
+  console.log(filteredFinanciamientos);
+  console.log('&&&&&&&&&&&&<<<<<<<&&&&&&&&&&&&&&&&&');
 
   const getStatusColor = (index: number) => {
     return index % 2 === 0 ? blanco : grisClaro;
@@ -436,7 +446,7 @@ export default function ListaFinanciamientos({
                   <Box>
                     <Typography variant="body2" fontWeight={600}>
                       {typeof fin.cliente === 'object'
-                        ? fin.cliente.NOMBRE
+                        ? (fin.cliente.NOMBRE ?? 's/n')
                         : '-'}
                     </Typography>
                     {fin.cliente2 &&
@@ -576,7 +586,8 @@ export default function ListaFinanciamientos({
                           '& .MuiPaper-root': {
                             borderRadius: '8px !important',
                             border: `1px solid ${grisClaro} !important`,
-                            boxShadow: '0px 4px 12px rgba(0,0,0,0.15) !important',
+                            boxShadow:
+                              '0px 4px 12px rgba(0,0,0,0.15) !important',
                             minWidth: '160px !important',
                             outline: 'none !important',
                             zIndex: 1300,

@@ -8,37 +8,8 @@ import { getUserIdFromToken } from '@/lib/server-utils';
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
-
-    // Obtener parámetros de búsqueda
-    const { searchParams } = new URL(request.url);
-    const nombreCliente = searchParams.get('nombreCliente');
-
-    let query = Financiamiento.find();
-
-    // Si hay búsqueda por nombre de cliente, filtrar
-    if (nombreCliente && nombreCliente.trim()) {
-      // Buscar clientes que coincidan con el nombre
-      const clientes = await Cliente.find({
-        NOMBRE: { $regex: nombreCliente.trim(), $options: 'i' },
-      }).select('_id');
-
-      const clienteIds = clientes.map(c => c._id);
-
-      // Filtrar financiamientos por los IDs de clientes encontrados
-      query = query.where('cliente').in(clienteIds);
-    }
-
     // Obtener todos los financiamientos con información de cliente, vehículo, empresa y usuario
-    const financiamientos = await query
-      .populate('cliente', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
-      .populate('cliente2', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
-      .populate('vehiculo', 'Marca Modelo Matricula Padron Año Color Descripcion disponible')
-      .populate('empresa', 'nombre descripcion telefono')
-      .populate('usuarioRegistro', 'nombre usuario')
-      .populate('usuarioCreacion', 'nombre usuario email')
-      .populate('usuarioModificacion', 'nombre usuario email')
-      .sort({ fechaVenta: -1 }); // Ordenar por fecha de venta descendente
-
+    const financiamientos = await Financiamiento.find();
     return NextResponse.json(financiamientos);
   } catch (error) {
     console.error('Error obteniendo financiamientos:', error);
@@ -100,7 +71,11 @@ export async function POST(request: NextRequest) {
 
     // Manejar segundo cliente (si existe)
     let cliente2Id = body.cliente2;
-    if (body.clientes && Array.isArray(body.clientes) && body.clientes.length > 1) {
+    if (
+      body.clientes &&
+      Array.isArray(body.clientes) &&
+      body.clientes.length > 1
+    ) {
       // Si viene en el array de clientes, usar el segundo elemento
       const segundoCliente = body.clientes[1];
       if (typeof segundoCliente === 'object' && segundoCliente.NOMBRE) {
@@ -135,16 +110,14 @@ export async function POST(request: NextRequest) {
 
     // Calcular fechas y montos
     const fechaPrimeraCuota = new Date(body.fechaPrimeraCuota);
-    
+
     // Si hay cuotasFuturas, usar la última fecha de ahí, sino calcular
     let fechaUltimaCuota = new Date(fechaPrimeraCuota);
     if (body.cuotasFuturas && body.cuotasFuturas.length > 0) {
       const ultimaCuota = body.cuotasFuturas[body.cuotasFuturas.length - 1];
       fechaUltimaCuota = new Date(ultimaCuota.fechaVencimiento);
     } else {
-      fechaUltimaCuota.setMonth(
-        fechaUltimaCuota.getMonth() + body.cuotas - 1
-      );
+      fechaUltimaCuota.setMonth(fechaUltimaCuota.getMonth() + body.cuotas - 1);
     }
 
     // Crear nuevo financiamiento
@@ -199,7 +172,10 @@ export async function POST(request: NextRequest) {
     )
       .populate('cliente', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
       .populate('cliente2', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
-      .populate('vehiculo', 'Marca Modelo Matricula Padron Año Color Descripcion disponible')
+      .populate(
+        'vehiculo',
+        'Marca Modelo Matricula Padron Año Color Descripcion disponible'
+      )
       .populate('empresa', 'nombre descripcion telefono')
       .populate('usuarioRegistro', 'nombre usuario')
       .populate('usuarioCreacion', 'nombre usuario email')
@@ -234,7 +210,7 @@ export async function DELETE(request: Request) {
 
     // Buscar el financiamiento antes de eliminarlo para obtener el vehículo
     const financiamiento = await Financiamiento.findById(id);
-    
+
     if (!financiamiento) {
       return NextResponse.json(
         { error: 'Financiamiento no encontrado' },
