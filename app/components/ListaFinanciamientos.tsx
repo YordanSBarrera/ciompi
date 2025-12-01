@@ -20,16 +20,27 @@ import {
   useTheme,
   useMediaQuery,
   LinearProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Alert,
+  Snackbar,
+  Pagination,
+  CircularProgress,
 } from '@mui/material';
 import {
   Visibility as ViewIcon,
   Search as SearchIcon,
   Add as AddIcon,
   Print as PrintIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { Menu, MenuItem } from '@mui/material';
 import { FinanciamientoType } from '@/lib/types';
+import { useEliminarFinanciamiento } from '@/app/hook/useEliminarFinanciamiento';
 import {
   azulBase,
   azulClaro,
@@ -43,15 +54,27 @@ import {
 } from '@/lib/color';
 import { useRouter } from 'next/navigation';
 
+interface PaginationData {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
 interface ListaFinanciamientosProps {
   financiamientos: (FinanciamientoType & {
     cuotasAtrasadas?: number;
     montoAtrasado?: number;
   })[];
+  pagination?: PaginationData;
+  loading?: boolean;
   onFinanciamientoEliminado?: () => void;
   onAgregarFinanciamiento?: () => void;
   mostrarAtrasos?: boolean;
   onImprimir?: (id: string) => void;
+  onPageChange?: (page: number) => void;
+  onSearchChange?: (search: string) => void;
+  initialSearch?: string;
 }
 
 interface MenuState {
@@ -61,12 +84,17 @@ interface MenuState {
 
 export default function ListaFinanciamientos({
   financiamientos,
+  pagination,
+  loading = false,
   onFinanciamientoEliminado,
   onAgregarFinanciamiento,
   mostrarAtrasos = false,
   onImprimir,
+  onPageChange,
+  onSearchChange,
+  initialSearch = '',
 }: ListaFinanciamientosProps) {
-  const [filter, setFilter] = React.useState('');
+  const [filter, setFilter] = React.useState(initialSearch);
   const [menuState, setMenuState] = React.useState<MenuState>({
     anchorEl: null,
     financiamientoId: null,
@@ -74,6 +102,24 @@ export default function ListaFinanciamientos({
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  // Debounce para la búsqueda
+  const searchTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  React.useEffect(() => {
+    setFilter(initialSearch);
+  }, [initialSearch]);
+
+  // Hook personalizado para eliminar financiamiento
+  const {
+    confirmDialog,
+    loading: deletingLoading,
+    snackbar,
+    handleClickEliminar,
+    handleConfirmEliminar,
+    handleCancelEliminar,
+    handleCloseSnackbar,
+  } = useEliminarFinanciamiento({ onFinanciamientoEliminado });
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -131,36 +177,51 @@ export default function ListaFinanciamientos({
     }
   };
 
-  const filteredFinanciamientos = financiamientos.filter(fin => {
-    const searchTerm = filter.toLowerCase().trim();
+  // Wrapper para handleClickEliminar que también cierra el menú
+  const handleClickEliminarWrapper = (id: string, nombre: string) => {
+    handleMenuClose();
+    handleClickEliminar(id, nombre);
+  };
 
-    if (!searchTerm) return true;
-
-    const searchInField = (field: string | undefined | null): boolean => {
-      if (!field) return false;
-      return field.toString().toLowerCase().includes(searchTerm);
-    };
-
+  // Función para obtener el nombre del financiamiento para mostrar en el diálogo
+  const getFinanciamientoNombre = (fin: FinanciamientoType): string => {
     const clienteNombre =
-      typeof fin.cliente === 'object' ? fin.cliente.NOMBRE : '';
-    const cliente2Nombre =
-      typeof fin.cliente2 === 'object' ? fin.cliente2.NOMBRE : '';
-    const vehiculoMarca =
-      typeof fin.vehiculo === 'object' ? fin.vehiculo.Marca : '';
-    const vehiculoModelo =
-      typeof fin.vehiculo === 'object' ? fin.vehiculo.Modelo : '';
-    const vehiculoMatricula =
-      typeof fin.vehiculo === 'object' ? fin.vehiculo.Matricula : '';
+      typeof fin.cliente === 'object' ? fin.cliente.NOMBRE : 's/n';
+    const vehiculoInfo =
+      typeof fin.vehiculo === 'object'
+        ? `${fin.vehiculo.Marca} ${fin.vehiculo.Modelo}`
+        : 's/v';
+    return `${clienteNombre} - ${vehiculoInfo}`;
+  };
 
-    return (
-      searchInField(clienteNombre) ||
-      searchInField(cliente2Nombre) ||
-      searchInField(vehiculoMarca) ||
-      searchInField(vehiculoModelo) ||
-      searchInField(vehiculoMatricula) ||
-      searchInField(fin.estadoFinanciamiento)
-    );
-  });
+  // Manejar cambio en el filtro de búsqueda
+  const handleFilterChange = (value: string) => {
+    setFilter(value);
+
+    // Limpiar timeout anterior
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Debounce: esperar 500ms antes de buscar
+    searchTimeoutRef.current = setTimeout(() => {
+      if (onSearchChange) {
+        onSearchChange(value);
+      }
+    }, 500);
+  };
+
+  // Limpiar timeout al desmontar
+  React.useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Si hay paginación, los datos ya vienen filtrados del servidor
+  const filteredFinanciamientos = financiamientos;
 
   const getStatusColor = (index: number) => {
     return index % 2 === 0 ? blanco : grisClaro;
@@ -190,7 +251,11 @@ export default function ListaFinanciamientos({
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Chip
-            label={`${filteredFinanciamientos.length} financiamientos`}
+            label={
+              pagination
+                ? `${pagination.total} financiamientos (página ${pagination.page} de ${pagination.pages})`
+                : `${filteredFinanciamientos.length} financiamientos`
+            }
             variant="outlined"
             sx={{
               borderColor: turquesa,
@@ -237,7 +302,8 @@ export default function ListaFinanciamientos({
       <TextField
         placeholder="Buscar por cliente, vehículo, marca, matrícula o estado..."
         value={filter}
-        onChange={e => setFilter(e.target.value)}
+        onChange={e => handleFilterChange(e.target.value)}
+        disabled={loading}
         sx={{
           maxWidth: 500,
           '& .MuiOutlinedInput-root': {
@@ -426,8 +492,14 @@ export default function ListaFinanciamientos({
                 key={fin._id}
                 sx={{
                   backgroundColor: getStatusColor(index),
+                  transition: 'all 0.2s ease-in-out',
                   '&:hover': {
-                    backgroundColor: azulClaro + '20',
+                    backgroundColor: grisMedio,
+                    transform: 'translateY(-1px)',
+                    boxShadow: 1,
+                    '& .sticky-actions-cell': {
+                      backgroundColor: grisMedio,
+                    },
                   },
                 }}
               >
@@ -436,7 +508,7 @@ export default function ListaFinanciamientos({
                   <Box>
                     <Typography variant="body2" fontWeight={600}>
                       {typeof fin.cliente === 'object'
-                        ? fin.cliente.NOMBRE
+                        ? (fin.cliente.NOMBRE ?? 's/n')
                         : '-'}
                     </Typography>
                     {fin.cliente2 &&
@@ -529,94 +601,22 @@ export default function ListaFinanciamientos({
                   </Typography>
                 </TableCell>
                 <TableCell
+                  className="sticky-actions-cell"
                   sx={{
                     position: 'sticky',
                     right: 0,
                     backgroundColor: getStatusColor(index),
                     zIndex: 5,
-                    '.MuiTableRow-root:hover &': {
-                      backgroundColor: azulClaro + '20',
-                    },
+                    minWidth: 100,
+                    width: 100,
+                    borderLeft: `2px solid ${grisMedio}`,
+                    transition: 'all 0.2s ease-in-out',
                   }}
                 >
-                  {mostrarAtrasos ? (
-                    <Box>
-                      <Tooltip title="Acciones" placement="top">
-                        <IconButton
-                          onClick={event =>
-                            handleMenuOpen(event, fin._id || '')
-                          }
-                          size="small"
-                          sx={{
-                            color: azulBase,
-                            '&:hover': {
-                              backgroundColor: azulBase + '20',
-                            },
-                          }}
-                        >
-                          <MoreVertIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Menu
-                        anchorEl={menuState.anchorEl}
-                        open={Boolean(
-                          menuState.anchorEl &&
-                            menuState.financiamientoId === fin._id
-                        )}
-                        onClose={handleMenuClose}
-                        anchorOrigin={{
-                          vertical: 'bottom',
-                          horizontal: 'right',
-                        }}
-                        transformOrigin={{
-                          vertical: 'top',
-                          horizontal: 'right',
-                        }}
-                        sx={{
-                          '& .MuiPaper-root': {
-                            borderRadius: '8px !important',
-                            border: `1px solid ${grisClaro} !important`,
-                            boxShadow: '0px 4px 12px rgba(0,0,0,0.15) !important',
-                            minWidth: '160px !important',
-                            outline: 'none !important',
-                            zIndex: 1300,
-                          },
-                          '& .MuiMenu-list': {
-                            padding: '4px 0 !important',
-                          },
-                          '& .MuiMenuItem-root': {
-                            fontSize: '0.875rem',
-                            minHeight: '36px',
-                            '&:hover': {
-                              backgroundColor: grisClaro,
-                            },
-                          },
-                        }}
-                      >
-                        <MenuItem
-                          onClick={() => handleClickVerDetalles(fin._id || '')}
-                        >
-                          <ViewIcon
-                            sx={{ fontSize: 18, mr: 1, color: azulBase }}
-                          />
-                          Ver Detalles
-                        </MenuItem>
-                        {onImprimir && (
-                          <MenuItem
-                            onClick={() => handleClickImprimir(fin._id || '')}
-                          >
-                            <PrintIcon
-                              sx={{ fontSize: 18, mr: 1, color: azulOscuro }}
-                            />
-                            Imprimir
-                          </MenuItem>
-                        )}
-                      </Menu>
-                    </Box>
-                  ) : (
-                    <Tooltip title="Ver Detalles">
+                  <Stack alignItems="flex-end">
+                    <Tooltip title="Acciones" placement="top">
                       <IconButton
-                        onClick={() => handleClickVerDetalles(fin._id || '')}
+                        onClick={event => handleMenuOpen(event, fin._id || '')}
                         size="small"
                         sx={{
                           color: azulBase,
@@ -625,16 +625,183 @@ export default function ListaFinanciamientos({
                           },
                         }}
                       >
-                        <ViewIcon />
+                        <MoreVertIcon fontSize="small" />
                       </IconButton>
                     </Tooltip>
-                  )}
+                    <Menu
+                      anchorEl={menuState.anchorEl}
+                      open={Boolean(
+                        menuState.anchorEl &&
+                          menuState.financiamientoId === fin._id
+                      )}
+                      onClose={handleMenuClose}
+                      anchorOrigin={{
+                        vertical: 'bottom',
+                        horizontal: 'right',
+                      }}
+                      transformOrigin={{
+                        vertical: 'top',
+                        horizontal: 'right',
+                      }}
+                      sx={{
+                        '& .MuiPaper-root': {
+                          borderRadius: '8px !important',
+                          border: `1px solid ${grisClaro} !important`,
+                          boxShadow: '0px 4px 12px rgba(0,0,0,0.15) !important',
+                          minWidth: '160px !important',
+                          outline: 'none !important',
+                          zIndex: 1300,
+                        },
+                        '& .MuiMenu-list': {
+                          padding: '4px 0 !important',
+                        },
+                        '& .MuiMenuItem-root': {
+                          fontSize: '0.875rem',
+                          minHeight: '36px',
+                          '&:hover': {
+                            backgroundColor: grisClaro,
+                          },
+                        },
+                      }}
+                    >
+                      <MenuItem
+                        onClick={() => handleClickVerDetalles(fin._id || '')}
+                      >
+                        <ViewIcon
+                          sx={{ fontSize: 18, mr: 1, color: azulBase }}
+                        />
+                        Ver Detalles
+                      </MenuItem>
+                      {onImprimir && (
+                        <MenuItem
+                          onClick={() => handleClickImprimir(fin._id || '')}
+                        >
+                          <PrintIcon
+                            sx={{ fontSize: 18, mr: 1, color: azulOscuro }}
+                          />
+                          Imprimir
+                        </MenuItem>
+                      )}
+                      <MenuItem
+                        onClick={() =>
+                          handleClickEliminarWrapper(
+                            fin._id || '',
+                            getFinanciamientoNombre(fin)
+                          )
+                        }
+                      >
+                        <DeleteIcon
+                          sx={{ fontSize: 18, mr: 1, color: 'error.main' }}
+                        />
+                        <Typography variant="body2" color="error.main">
+                          Eliminar
+                        </Typography>
+                      </MenuItem>
+                    </Menu>
+                  </Stack>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Controles de paginación */}
+      {pagination && pagination.pages > 1 && (
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            mt: 3,
+            gap: 2,
+          }}
+        >
+          <Pagination
+            count={pagination.pages}
+            page={pagination.page}
+            onChange={(event, value) => {
+              if (onPageChange) {
+                onPageChange(value);
+              }
+            }}
+            color="primary"
+            size="large"
+            showFirstButton
+            showLastButton
+            sx={{
+              '& .MuiPaginationItem-root': {
+                fontSize: '0.95rem',
+                fontWeight: 500,
+              },
+            }}
+          />
+          <Typography variant="body2" color={grisTexto}>
+            Mostrando {(pagination.page - 1) * pagination.limit + 1} -{' '}
+            {Math.min(pagination.page * pagination.limit, pagination.total)} de{' '}
+            {pagination.total}
+          </Typography>
+        </Box>
+      )}
+
+      {/* Indicador de carga */}
+      {loading && (
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            py: 3,
+          }}
+        >
+          <CircularProgress size={40} />
+        </Box>
+      )}
+
+      {/* Diálogo de confirmación */}
+      <Dialog
+        open={confirmDialog.open}
+        onClose={handleCancelEliminar}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">Confirmar eliminación</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            ¿Estás seguro de que deseas eliminar el financiamiento "
+            {confirmDialog.financiamientoNombre}"? Esta acción no se puede
+            deshacer.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelEliminar} disabled={deletingLoading}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleConfirmEliminar}
+            color="error"
+            variant="contained"
+            disabled={deletingLoading}
+          >
+            {deletingLoading ? 'Eliminando...' : 'Eliminar'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar para notificaciones */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Stack>
   );
 }

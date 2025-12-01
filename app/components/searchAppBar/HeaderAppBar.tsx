@@ -7,7 +7,6 @@ import { azulBase } from '@/lib/color';
 import {
   Divider,
   IconButton,
-  ListItemIcon,
   Menu,
   MenuItem,
   Toolbar,
@@ -19,6 +18,7 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import SearchIcon from '@mui/icons-material/Search';
 import WarningIcon from '@mui/icons-material/Warning';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import EventIcon from '@mui/icons-material/Event';
 import { useRouter } from 'next/navigation';
 import { routes } from '@/lib/rutas';
 import MenuItemFormatted from './MenuItemFormatted';
@@ -30,8 +30,6 @@ export default function HeaderAppBar() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [operacionesAnchorEl, setOperacionesAnchorEl] =
     useState<null | HTMLElement>(null);
-  // const operacionesTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  // const isMouseOverSubmenuRef = useRef<boolean>(false);
   const [user, setUser] = useState<any>(null);
   const openMainMenu = Boolean(anchorEl);
   const operacionesMenuOpen = Boolean(operacionesAnchorEl);
@@ -39,27 +37,6 @@ export default function HeaderAppBar() {
   useEffect(() => {
     const currentUser = getCurrentUser();
     setUser(currentUser);
-
-    // Escuchar cambios en localStorage
-    const handleStorageChange = () => {
-      const updatedUser = getCurrentUser();
-      setUser(updatedUser);
-    };
-
-    // // Escuchar evento personalizado de cambio de usuario
-    // window.addEventListener('storage', handleStorageChange);
-
-    // // Escuchar eventos personalizados para cambios internos
-    // window.addEventListener('userChange', handleStorageChange);
-
-    // return () => {
-    //   window.removeEventListener('storage', handleStorageChange);
-    //   window.removeEventListener('userChange', handleStorageChange);
-    //   // Limpiar timeout al desmontar
-    //   if (operacionesTimeoutRef.current) {
-    //     clearTimeout(operacionesTimeoutRef.current);
-    //   }
-    // };
   }, []);
 
   const handleClick = (event: MouseEvent<HTMLElement>) => {
@@ -82,12 +59,6 @@ export default function HeaderAppBar() {
     window.dispatchEvent(new Event('userChange'));
     // Redirigir al login
     router.push('/login');
-  };
-
-  const handleOperacionesItemClick = (href: string) => {
-    router.push(href);
-    setOperacionesAnchorEl(null);
-    handleClose();
   };
 
   return (
@@ -155,7 +126,6 @@ export default function HeaderAppBar() {
                 />
                 <MenuItem
                   onMouseEnter={e => setOperacionesAnchorEl(e.currentTarget)}
-                  // onMouseLeave={() => setOperacionesAnchorEl(null)}
                   sx={{
                     color: '#ffffff',
                     '&:hover': {
@@ -257,6 +227,14 @@ export default function HeaderAppBar() {
                     />
                   }
                   href={`/${routes.operaciones}?tab=estado-cuenta`}
+                  onHandleClose={handleClose}
+                />
+                <MenuItemFormatted
+                  title="Vencimientos"
+                  icon={
+                    <EventIcon fontSize="small" sx={{ color: '#4caf50' }} />
+                  }
+                  href={`/${routes.operaciones}?tab=vencimientos`}
                   onHandleClose={handleClose}
                 />
               </Menu>

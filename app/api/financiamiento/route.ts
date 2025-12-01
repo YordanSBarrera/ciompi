@@ -8,38 +8,97 @@ import { getUserIdFromToken } from '@/lib/server-utils';
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
-
-    // Obtener parámetros de búsqueda
     const { searchParams } = new URL(request.url);
-    const nombreCliente = searchParams.get('nombreCliente');
-
-    let query = Financiamiento.find();
-
-    // Si hay búsqueda por nombre de cliente, filtrar
-    if (nombreCliente && nombreCliente.trim()) {
-      // Buscar clientes que coincidan con el nombre
-      const clientes = await Cliente.find({
-        NOMBRE: { $regex: nombreCliente.trim(), $options: 'i' },
-      }).select('_id');
-
-      const clienteIds = clientes.map(c => c._id);
-
-      // Filtrar financiamientos por los IDs de clientes encontrados
-      query = query.where('cliente').in(clienteIds);
+    
+    // Parámetros de paginación
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '20');
+    const skip = (page - 1) * limit;
+    
+    // Parámetros de búsqueda/filtro
+    const search = searchParams.get('search') || '';
+    const estado = searchParams.get('estado') || '';
+    
+    // Construir query base
+    let query: any = {};
+    
+    // Filtro por estado si existe
+    if (estado) {
+      query.estadoFinanciamiento = estado;
     }
-
-    // Obtener todos los financiamientos con información de cliente, vehículo, empresa y usuario
-    const financiamientos = await query
+    
+    // Si hay búsqueda, necesitamos buscar en campos relacionados
+    if (search) {
+      const searchLower = search.trim().toLowerCase();
+      
+      // Buscar clientes que coincidan
+      const clientesMatch = await Cliente.find({
+        $or: [
+          { NOMBRE: { $regex: searchLower, $options: 'i' } },
+          { cedula: { $regex: searchLower, $options: 'i' } },
+          { TELEFONO: { $regex: searchLower, $options: 'i' } },
+        ],
+      }).select('_id').lean();
+      
+      const clienteIds = clientesMatch.map(c => c._id.toString());
+      
+      // Buscar vehículos que coincidan
+      const vehiculosMatch = await Vehiculo.find({
+        $or: [
+          { Marca: { $regex: searchLower, $options: 'i' } },
+          { Modelo: { $regex: searchLower, $options: 'i' } },
+          { Matricula: { $regex: searchLower, $options: 'i' } },
+        ],
+      }).select('_id').lean();
+      
+      const vehiculoIds = vehiculosMatch.map(v => v._id.toString());
+      
+      // Construir condiciones de búsqueda
+      const searchConditions: any[] = [];
+      
+      if (clienteIds.length > 0) {
+        searchConditions.push({ cliente: { $in: clienteIds } });
+        searchConditions.push({ cliente2: { $in: clienteIds } });
+      }
+      
+      if (vehiculoIds.length > 0) {
+        searchConditions.push({ vehiculo: { $in: vehiculoIds } });
+      }
+      
+      searchConditions.push({
+        estadoFinanciamiento: { $regex: searchLower, $options: 'i' },
+      });
+      
+      // Si hay condiciones de búsqueda, agregarlas al query
+      if (searchConditions.length > 0) {
+        query.$or = searchConditions;
+      }
+    }
+    
+    // Obtener financiamientos con paginación y populate optimizado
+    const financiamientos = await Financiamiento.find(query)
       .populate('cliente', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
       .populate('cliente2', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
       .populate('vehiculo', 'Marca Modelo Matricula Padron Año Color Descripcion disponible')
       .populate('empresa', 'nombre descripcion telefono')
-      .populate('usuarioRegistro', 'nombre usuario')
-      .populate('usuarioCreacion', 'nombre usuario email')
-      .populate('usuarioModificacion', 'nombre usuario email')
-      .sort({ fechaVenta: -1 }); // Ordenar por fecha de venta descendente
-
-    return NextResponse.json(financiamientos);
+      .sort({ fechaVenta: -1, createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(); // Usar lean() para mejor rendimiento
+    
+    // Contar total de documentos que coinciden con el query
+    const total = await Financiamiento.countDocuments(query);
+    
+    return NextResponse.json({
+      success: true,
+      data: financiamientos,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+    });
   } catch (error) {
     console.error('Error obteniendo financiamientos:', error);
     return NextResponse.json(
@@ -100,7 +159,11 @@ export async function POST(request: NextRequest) {
 
     // Manejar segundo cliente (si existe)
     let cliente2Id = body.cliente2;
-    if (body.clientes && Array.isArray(body.clientes) && body.clientes.length > 1) {
+    if (
+      body.clientes &&
+      Array.isArray(body.clientes) &&
+      body.clientes.length > 1
+    ) {
       // Si viene en el array de clientes, usar el segundo elemento
       const segundoCliente = body.clientes[1];
       if (typeof segundoCliente === 'object' && segundoCliente.NOMBRE) {
@@ -135,16 +198,14 @@ export async function POST(request: NextRequest) {
 
     // Calcular fechas y montos
     const fechaPrimeraCuota = new Date(body.fechaPrimeraCuota);
-    
+
     // Si hay cuotasFuturas, usar la última fecha de ahí, sino calcular
     let fechaUltimaCuota = new Date(fechaPrimeraCuota);
     if (body.cuotasFuturas && body.cuotasFuturas.length > 0) {
       const ultimaCuota = body.cuotasFuturas[body.cuotasFuturas.length - 1];
       fechaUltimaCuota = new Date(ultimaCuota.fechaVencimiento);
     } else {
-      fechaUltimaCuota.setMonth(
-        fechaUltimaCuota.getMonth() + body.cuotas - 1
-      );
+      fechaUltimaCuota.setMonth(fechaUltimaCuota.getMonth() + body.cuotas - 1);
     }
 
     // Crear nuevo financiamiento
@@ -199,7 +260,10 @@ export async function POST(request: NextRequest) {
     )
       .populate('cliente', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
       .populate('cliente2', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
-      .populate('vehiculo', 'Marca Modelo Matricula Padron Año Color Descripcion disponible')
+      .populate(
+        'vehiculo',
+        'Marca Modelo Matricula Padron Año Color Descripcion disponible'
+      )
       .populate('empresa', 'nombre descripcion telefono')
       .populate('usuarioRegistro', 'nombre usuario')
       .populate('usuarioCreacion', 'nombre usuario email')
@@ -234,7 +298,7 @@ export async function DELETE(request: Request) {
 
     // Buscar el financiamiento antes de eliminarlo para obtener el vehículo
     const financiamiento = await Financiamiento.findById(id);
-    
+
     if (!financiamiento) {
       return NextResponse.json(
         { error: 'Financiamiento no encontrado' },

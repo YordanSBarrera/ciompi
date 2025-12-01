@@ -1,0 +1,364 @@
+{
+  "FORMAPAG": [
+    {
+      "FECHA": "20.03.2000",
+      "IMPORTE": "      195.00",
+      "SALDO": "        1.00",
+      "CODCLI": "  44",
+      "CODOP": "  42",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "20.07.2000",
+      "IMPORTE": "      271.00",
+      "CODCLI": "  53",
+      "CODOP": "  51",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "20.01.2000",
+      "IMPORTE": "     1561.00",
+      "CODCLI": "  83",
+      "CODOP": "  82",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "20.02.2000",
+      "IMPORTE": "     2000.00",
+      "CODCLI": "  83",
+      "CODOP": "  82",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "20.03.2000",
+      "IMPORTE": "     2000.00",
+      "CODCLI": "  83",
+      "CODOP": "  82",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "20.04.2000",
+      "IMPORTE": "     2000.00",
+      "CODCLI": "  83",
+      "CODOP": "  82",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "20.05.2000",
+      "IMPORTE": "     2000.00",
+      "CODCLI": "  83",
+      "CODOP": "  82",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "20.06.2000",
+      "IMPORTE": "     2000.00",
+      "CODCLI": "  83",
+      "CODOP": "  82",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "20.07.2000",
+      "IMPORTE": "     2000.00",
+      "CODCLI": "  83",
+      "CODOP": "  82",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "20.08.2000",
+      "IMPORTE": "     2000.00",
+      "CODCLI": "  83",
+      "CODOP": "  82",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "20.09.2000",
+      "IMPORTE": "     2000.00",
+      "CODCLI": "  83",
+      "CODOP": "  82",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "20.10.2000",
+      "IMPORTE": "     2000.00",
+      "CODCLI": "  83",
+      "CODOP": "  82",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "20.11.2000",
+      "IMPORTE": "     2000.00",
+      "CODCLI": "  83",
+      "CODOP": "  82",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "20.12.2000",
+      "IMPORTE": "     2000.00",
+      "CODCLI": "  83",
+      "CODOP": "  82",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "20.01.2001",
+      "IMPORTE": "    25561.00",
+      "CODCLI": "  83",
+      "CODOP": "  82",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "30.12.2002",
+      "IMPORTE": "      215.00",
+      "COMENTARIO": "PAGA DE AGOSTO",
+      "CODCLI": " 124",
+      "CODOP": " 124",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "30.01.2003",
+      "IMPORTE": "      215.00",
+      "CODCLI": " 124",
+      "CODOP": " 124",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "28.02.2003",
+      "IMPORTE": "      215.00",
+      "CODCLI": " 124",
+      "CODOP": " 124",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "30.03.2003",
+      "IMPORTE": "      215.00",
+      "CODCLI": " 124",
+      "CODOP": " 124",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "30.04.2003",
+      "IMPORTE": "     1075.00",
+      "CODCLI": " 124",
+      "CODOP": " 124",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "26.02.2001",
+      "IMPORTE": "      250.00",
+      "COMENTARIO": "JUNIO",
+      "CODCLI": " 148",
+      "CODOP": " 147",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "26.03.2001",
+      "IMPORTE": "      250.00",
+      "CODCLI": " 148",
+      "CODOP": " 147",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "26.04.2001",
+      "IMPORTE": "      250.00",
+      "CODCLI": " 148",
+      "CODOP": " 147",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "26.05.2001",
+      "IMPORTE": "      250.00",
+      "CODCLI": " 148",
+      "CODOP": " 147",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "26.06.2001",
+      "IMPORTE": "      250.00",
+      "CODCLI": " 148",
+      "CODOP": " 147",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "26.07.2001",
+      "IMPORTE": "      250.00",
+      "CODCLI": " 148",
+      "CODOP": " 147",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "26.08.2001",
+      "IMPORTE": "      250.00",
+      "CODCLI": " 148",
+      "CODOP": " 147",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "26.09.2001",
+      "IMPORTE": "      250.00",
+      "CODCLI": " 148",
+      "CODOP": " 147",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "26.10.2001",
+      "IMPORTE": "      250.00",
+      "CODCLI": " 148",
+      "CODOP": " 147",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "26.11.2001",
+      "IMPORTE": "      250.00",
+      "CODCLI": " 148",
+      "CODOP": " 147",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "26.12.2001",
+      "IMPORTE": "      250.00",
+      "CODCLI": " 148",
+      "CODOP": " 147",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "26.01.2002",
+      "IMPORTE": "      250.00",
+      "CODCLI": " 148",
+      "CODOP": " 147",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "26.02.2002",
+      "IMPORTE": "      250.00",
+      "CODCLI": " 148",
+      "CODOP": " 147",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "26.03.2002",
+      "IMPORTE": "      250.00",
+      "CODCLI": " 148",
+      "CODOP": " 147",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "26.04.2002",
+      "IMPORTE": "      250.00",
+      "CODCLI": " 148",
+      "CODOP": " 147",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "26.05.2002",
+      "IMPORTE": "      250.00",
+      "CODCLI": " 148",
+      "CODOP": " 147",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "26.06.2002",
+      "IMPORTE": "      250.00",
+      "CODCLI": " 148",
+      "CODOP": " 147",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "26.07.2002",
+      "IMPORTE": "      250.00",
+      "CODCLI": " 148",
+      "CODOP": " 147",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "26.08.2002",
+      "IMPORTE": "      250.00",
+      "CODCLI": " 148",
+      "CODOP": " 147",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "26.09.2002",
+      "IMPORTE": "      250.00",
+      "CODCLI": " 148",
+      "CODOP": " 147",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "27.06.2003",
+      "IMPORTE": "     1944.00",
+      "CODCLI": " 196",
+      "CODOP": " 194",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "21.11.2004",
+      "IMPORTE": "     5587.00",
+      "CODCLI": " 207",
+      "CODOP": " 207",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "11.09.2002",
+      "IMPORTE": "      145.00",
+      "CODCLI": " 242",
+      "CODOP": " 244",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "11.10.2002",
+      "IMPORTE": "      145.00",
+      "CODCLI": " 242",
+      "CODOP": " 244",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "11.11.2002",
+      "IMPORTE": "      145.00",
+      "CODCLI": " 242",
+      "CODOP": " 244",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "11.12.2002",
+      "IMPORTE": "      145.00",
+      "CODCLI": " 242",
+      "CODOP": " 244",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "11.01.2003",
+      "IMPORTE": "      145.00",
+      "CODCLI": " 242",
+      "CODOP": " 244",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "11.02.2003",
+      "IMPORTE": "      145.00",
+      "CODCLI": " 242",
+      "CODOP": " 244",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "11.03.2003",
+      "IMPORTE": "      145.00",
+      "CODCLI": " 242",
+      "CODOP": " 244",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "11.04.2003",
+      "IMPORTE": "      145.00",
+      "CODCLI": " 242",
+      "CODOP": " 244",
+      "MONEDA": "D"
+    },
+    {
+      "FECHA": "11.05.2003",
+      "IMPORTE": "      145.00",
+      "CODCLI": " 242",
+      "CODOP": " 244",
+      "MONEDA": "D"
+    }
+  ]
+}
