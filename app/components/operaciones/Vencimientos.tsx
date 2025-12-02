@@ -240,7 +240,7 @@ export default function Vencimientos() {
 
         {/* Filtros */}
         <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <FormControl fullWidth>
               <InputLabel>Empresa</InputLabel>
               <Select
@@ -257,7 +257,7 @@ export default function Vencimientos() {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <TextField
               fullWidth
               label="Fecha Inicio"
@@ -270,7 +270,7 @@ export default function Vencimientos() {
               disabled={loading}
             />
           </Grid>
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <TextField
               fullWidth
               label="Fecha Fin"
@@ -283,7 +283,7 @@ export default function Vencimientos() {
               disabled={loading}
             />
           </Grid>
-          <Grid item xs={12} md={2}>
+          <Grid size={{ xs: 12, md: 2 }}>
             <Button
               fullWidth
               variant="contained"

@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
           { cedula: { $regex: searchLower, $options: 'i' } },
           { TELEFONO: { $regex: searchLower, $options: 'i' } },
         ],
-      }).select('_id').lean();
+      }).select('_id').lean() as Array<{ _id: any }>;
       
       const clienteIds = clientesMatch.map(c => c._id.toString());
       
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
           { Modelo: { $regex: searchLower, $options: 'i' } },
           { Matricula: { $regex: searchLower, $options: 'i' } },
         ],
-      }).select('_id').lean();
+      }).select('_id').lean() as Array<{ _id: any }>;
       
       const vehiculoIds = vehiculosMatch.map(v => v._id.toString());
       
