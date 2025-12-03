@@ -57,8 +57,8 @@ export default function HeaderAppBar() {
     setUser(null);
     // Disparar evento personalizado para notificar a otros componentes
     window.dispatchEvent(new Event('userChange'));
-    // Redirigir al login
-    router.push('/login');
+    // Redirigir al login y refrescar el navegador para que tome efecto el cambio de usuario
+    window.location.href = '/login';
   };
 
   return (

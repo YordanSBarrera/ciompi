@@ -21,6 +21,7 @@ interface ClientesResponse {
 
 export default function ClientesPage() {
   const router = useRouter();
+  const [todosLosClientes, setTodosLosClientes] = useState<ClienteType[]>([]);
   const [clientes, setClientes] = useState<ClienteType[]>([]);
   const [pagination, setPagination] = useState<PaginationData>({
     page: 1,
@@ -32,22 +33,17 @@ export default function ClientesPage() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
 
-  const cargarListaClientes = async (
-    page: number = 1,
-    searchTerm: string = ''
-  ) => {
+  // Cargar todos los clientes una sola vez
+  const cargarTodosLosClientes = async () => {
     try {
       setLoading(true);
       setError(null);
 
+      // Cargar TODOS los clientes sin paginación ni búsqueda del servidor
       const params = new URLSearchParams({
-        page: page.toString(),
-        limit: pagination.limit.toString(),
+        page: '1',
+        limit: '10000', // Límite muy alto para obtener todos
       });
-
-      if (searchTerm) {
-        params.append('search', searchTerm);
-      }
 
       const response = await fetch(`/api/clientes?${params.toString()}`);
       if (!response.ok) {
@@ -57,8 +53,9 @@ export default function ClientesPage() {
       const result: ClientesResponse = await response.json();
 
       if (result.success) {
-        setClientes(result.data);
-        setPagination(result.pagination);
+        setTodosLosClientes(result.data);
+        // Aplicar filtrado y paginación local
+        aplicarFiltroYPaginacion(result.data, '', 1);
       } else {
         throw new Error('Error en la respuesta del servidor');
       }
@@ -70,13 +67,59 @@ export default function ClientesPage() {
     }
   };
 
+  // Filtrar y paginar localmente
+  const aplicarFiltroYPaginacion = (
+    todosClientes: ClienteType[],
+    searchTerm: string,
+    page: number
+  ) => {
+    const searchLower = searchTerm.toLowerCase().trim();
+
+    // Filtrar clientes
+    const clientesFiltrados = searchLower
+      ? todosClientes.filter(cliente => {
+          const searchInField = (field: string | undefined | null): boolean => {
+            if (!field) return false;
+            return field.toString().toLowerCase().includes(searchLower);
+          };
+
+          return (
+            searchInField(cliente.NOMBRE) ||
+            searchInField(cliente.DIRECCION) ||
+            searchInField(cliente.TELEFONO) ||
+            searchInField(cliente.correo) ||
+            searchInField(cliente.profesion) ||
+            searchInField(cliente.cedula)
+          );
+        })
+      : todosClientes;
+
+    // Calcular paginación local
+    const total = clientesFiltrados.length;
+    const pages = Math.ceil(total / pagination.limit);
+    const skip = (page - 1) * pagination.limit;
+    const clientesPaginados = clientesFiltrados.slice(
+      skip,
+      skip + pagination.limit
+    );
+
+    setClientes(clientesPaginados);
+    setPagination({
+      page,
+      limit: pagination.limit,
+      total,
+      pages,
+    });
+  };
+
   useEffect(() => {
-    cargarListaClientes(1, search);
+    cargarTodosLosClientes();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleClienteEliminado = () => {
-    // Recargar la lista después de eliminar un cliente
-    cargarListaClientes(pagination.page, search);
+    // Recargar la lista completa después de eliminar un cliente
+    cargarTodosLosClientes();
   };
 
   const handleAgregarCliente = () => {
@@ -85,49 +128,34 @@ export default function ClientesPage() {
   };
 
   const handlePageChange = (newPage: number) => {
-    cargarListaClientes(newPage, search);
+    aplicarFiltroYPaginacion(todosLosClientes, search, newPage);
   };
 
   const handleSearchChange = (searchTerm: string) => {
     setSearch(searchTerm);
-    cargarListaClientes(1, searchTerm);
+    aplicarFiltroYPaginacion(todosLosClientes, searchTerm, 1);
   };
-
-  if (loading) {
-    return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="50vh"
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Box sx={{ p: 2 }}>
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      </Box>
-    );
-  }
 
   return (
     <AuthGuard>
-      <ListaClientes
-        clientes={clientes}
-        pagination={pagination}
-        loading={loading}
-        onClienteEliminado={handleClienteEliminado}
-        onAgregarCliente={handleAgregarCliente}
-        onPageChange={handlePageChange}
-        onSearchChange={handleSearchChange}
-        initialSearch={search}
-      />
+      {error ? (
+        <Box sx={{ p: 2 }}>
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        </Box>
+      ) : (
+        <ListaClientes
+          clientes={clientes}
+          pagination={pagination}
+          loading={loading}
+          onClienteEliminado={handleClienteEliminado}
+          onAgregarCliente={handleAgregarCliente}
+          onPageChange={handlePageChange}
+          onSearchChange={handleSearchChange}
+          initialSearch={search}
+        />
+      )}
     </AuthGuard>
   );
 }

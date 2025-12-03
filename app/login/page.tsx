@@ -10,8 +10,9 @@ export default function LoginPage() {
 
   const handleLoginSuccess = async () => {
     try {
-      // Redirigir a la página principal de ciompi
-      router.push('/ciompi');
+      // Redirigir a la página principal de ciompi y refrescar el navegador
+      // para que tome efecto el cambio de usuario
+      window.location.href = '/ciompi';
     } catch (error) {
       console.error('Error en redirección:', error);
     }

@@ -300,7 +300,7 @@ export default function ListaFinanciamientos({
 
       {/* Barra de búsqueda */}
       <TextField
-        placeholder="Buscar por cliente, vehículo, marca, matrícula o estado..."
+        placeholder="Buscar por cliente, cédula, teléfono, vehículo, empresa o estado..."
         value={filter}
         onChange={e => handleFilterChange(e.target.value)}
         disabled={loading}
