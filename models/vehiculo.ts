@@ -44,4 +44,4 @@ if (models.Vehiculo) {
   delete models.Vehiculo;
 }
 
-export default model('Vehiculo', vehiculoSchema);
+export default models.Vehiculo || model('Vehiculo', vehiculoSchema);

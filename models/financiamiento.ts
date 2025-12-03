@@ -187,4 +187,4 @@ if (models.Financiamiento) {
   delete models.Financiamiento;
 }
 
-export default model('Financiamiento', financiamientoSchema);
+export default models.Financiamiento || model('Financiamiento', financiamientoSchema);

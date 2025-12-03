@@ -1,11 +1,11 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import { Schema, Document, model, models } from 'mongoose';
 
 export interface IEmpresa extends Document {
   nombre: string;
   descripcion?: string;
   telefono?: string;
-  usuarioRegistro: mongoose.Types.ObjectId;
-  usuarioModificacion?: mongoose.Types.ObjectId;
+  usuarioRegistro: Schema.Types.ObjectId;
+  usuarioModificacion?: Schema.Types.ObjectId;
   estado: 'activa' | 'inactiva';
   createdAt: Date;
   updatedAt: Date;
@@ -69,5 +69,4 @@ EmpresaSchema.pre('save', function (next) {
   next();
 });
 
-export default mongoose.models.Empresa ||
-  mongoose.model<IEmpresa>('Empresa', EmpresaSchema);
+export default models.Empresa || model<IEmpresa>('Empresa', EmpresaSchema);
