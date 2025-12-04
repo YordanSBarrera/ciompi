@@ -145,62 +145,98 @@ export interface VehiculoFormType {
 }
 
 // Tipos para Financiamiento
+export interface CuotaFuturaType {
+  numeroCuota: number;
+  fechaVencimiento: Date | string;
+  valorCuota: number;
+  estadoCuota?: 'pendiente' | 'pagada' | 'parcial'; // Opcional para el modelo
+}
+
 export interface FinanciamientoType {
   _id?: string;
-  cliente: string | ClienteType; // Puede ser ID o objeto completo
-  cliente2?: string | ClienteType; // Segundo cliente (opcional)
-  vehiculo?: string | VehiculoType; // Puede ser ID o objeto completo (opcional)
-  empresa: string | EmpresaType; // Puede ser ID o objeto completo
-  costoVehiculo: number;
-  cuotas: number;
-  valorCuota: number;
-  interesTotal: number;
-  montoTotal: number;
-  fechaVenta: Date;
+
+  // Referencias
+  cliente: string | ClienteType;
+  cliente2?: string | ClienteType;
+  vehiculo?: string | VehiculoType;
+  empresa: string | EmpresaType;
+
+  // Información financiera básica
+  costoVehiculo: number; // Costo final total
+  valorBase?: number; // Valor base del vehículo (sin costos adicionales)
+  costosDocumentacion?: number; // Costos de documentación
+  gastosExtras?: number; // Gastos extras adicionales
+
+  // Estructura del financiamiento
+  cuotas: number; // Número total de cuotas
+  cuotasExtras?: number; // Número de cuotas extras
+  valorCuota: number; // Valor de cada cuota
+  interesTotal: number; // Total de intereses
+  montoTotal: number; // Monto total a financiar
+
+  // Cuotas futuras programadas
+  cuotasFuturas?: CuotaFuturaType[];
+
+  // Fechas importantes
+  fechaVenta: Date | string;
+  fechaPrimeraCuota: Date | string;
+  fechaUltimaCuota: Date | string;
+
+  // Estado y seguimiento
   estadoFinanciamiento: 'activo' | 'finalizado' | 'cancelado' | 'en_mora';
-  usuarioCreacion?: string | Usuario; // Puede ser ID o objeto completo
-  usuarioRegistro: string | Usuario; // Puede ser ID o objeto completo
-  usuarioModificacion?: string | Usuario; // Puede ser ID o objeto completo
-  observaciones?: string;
-  fechaPrimeraCuota: Date;
-  fechaUltimaCuota: Date;
   cuotasPagadas: number;
   cuotasPendientes: number;
   montoPagado: number;
   saldoPendiente: number;
-  cuotasExtras?: number;
-  cuotasFuturas?: Array<{
-    numeroCuota: number;
-    fechaVencimiento: Date | string;
-    valorCuota: number;
-  }>;
-  progresoFinanciamiento?: number; // Virtual
-  estaAlDia?: boolean; // Virtual
+
+  // Usuarios de auditoría
+  usuarioCreacion?: string | Usuario;
+  usuarioRegistro: string | Usuario;
+  usuarioModificacion?: string | Usuario;
+
+  // Información adicional
+  observaciones?: string;
+
+  // Campos virtuales (calculados)
+  progresoFinanciamiento?: number; // Porcentaje de progreso
+  estaAlDia?: boolean; // Si está al día con los pagos
+
+  // Timestamps
   createdAt?: Date;
   updatedAt?: Date;
 }
 
+// Alias para compatibilidad con código existente
 export interface CuotaFutura {
   numeroCuota: number;
-  fechaVencimiento: string; // ISO date string
+  fechaVencimiento: string;
   valorCuota: number;
 }
 
 export interface FinanciamientoFormType {
+  // Referencias
   clientes: Array<string | ClienteFormType>; // Array de 1 o 2 clientes (ID o objeto nuevo)
   vehiculo?: string; // ID del vehículo (opcional)
   empresa: string; // ID de la empresa
-  valorBase: number; // Valor base (antes costoVehiculo)
+
+  // Información financiera
+  valorBase: number; // Valor base del vehículo
   costosDocumentacion?: number; // Costos de documentación
-  gastosExtras?: number; // Gastos extras
-  cuotas: number;
+  gastosExtras?: number; // Gastos extras adicionales
+
+  // Estructura del financiamiento
+  cuotas: number; // Número total de cuotas
   cuotasExtras?: number; // Número de cuotas extras
-  valorCuota: number;
-  interesTotal: number;
-  montoTotal: number;
-  fechaPrimeraCuota: string;
+  valorCuota: number; // Valor de cada cuota
+  interesTotal: number; // Total de intereses
+  montoTotal: number; // Monto total a financiar
+
+  // Fechas y cuotas programadas
+  fechaPrimeraCuota: string; // Fecha de la primera cuota (ISO string)
   cuotasFuturas?: CuotaFutura[]; // Array de cuotas futuras con fechas editables
-  observaciones?: string;
+
+  // Información adicional
+  observaciones?: string; // Observaciones del financiamiento
 }
 
 // Tipo para selección de cliente/vehículo en el formulario

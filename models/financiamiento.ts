@@ -59,6 +59,12 @@ const financiamientoSchema = new Schema(
         numeroCuota: { type: Number, required: true },
         fechaVencimiento: { type: Date, required: true },
         valorCuota: { type: Number, required: true },
+        estadoCuota: {
+          type: String,
+          enum: ['pendiente', 'pagada', 'parcial'],
+          default: 'pendiente',
+          required: false,
+        },
       },
     ],
     cuotas: {
