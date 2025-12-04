@@ -53,7 +53,8 @@ async function cargarClientes(): Promise<ClienteType[]> {
     if (!response.ok) {
       throw new Error('Error al cargar clientes');
     }
-    return await response.json();
+    const result = await response.json();
+    return result.success ? result.data : result;
   } catch (error) {
     console.error('Error cargando clientes:', error);
     return [];
@@ -67,7 +68,8 @@ async function cargarVehiculos(): Promise<VehiculoType[]> {
     if (!response.ok) {
       throw new Error('Error al cargar vehículos');
     }
-    return await response.json();
+    const result = await response.json();
+    return result.success ? result.data : result;
   } catch (error) {
     console.error('Error cargando vehículos:', error);
     return [];
@@ -559,7 +561,7 @@ export default function NuevoFinanciamientoPage() {
                         + Crear Cliente Nuevo
                       </Typography>
                     </MenuItem>
-                    {clientes.map(cliente => (
+                    {Array.isArray(clientes) && clientes.map(cliente => (
                       <MenuItem key={cliente._id} value={cliente._id}>
                         <Box>
                           <Typography variant="body1">
@@ -656,7 +658,7 @@ export default function NuevoFinanciamientoPage() {
                             + Crear Cliente Nuevo
                           </Typography>
                         </MenuItem>
-                        {clientes.map(cliente => (
+                        {Array.isArray(clientes) && clientes.map(cliente => (
                           <MenuItem key={cliente._id} value={cliente._id}>
                             <Box>
                               <Typography variant="body1">

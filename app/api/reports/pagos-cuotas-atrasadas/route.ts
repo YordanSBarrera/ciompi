@@ -56,7 +56,7 @@ export async function GET() {
       // Verificar si tiene cuotasFuturas
       if (financiamiento.cuotasFuturas && financiamiento.cuotasFuturas.length > 0) {
         // Verificar cuotas vencidas
-        financiamiento.cuotasFuturas.forEach(cuota => {
+        financiamiento.cuotasFuturas.forEach((cuota: any) => {
           const fechaVencimiento = new Date(cuota.fechaVencimiento);
           fechaVencimiento.setHours(0, 0, 0, 0);
           
@@ -198,7 +198,7 @@ function generateCuotasAtrasadasReportHTML(
   // Calcular totales
   const totalCuotas = cuotasAtrasadas.length;
   const totalMontoAtrasado = cuotasAtrasadas.reduce(
-    (sum, cuota) => sum + cuota.valorCuota,
+    (sum: number, cuota: any) => sum + cuota.valorCuota,
     0
   );
 

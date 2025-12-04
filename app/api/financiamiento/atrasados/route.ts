@@ -37,7 +37,7 @@ export async function GET() {
       // Verificar si tiene cuotasFuturas
       if (financiamiento.cuotasFuturas && financiamiento.cuotasFuturas.length > 0) {
         // Verificar cuotas vencidas
-        const cuotasAtrasadas = financiamiento.cuotasFuturas.filter(cuota => {
+        const cuotasAtrasadas = financiamiento.cuotasFuturas.filter((cuota: any) => {
           const fechaVencimiento = new Date(cuota.fechaVencimiento);
           fechaVencimiento.setHours(0, 0, 0, 0);
           
@@ -53,7 +53,7 @@ export async function GET() {
         if (cuotasAtrasadas.length > 0) {
           // Calcular información adicional
           const montoAtrasado = cuotasAtrasadas.reduce(
-            (sum, cuota) => sum + cuota.valorCuota,
+            (sum: number, cuota: any) => sum + cuota.valorCuota,
             0
           );
 

@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
     // Procesar cada financiamiento para encontrar cuotas por vencer
     const resultados: any[] = [];
 
-    for (const financiamiento of financiamientos) {
+    for (const financiamiento of financiamientos as any[]) {
       const finId = financiamiento._id.toString();
       const pagosFin = pagosPorFinanciamiento.get(finId) || [];
       const cuotasPagadas = new Set(pagosFin.map((p: any) => p.numeroCuota));

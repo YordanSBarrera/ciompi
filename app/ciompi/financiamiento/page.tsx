@@ -146,7 +146,8 @@ export default function FinanciamientoPage() {
             searchInField(vehiculoModelo) ||
             searchInField(vehiculoMatricula) ||
             searchInField(empresaNombre) ||
-            searchInField(financiamiento.estadoFinanciamiento)
+            searchInField(financiamiento.estadoFinanciamiento) ||
+            searchInField(financiamiento.observaciones)
           );
         })
       : todosFinanciamientos;

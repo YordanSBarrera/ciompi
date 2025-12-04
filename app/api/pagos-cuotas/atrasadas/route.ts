@@ -56,7 +56,7 @@ export async function GET() {
       // Verificar si tiene cuotasFuturas
       if (financiamiento.cuotasFuturas && financiamiento.cuotasFuturas.length > 0) {
         // Verificar cuotas vencidas
-        financiamiento.cuotasFuturas.forEach(cuota => {
+        financiamiento.cuotasFuturas.forEach((cuota: any) => {
           const fechaVencimiento = new Date(cuota.fechaVencimiento);
           fechaVencimiento.setHours(0, 0, 0, 0);
           
