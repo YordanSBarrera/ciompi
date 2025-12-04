@@ -33,7 +33,7 @@ export async function GET() {
       );
 
       if (financiamiento.cuotasFuturas && financiamiento.cuotasFuturas.length > 0) {
-        const cuotasAtrasadas = financiamiento.cuotasFuturas.filter(cuota => {
+        const cuotasAtrasadas = financiamiento.cuotasFuturas.filter((cuota: any) => {
           const fechaVencimiento = new Date(cuota.fechaVencimiento);
           fechaVencimiento.setHours(0, 0, 0, 0);
           return (
@@ -44,7 +44,7 @@ export async function GET() {
 
         if (cuotasAtrasadas.length > 0) {
           const montoAtrasado = cuotasAtrasadas.reduce(
-            (sum, cuota) => sum + cuota.valorCuota,
+            (sum: number, cuota: any) => sum + cuota.valorCuota,
             0
           );
 

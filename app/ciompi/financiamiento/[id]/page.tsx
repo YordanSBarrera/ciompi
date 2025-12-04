@@ -1372,17 +1372,15 @@ export default function FinanciamientoDetailPage() {
           fullWidth
         >
           <DialogTitle>
-            <Typography variant="h6">
-              {pagoSeleccionado?.esExtra ? (
-                <>
-                  Detalles del Pago - Cuota Extra
-                  {pagoSeleccionado.numeroCuota &&
-                    ` #${pagoSeleccionado.numeroCuota}`}
-                </>
-              ) : (
-                `Detalles del Pago - Cuota #${pagoSeleccionado?.numeroCuota}`
-              )}
-            </Typography>
+            {pagoSeleccionado?.esExtra ? (
+              <>
+                Detalles del Pago - Cuota Extra
+                {pagoSeleccionado.numeroCuota &&
+                  ` #${pagoSeleccionado.numeroCuota}`}
+              </>
+            ) : (
+              `Detalles del Pago - Cuota #${pagoSeleccionado?.numeroCuota}`
+            )}
           </DialogTitle>
           <DialogContent>
             {pagoSeleccionado && (

@@ -2,12 +2,14 @@ import { connectDB } from '@/db/dbConnection';
 import Financiamiento from '@/models/financiamiento';
 import Cliente from '@/models/cliente';
 import Vehiculo from '@/models/vehiculo';
+import Empresa from '@/models/empresa';
 import { NextResponse, NextRequest } from 'next/server';
 import { getUserIdFromToken } from '@/lib/server-utils';
 
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
+    
     const { searchParams } = new URL(request.url);
     
     // Parámetros de paginación
@@ -15,8 +17,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20');
     const skip = (page - 1) * limit;
     
-    // Parámetros de búsqueda/filtro
-    const search = searchParams.get('search') || '';
+    // Parámetros de filtro
     const estado = searchParams.get('estado') || '';
     
     // Construir query base
@@ -27,53 +28,7 @@ export async function GET(request: NextRequest) {
       query.estadoFinanciamiento = estado;
     }
     
-    // Si hay búsqueda, necesitamos buscar en campos relacionados
-    if (search) {
-      const searchLower = search.trim().toLowerCase();
-      
-      // Buscar clientes que coincidan
-      const clientesMatch = await Cliente.find({
-        $or: [
-          { NOMBRE: { $regex: searchLower, $options: 'i' } },
-          { cedula: { $regex: searchLower, $options: 'i' } },
-          { TELEFONO: { $regex: searchLower, $options: 'i' } },
-        ],
-      }).select('_id').lean() as Array<{ _id: any }>;
-      
-      const clienteIds = clientesMatch.map(c => c._id.toString());
-      
-      // Buscar vehículos que coincidan
-      const vehiculosMatch = await Vehiculo.find({
-        $or: [
-          { Marca: { $regex: searchLower, $options: 'i' } },
-          { Modelo: { $regex: searchLower, $options: 'i' } },
-          { Matricula: { $regex: searchLower, $options: 'i' } },
-        ],
-      }).select('_id').lean() as Array<{ _id: any }>;
-      
-      const vehiculoIds = vehiculosMatch.map(v => v._id.toString());
-      
-      // Construir condiciones de búsqueda
-      const searchConditions: any[] = [];
-      
-      if (clienteIds.length > 0) {
-        searchConditions.push({ cliente: { $in: clienteIds } });
-        searchConditions.push({ cliente2: { $in: clienteIds } });
-      }
-      
-      if (vehiculoIds.length > 0) {
-        searchConditions.push({ vehiculo: { $in: vehiculoIds } });
-      }
-      
-      searchConditions.push({
-        estadoFinanciamiento: { $regex: searchLower, $options: 'i' },
-      });
-      
-      // Si hay condiciones de búsqueda, agregarlas al query
-      if (searchConditions.length > 0) {
-        query.$or = searchConditions;
-      }
-    }
+    // Nota: La búsqueda de texto se hace en el cliente (frontend) para mejor rendimiento
     
     // Obtener financiamientos con paginación y populate optimizado
     const financiamientos = await Financiamiento.find(query)
@@ -329,3 +284,4 @@ export async function DELETE(request: Request) {
     );
   }
 }
+

@@ -301,27 +301,82 @@ async function run() {
     };
 
     await Financiamientos.insertOne(financiamientoDoc);
+    // -----------------------------
+    // REGISTRAR PAGOS REALES (formaPag.XML)
+    // -----------------------------
 
-    // Registrar pagos históricos (pagocuotas)
-    for (let i = 0; i < cuotas.length; i++) {
-      const cuota = cuotas[i];
-      const pagoDoc = {
-        _id: new ObjectId(),
-        financiamiento: financiamientoDoc._id,
-        numeroCuota: i + 1,
-        metodoPago: 'EFECTIVO',
-        banco: '',
-        estadoPago: 'PENDIENTE',
-        montoPago: cuota.valor,
-        fechaPago: cuota.fecha,
-        numeroComprobante: '',
-        observaciones: '',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        usuarioRegistro: new ObjectId(),
-      };
-      await PagoCuotas.insertOne(pagoDoc);
+    const pagosOp = formapRows.filter(p => normalizeCod(p.CODOP) === codop);
+
+    // cuotas futuras ya creadas
+    let cuotasPendientes = [...financiamientoDoc.cuotasFuturas];
+    let numeroCuotaActual = 1;
+
+    for (const pagoRaw of pagosOp) {
+      const importe = toNumber(pagoRaw.IMPORTE);
+      const saldo = toNumber(pagoRaw.SALDO);
+      const pagado = importe - saldo;
+
+      if (pagado <= 0) continue; // no hubo pago real
+
+      let montoRestante = pagado;
+
+      while (
+        montoRestante > 0 &&
+        numeroCuotaActual <= cuotasPendientes.length
+      ) {
+        const cuota = cuotasPendientes[numeroCuotaActual - 1];
+
+        const valorCuota = cuota.valorCuota;
+        const pagoAplicado = Math.min(montoRestante, valorCuota);
+
+        await PagoCuotas.insertOne({
+          _id: new ObjectId(),
+          financiamiento: financiamientoDoc._id,
+          numeroCuota: numeroCuotaActual,
+          metodoPago: 'EFECTIVO',
+          banco: '',
+          estadoPago: pagoAplicado === valorCuota ? 'PAGADO' : 'PARCIAL',
+          montoPago: pagoAplicado,
+          fechaPago: parseFechaRaw(pagoRaw.FECHA),
+          numeroComprobante: '',
+          observaciones: '',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          usuarioRegistro: new ObjectId(),
+        });
+
+        montoRestante -= pagoAplicado;
+
+        // si se pagó la cuota completa, avanzamos
+        if (pagoAplicado === valorCuota) {
+          numeroCuotaActual++;
+        } else {
+          // pago parcial => quedarse en la misma cuota
+          break;
+        }
+      }
     }
+
+    // // Registrar pagos históricos (pagocuotas)
+    // for (let i = 0; i < cuotas.length; i++) {
+    //   const cuota = cuotas[i];
+    //   const pagoDoc = {
+    //     _id: new ObjectId(),
+    //     financiamiento: financiamientoDoc._id,
+    //     numeroCuota: i + 1,
+    //     metodoPago: 'EFECTIVO',
+    //     banco: '',
+    //     estadoPago: 'PENDIENTE',
+    //     montoPago: cuota.valor,
+    //     fechaPago: cuota.fecha,
+    //     numeroComprobante: '',
+    //     observaciones: '',
+    //     createdAt: new Date(),
+    //     updatedAt: new Date(),
+    //     usuarioRegistro: new ObjectId(),
+    //   };
+    //   await PagoCuotas.insertOne(pagoDoc);
+    // }
   }
 
   console.log('================================');
