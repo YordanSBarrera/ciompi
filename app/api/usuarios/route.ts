@@ -1,12 +1,23 @@
 import { connectDB } from '@/db/dbConnection';
 import { getUserIdFromToken } from '@/lib/server-utils';
 import Usuario from '@/models/Usuario';
-import { NextResponse } from 'next/server';
+import Financiamiento from '@/models/financiamiento';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET() {
+// Forzar registro de modelos para populate
+void Financiamiento;
+
+export async function GET(request: NextRequest) {
   try {
     await connectDB();
-    const usuarios = await Usuario.find().select('-password');
+    
+    const { searchParams } = new URL(request.url);
+    const incluirEliminados = searchParams.get('incluirEliminados') === 'true';
+    
+    // Filtrar usuarios eliminados por defecto
+    const query = incluirEliminados ? {} : { eliminado: { $ne: true } };
+    
+    const usuarios = await Usuario.find(query).select('-password');
 
     // Obtener información de usuarios de creación y modificación por separado
     const usuariosConInfo = await Promise.all(

@@ -7,6 +7,10 @@ export interface ClienteType {
   profesion?: string;
   DIRECCION?: string;
   TELEFONO?: string;
+  // Campos de Soft Delete
+  eliminado?: boolean;
+  fechaEliminacion?: Date;
+  usuarioEliminacion?: Usuario | string;
   usuarioCreacion?: Usuario;
   usuarioModificacion?: Usuario;
   _id: string;
@@ -92,6 +96,10 @@ export interface Usuario {
   avatar?: Avatar | string; // Puede ser objeto o string simple
   rol: Roles;
   estado: 'activo' | 'inactivo';
+  // Campos de Soft Delete
+  eliminado?: boolean;
+  fechaEliminacion?: Date;
+  usuarioEliminacion?: string | Usuario;
   usuarioCreacion?: string | Usuario;
   usuarioModificacion?: string | Usuario;
   ultimoAcceso?: Date;
@@ -127,6 +135,10 @@ export interface VehiculoType {
   Año?: number;
   Color?: string;
   disponible?: boolean;
+  // Campos de Soft Delete
+  eliminado?: boolean;
+  fechaEliminacion?: Date;
+  usuarioEliminacion?: Usuario | string;
   usuarioCreacion?: Usuario | string;
   usuarioModificacion?: Usuario | string;
   createdAt?: Date;
@@ -285,6 +297,10 @@ export interface EmpresaType {
   usuarioRegistro: string | Usuario; // Puede ser ID o objeto completo
   usuarioModificacion?: string | Usuario; // Puede ser ID o objeto completo
   estado: 'activa' | 'inactiva';
+  // Campos de Soft Delete
+  eliminado?: boolean;
+  fechaEliminacion?: Date;
+  usuarioEliminacion?: string | Usuario;
   createdAt?: Date;
   updatedAt?: Date;
 }

@@ -49,6 +49,21 @@ const usuarioSchema = new Schema(
       trim: true,
       maxlength: 100,
     },
+    // Campos para Soft Delete
+    eliminado: {
+      type: Boolean,
+      default: false,
+      required: false,
+    },
+    fechaEliminacion: {
+      type: Date,
+      required: false,
+    },
+    usuarioEliminacion: {
+      type: Schema.Types.ObjectId,
+      ref: 'Usuario',
+      required: false,
+    },
     usuarioCreacion: {
       type: Schema.Types.ObjectId,
       ref: 'Usuario',
@@ -78,6 +93,9 @@ const usuarioSchema = new Schema(
     },
   }
 );
+
+// Índice para soft delete
+usuarioSchema.index({ eliminado: 1 });
 
 // Middleware para actualizar fechaActualizacion
 usuarioSchema.pre('save', function (next) {

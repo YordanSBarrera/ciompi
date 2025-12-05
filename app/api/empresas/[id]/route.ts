@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/db/dbConnection';
 import { getUserIdFromToken } from '@/lib/server-utils';
 import Empresa from '@/models/empresa';
+import Financiamiento from '@/models/financiamiento';
+
+// Forzar registro de modelos para populate
+void Financiamiento;
 
 // GET - Obtener empresa por ID
 export async function GET(
@@ -107,7 +111,7 @@ export async function PUT(
   }
 }
 
-// DELETE - Eliminar empresa
+// DELETE - Eliminar empresa (soft delete)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -124,13 +128,46 @@ export async function DELETE(
       );
     }
 
-    // En lugar de eliminar físicamente, cambiar estado a inactiva
+    // Verificar si ya está eliminada
+    if (empresa.eliminado) {
+      return NextResponse.json(
+        { success: false, error: 'La empresa ya fue eliminada anteriormente' },
+        { status: 400 }
+      );
+    }
+
+    // Verificar si está en algún financiamiento ACTIVO
+    const financiamientoActivo = await Financiamiento.findOne({
+      empresa: id,
+      estadoFinanciamiento: { $in: ['activo', 'en_mora'] }
+    });
+
+    if (financiamientoActivo) {
+      return NextResponse.json(
+        { 
+          success: false,
+          error: 'No se puede eliminar la empresa porque está asociada a un financiamiento activo',
+          financiamientoId: financiamientoActivo._id 
+        },
+        { status: 409 } // Conflict
+      );
+    }
+
+    // Obtener ID del usuario para auditoría
+    const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb';
+
+    // Soft delete: marcar como eliminado y cambiar estado a inactiva
+    empresa.eliminado = true;
+    empresa.fechaEliminacion = new Date();
+    empresa.usuarioEliminacion = userId as any;
+    empresa.usuarioModificacion = userId as any;
     empresa.estado = 'inactiva';
     await empresa.save();
 
     return NextResponse.json({
       success: true,
-      message: 'Empresa desactivada exitosamente',
+      message: 'Empresa eliminada exitosamente',
+      data: empresa,
     });
   } catch (error) {
     console.error('Error al eliminar empresa:', error);

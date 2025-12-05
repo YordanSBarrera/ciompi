@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/db/dbConnection';
 import { getUserIdFromToken } from '@/lib/server-utils';
 import Empresa from '@/models/empresa';
+import Financiamiento from '@/models/financiamiento';
+
+// Forzar registro de modelos para populate
+void Financiamiento;
 
 // GET - Obtener todas las empresas
 export async function GET(request: NextRequest) {
@@ -10,12 +14,13 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const estado = searchParams.get('estado');
+    const incluirEliminados = searchParams.get('incluirEliminados') === 'true';
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
     const skip = (page - 1) * limit;
 
-    // Construir filtro
-    const filter: any = {};
+    // Construir filtro - filtrar eliminados por defecto
+    const filter: any = incluirEliminados ? {} : { eliminado: { $ne: true } };
     if (estado) {
       filter.estado = estado;
     }

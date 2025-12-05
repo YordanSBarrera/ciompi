@@ -7,6 +7,10 @@ export interface IEmpresa extends Document {
   usuarioRegistro: Schema.Types.ObjectId;
   usuarioModificacion?: Schema.Types.ObjectId;
   estado: 'activa' | 'inactiva';
+  // Campos para Soft Delete
+  eliminado?: boolean;
+  fechaEliminacion?: Date;
+  usuarioEliminacion?: Schema.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -44,6 +48,21 @@ const EmpresaSchema = new Schema<IEmpresa>(
       enum: ['activa', 'inactiva'],
       default: 'activa',
     },
+    // Campos para Soft Delete
+    eliminado: {
+      type: Boolean,
+      default: false,
+      required: false,
+    },
+    fechaEliminacion: {
+      type: Date,
+      required: false,
+    },
+    usuarioEliminacion: {
+      type: Schema.Types.ObjectId,
+      ref: 'Usuario',
+      required: false,
+    },
   },
   {
     timestamps: true,
@@ -54,6 +73,7 @@ const EmpresaSchema = new Schema<IEmpresa>(
 // Índices para mejorar el rendimiento
 EmpresaSchema.index({ nombre: 1 });
 EmpresaSchema.index({ estado: 1 });
+EmpresaSchema.index({ eliminado: 1 });
 EmpresaSchema.index({ usuarioRegistro: 1 });
 
 // Middleware para validaciones adicionales

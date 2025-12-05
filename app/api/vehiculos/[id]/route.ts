@@ -1,7 +1,11 @@
 import { connectDB } from '@/db/dbConnection';
 import { getUserIdFromToken } from '@/lib/server-utils';
 import Vehiculo from '@/models/vehiculo';
+import Financiamiento from '@/models/financiamiento';
 import { NextRequest, NextResponse } from 'next/server';
+
+// Forzar registro de modelos para populate
+void Financiamiento;
 
 export async function GET(
   request: NextRequest,
@@ -75,14 +79,54 @@ export async function DELETE(
   try {
     await connectDB();
     const { id } = await params;
-    const vehiculoEliminado = await Vehiculo.findByIdAndDelete(id);
 
-    if (!vehiculoEliminado) {
+    // Verificar que el vehículo existe
+    const vehiculo = await Vehiculo.findById(id);
+    if (!vehiculo) {
       return NextResponse.json(
         { message: 'Vehículo no encontrado' },
         { status: 404 }
       );
     }
+
+    // Verificar si ya está eliminado
+    if (vehiculo.eliminado) {
+      return NextResponse.json(
+        { error: 'El vehículo ya fue eliminado anteriormente' },
+        { status: 400 }
+      );
+    }
+
+    // Verificar si está en algún financiamiento ACTIVO
+    const financiamientoActivo = await Financiamiento.findOne({
+      vehiculo: id,
+      estadoFinanciamiento: { $in: ['activo', 'en_mora'] }
+    });
+
+    if (financiamientoActivo) {
+      return NextResponse.json(
+        { 
+          error: 'No se puede eliminar el vehículo porque está asociado a un financiamiento activo',
+          financiamientoId: financiamientoActivo._id 
+        },
+        { status: 409 } // Conflict
+      );
+    }
+
+    // Obtener ID del usuario para auditoría
+    const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb';
+
+    // Soft delete: marcar como eliminado en lugar de borrar
+    const vehiculoEliminado = await Vehiculo.findByIdAndUpdate(
+      id,
+      {
+        eliminado: true,
+        fechaEliminacion: new Date(),
+        usuarioEliminacion: userId,
+        usuarioModificacion: userId,
+      },
+      { new: true }
+    );
 
     return NextResponse.json({
       success: true,

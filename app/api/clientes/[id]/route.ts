@@ -2,7 +2,11 @@ import { connectDB } from '@/db/dbConnection';
 import { RouteParams } from '@/lib/types';
 import { getUserIdFromToken } from '@/lib/server-utils';
 import Cliente from '@/models/cliente';
+import Financiamiento from '@/models/financiamiento';
 import { NextRequest, NextResponse } from 'next/server';
+
+// Forzar registro de modelos para populate
+void Financiamiento;
 
 export async function GET(
   request: NextRequest,
@@ -32,26 +36,68 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  connectDB();
   try {
+    await connectDB();
     const { id } = await params;
-    const clienteBorrado = await Cliente.findByIdAndDelete(id);
 
-    if (!clienteBorrado)
+    // Verificar que el cliente existe
+    const cliente = await Cliente.findById(id);
+    if (!cliente) {
       return NextResponse.json(
-        {
-          message: 'Client not found',
-        },
-        {
-          status: 404,
-        }
+        { message: 'Cliente no encontrado' },
+        { status: 404 }
       );
+    }
 
-    return NextResponse.json(clienteBorrado);
-  } catch (error: any) {
-    return NextResponse.json(error.message, {
-      status: 400,
+    // Verificar si ya está eliminado
+    if (cliente.eliminado) {
+      return NextResponse.json(
+        { error: 'El cliente ya fue eliminado anteriormente' },
+        { status: 400 }
+      );
+    }
+
+    // Verificar si está en algún financiamiento ACTIVO (como cliente o cliente2)
+    const financiamientoActivo = await Financiamiento.findOne({
+      $or: [
+        { cliente: id },
+        { cliente2: id }
+      ],
+      estadoFinanciamiento: { $in: ['activo', 'en_mora'] }
     });
+
+    if (financiamientoActivo) {
+      return NextResponse.json(
+        { 
+          error: 'No se puede eliminar el cliente porque está asociado a un financiamiento activo',
+          financiamientoId: financiamientoActivo._id 
+        },
+        { status: 409 } // Conflict
+      );
+    }
+
+    // Obtener ID del usuario para auditoría
+    const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb';
+
+    // Soft delete: marcar como eliminado en lugar de borrar
+    const clienteEliminado = await Cliente.findByIdAndUpdate(
+      id,
+      {
+        eliminado: true,
+        fechaEliminacion: new Date(),
+        usuarioEliminacion: userId,
+        usuarioModificacion: userId,
+      },
+      { new: true }
+    );
+
+    return NextResponse.json({
+      success: true,
+      message: 'Cliente eliminado exitosamente',
+      cliente: clienteEliminado,
+    });
+  } catch (error: any) {
+    return NextResponse.json({ message: error.message }, { status: 400 });
   }
 }
 
