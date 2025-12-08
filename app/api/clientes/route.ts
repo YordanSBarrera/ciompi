@@ -1,7 +1,11 @@
 import { connectDB } from '@/db/dbConnection';
 import { getUserIdFromToken } from '@/lib/server-utils';
 import Cliente from '@/models/cliente';
+import Financiamiento from '@/models/financiamiento';
 import { NextRequest, NextResponse } from 'next/server';
+
+// Forzar registro de modelos para populate
+void Financiamiento;
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,21 +19,52 @@ export async function GET(request: NextRequest) {
     
     // Parámetro de búsqueda
     const search = searchParams.get('search') || '';
+    const incluirEliminados = searchParams.get('incluirEliminados') === 'true';
     
-    // Construir query base
-    let query: any = {};
+    // Construir query base - filtrar eliminados por defecto
+    let query: any = incluirEliminados ? {} : { eliminado: { $ne: true } };
     
     // Si hay búsqueda, buscar en múltiples campos
     if (search) {
       const searchLower = search.trim().toLowerCase();
-      query.$or = [
-        { NOMBRE: { $regex: searchLower, $options: 'i' } },
-        { DIRECCION: { $regex: searchLower, $options: 'i' } },
-        { TELEFONO: { $regex: searchLower, $options: 'i' } },
-        { correo: { $regex: searchLower, $options: 'i' } },
-        { profesion: { $regex: searchLower, $options: 'i' } },
-        { cedula: { $regex: searchLower, $options: 'i' } },
+      query.$and = [
+        query.eliminado !== undefined ? { eliminado: query.eliminado } : {},
+        {
+          $or: [
+            { NOMBRE: { $regex: searchLower, $options: 'i' } },
+            { DIRECCION: { $regex: searchLower, $options: 'i' } },
+            { TELEFONO: { $regex: searchLower, $options: 'i' } },
+            { correo: { $regex: searchLower, $options: 'i' } },
+            { profesion: { $regex: searchLower, $options: 'i' } },
+            { cedula: { $regex: searchLower, $options: 'i' } },
+          ]
+        }
       ];
+      // Limpiar el query para evitar duplicados
+      if (!incluirEliminados) {
+        query = {
+          eliminado: { $ne: true },
+          $or: [
+            { NOMBRE: { $regex: searchLower, $options: 'i' } },
+            { DIRECCION: { $regex: searchLower, $options: 'i' } },
+            { TELEFONO: { $regex: searchLower, $options: 'i' } },
+            { correo: { $regex: searchLower, $options: 'i' } },
+            { profesion: { $regex: searchLower, $options: 'i' } },
+            { cedula: { $regex: searchLower, $options: 'i' } },
+          ]
+        };
+      } else {
+        query = {
+          $or: [
+            { NOMBRE: { $regex: searchLower, $options: 'i' } },
+            { DIRECCION: { $regex: searchLower, $options: 'i' } },
+            { TELEFONO: { $regex: searchLower, $options: 'i' } },
+            { correo: { $regex: searchLower, $options: 'i' } },
+            { profesion: { $regex: searchLower, $options: 'i' } },
+            { cedula: { $regex: searchLower, $options: 'i' } },
+          ]
+        };
+      }
     }
     
     // Obtener clientes con paginación
@@ -89,7 +124,7 @@ export async function POST(request: Request) {
   }
 }
 
-export async function DELETE(request: Request) {
+export async function DELETE(request: NextRequest) {
   try {
     await connectDB();
     const { searchParams } = new URL(request.url);
@@ -102,14 +137,56 @@ export async function DELETE(request: Request) {
       );
     }
 
-    const clienteEliminado = await Cliente.findByIdAndDelete(clienteId);
-
-    if (!clienteEliminado) {
+    // Verificar que el cliente existe
+    const cliente = await Cliente.findById(clienteId);
+    if (!cliente) {
       return NextResponse.json(
         { error: 'Cliente no encontrado' },
         { status: 404 }
       );
     }
+
+    // Verificar si ya está eliminado
+    if (cliente.eliminado) {
+      return NextResponse.json(
+        { error: 'El cliente ya fue eliminado anteriormente' },
+        { status: 400 }
+      );
+    }
+
+    // Verificar si está en algún financiamiento ACTIVO (como cliente o cliente2)
+    const financiamientoActivo = await Financiamiento.findOne({
+      $or: [
+        { cliente: clienteId },
+        { cliente2: clienteId }
+      ],
+      estadoFinanciamiento: { $in: ['activo', 'en_mora'] }
+    });
+
+    if (financiamientoActivo) {
+      return NextResponse.json(
+        { 
+          error: 'No se puede eliminar el cliente porque está asociado a un financiamiento activo',
+          financiamientoId: financiamientoActivo._id 
+        },
+        { status: 409 } // Conflict
+      );
+    }
+
+    // Obtener ID del usuario para auditoría
+    const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb';
+
+    // Soft delete: marcar como eliminado en lugar de borrar
+    const clienteEliminado = await Cliente.findByIdAndUpdate(
+      clienteId,
+      {
+        eliminado: true,
+        fechaEliminacion: new Date(),
+        usuarioEliminacion: userId,
+        usuarioModificacion: userId,
+      },
+      { new: true }
+    );
 
     return NextResponse.json({
       success: true,

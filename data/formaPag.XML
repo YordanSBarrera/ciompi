@@ -25063,7 +25063,7 @@
     <ROW
       FECHA="20220220"
       IMPORTE="275"
-      SALDO="114"
+      SALDO="0"
       COMENTARIO="16/06/25 $8.325 A42.05 SDO AGOST.MI"
       CODCLI="1748"
       CODOP="1871"
@@ -25074,7 +25074,7 @@
     <ROW
       FECHA="20220320"
       IMPORTE="275"
-      SALDO="275"
+      SALDO="0"
       COMENTARIO="16/06/25 $11.563 A42.05 SEPT.MI DIN"
       CODCLI="1748"
       CODOP="1871"
@@ -25085,7 +25085,7 @@
     <ROW
       FECHA="20220420"
       IMPORTE="275"
-      SALDO="275"
+      SALDO="167"
       COMENTARIO="11/07/25 $12.000 A41.90 OCT+ABNONVI"
       CODCLI="1748"
       CODOP="1871"
@@ -29615,7 +29615,7 @@
     <ROW
       FECHA="20221220"
       IMPORTE="200"
-      SALDO="87"
+      SALDO="0"
       COMENTARIO="27/09/24 $1460 42.70 ABONA SEP"
       CODCLI="1840"
       CODOP="1967"
@@ -29626,7 +29626,7 @@
     <ROW
       FECHA="20230120"
       IMPORTE="200"
-      SALDO="200"
+      SALDO="164"
       COMENTARIO="29/10/24 $7047 A 42.45 SEPT"
       CODCLI="1840"
       CODOP="1967"
@@ -60312,7 +60312,7 @@
     <ROW
       FECHA="20241128"
       IMPORTE="175"
-      SALDO="175"
+      SALDO="0"
       COMENTARIO="14/10/25 US$175 OCTB.PREX"
       CODCLI="2174"
       CODOP="2332"
@@ -60324,6 +60324,7 @@
       FECHA="20241228"
       IMPORTE="175"
       SALDO="175"
+      COMENTARIO="25/11/25 US$175 NOV. PREX"
       CODCLI="2174"
       CODOP="2332"
       MONEDA="D"
@@ -61471,7 +61472,8 @@
     <ROW
       FECHA="20240916"
       IMPORTE="180"
-      SALDO="180"
+      SALDO="0"
+      COMENTARIO="30/11/25 US$180 SEPT. SANTANDER"
       CODCLI="2182"
       CODOP="2341"
       MONEDA="D"
@@ -66580,7 +66582,7 @@
     <ROW
       FECHA="20250520"
       IMPORTE="580"
-      SALDO="570"
+      SALDO="370"
       COMENTARIO="30/06/25 US$870 OCTB+ABNO NOV.SANT."
       CODCLI="2218"
       CODOP="2379"
@@ -68851,7 +68853,7 @@
     <ROW
       FECHA="20240321"
       IMPORTE="260"
-      SALDO="5"
+      SALDO="4"
       COMENTARIO="06/02/24 MI DINERO u$s265"
       CODCLI="1617"
       CODOP="2397"
@@ -68983,7 +68985,7 @@
     <ROW
       FECHA="20250321"
       IMPORTE="260"
-      SALDO="260"
+      SALDO="0"
       COMENTARIO="02/07/25 $9.700 A41.35 DIC. MI DINE"
       CODCLI="1617"
       CODOP="2397"
@@ -69017,6 +69019,7 @@
       FECHA="20250621"
       IMPORTE="260"
       SALDO="260"
+      COMENTARIO="02/12/25 $10.500 A 40.20 MARZO MI D"
       CODCLI="1617"
       CODOP="2397"
       MONEDA="D"
@@ -87207,7 +87210,7 @@
     <ROW
       FECHA="20240505"
       IMPORTE="620"
-      SALDO="110"
+      SALDO="0"
       COMENTARIO="27/11/23 u$s110 REF2311270233270938"
       CODCLI="2343"
       CODOP="2505"
@@ -87218,7 +87221,7 @@
     <ROW
       FECHA="20240605"
       IMPORTE="620"
-      SALDO="620"
+      SALDO="526"
       COMENTARIO="28/11/23 u$s115 2311280233529838"
       CODCLI="2343"
       CODOP="2505"
@@ -88102,7 +88105,7 @@
     <ROW
       FECHA="20240612"
       IMPORTE="290"
-      SALDO="7"
+      SALDO="4"
       COMENTARIO="16/07/24 $11.600 A $41 PREX"
       CODCLI="2347"
       CODOP="2510"
@@ -88278,7 +88281,8 @@
     <ROW
       FECHA="20251012"
       IMPORTE="290"
-      SALDO="290"
+      SALDO="0"
+      COMENTARIO="24/11/25 $12.000 A40.95 OCTB.PREX"
       CODCLI="2347"
       CODOP="2510"
       MONEDA="D"
@@ -93936,7 +93940,8 @@
     <ROW
       FECHA="20250820"
       IMPORTE="1560"
-      SALDO="1560"
+      SALDO="0"
+      COMENTARIO="03/12/25 US$1560 BROU AGOSTO"
       CODCLI="2371"
       CODOP="2539"
       MONEDA="D"
@@ -95445,7 +95450,7 @@
     <ROW
       FECHA="20250710"
       IMPORTE="330"
-      SALDO="330"
+      SALDO="0"
       COMENTARIO="30/09/25 US$330 JUNIO EFECTV."
       CODCLI="2376"
       CODOP="2545"
@@ -95456,7 +95461,8 @@
     <ROW
       FECHA="20250810"
       IMPORTE="330"
-      SALDO="330"
+      SALDO="0"
+      COMENTARIO="30/10/25 US$330 JULIO EFECTV."
       CODCLI="2376"
       CODOP="2545"
       MONEDA="D"
@@ -95467,6 +95473,7 @@
       FECHA="20250910"
       IMPORTE="330"
       SALDO="330"
+      COMENTARIO="29/11/25 US$330 AGOSTO EFECTV."
       CODCLI="2376"
       CODOP="2545"
       MONEDA="D"
@@ -98791,7 +98798,7 @@
     <ROW
       FECHA="20250410"
       IMPORTE="180"
-      SALDO="158"
+      SALDO="11"
       COMENTARIO="22/09/25 $8000 A 40.95 FEBRE+MARZ.M"
       CODCLI="2394"
       CODOP="2562"
@@ -98814,6 +98821,7 @@
       FECHA="20250610"
       IMPORTE="180"
       SALDO="180"
+      COMENTARIO="27/11/25 $6000 ABNO ABRIL MI DINERO"
       CODCLI="2394"
       CODOP="2562"
       MONEDA="D"
@@ -99560,7 +99568,7 @@
     <ROW
       FECHA="20250210"
       IMPORTE="350"
-      SALDO="175"
+      SALDO="0"
       COMENTARIO="01/10/25 $7.600 SDO NOV+SDO DIC PRE"
       CODCLI="2397"
       CODOP="2565"
@@ -99571,7 +99579,7 @@
     <ROW
       FECHA="20250310"
       IMPORTE="350"
-      SALDO="350"
+      SALDO="178"
       COMENTARIO="20/10/25 $14.000 ENERO MI DINERO"
       CODCLI="2397"
       CODOP="2565"
@@ -99594,6 +99602,7 @@
       FECHA="20250510"
       IMPORTE="350"
       SALDO="350"
+      COMENTARIO="04/12/25 $7.052 SDO FEBRERO MI DINE"
       CODCLI="2397"
       CODOP="2565"
       MONEDA="D"
@@ -99604,6 +99613,7 @@
       FECHA="20250610"
       IMPORTE="350"
       SALDO="350"
+      COMENTARIO="O4/12/25 $6.931 ABNO MARZO MI DINER"
       CODCLI="2397"
       CODOP="2565"
       MONEDA="D"
@@ -100062,7 +100072,7 @@
     <ROW
       FECHA="20251020"
       IMPORTE="450"
-      SALDO="450"
+      SALDO="0"
       COMENTARIO="28/08/25 US$450 AGOST. EFECTV."
       CODCLI="2399"
       CODOP="2567"
@@ -100073,7 +100083,7 @@
     <ROW
       FECHA="20251120"
       IMPORTE="450"
-      SALDO="450"
+      SALDO="0"
       COMENTARIO="30/09/25 US$450 SEPT. EFECTV."
       CODCLI="2399"
       CODOP="2567"
@@ -100085,6 +100095,7 @@
       FECHA="20251220"
       IMPORTE="450"
       SALDO="450"
+      COMENTARIO="30/10/25 US$450 OCTB.EFECTV."
       CODCLI="2399"
       CODOP="2567"
       MONEDA="D"
@@ -100095,6 +100106,7 @@
       FECHA="20260120"
       IMPORTE="450"
       SALDO="450"
+      COMENTARIO="29/11/25 US$450 NOV.EFECTV."
       CODCLI="2399"
       CODOP="2567"
       MONEDA="D"
@@ -101031,7 +101043,8 @@
     <ROW
       FECHA="20251120"
       IMPORTE="230"
-      SALDO="230"
+      SALDO="0"
+      COMENTARIO="04/12/25 US$230 NOV. SANTANDER"
       CODCLI="2403"
       CODOP="2572"
       MONEDA="D"
@@ -102179,7 +102192,8 @@
     <ROW
       FECHA="20250720"
       IMPORTE="310"
-      SALDO="310"
+      SALDO="0"
+      COMENTARIO="29/11/25 US$310 JULIO BROU"
       CODCLI="2410"
       CODOP="2580"
       MONEDA="D"
@@ -102574,6 +102588,7 @@
       FECHA="20250820"
       IMPORTE="335"
       SALDO="0"
+      COMENTARIO="03/12/25 US$335 SEPT.MI DINERO"
       CODCLI="2411"
       CODOP="2581"
       MONEDA="D"
@@ -102583,7 +102598,7 @@
     <ROW
       FECHA="20250920"
       IMPORTE="335"
-      SALDO="335"
+      SALDO="0"
       CODCLI="2411"
       CODOP="2581"
       MONEDA="D"
@@ -103287,7 +103302,7 @@
     <ROW
       FECHA="20251228"
       IMPORTE="500"
-      SALDO="100"
+      SALDO="0"
       COMENTARIO="07/03/25 US$200 SALDO FEBRERO DINER"
       CODCLI="2156"
       CODOP="2586"
@@ -106040,7 +106055,8 @@
     <ROW
       FECHA="20251215"
       IMPORTE="300"
-      SALDO="300"
+      SALDO="0"
+      COMENTARIO="03/12/25 $12.090 A40.30 DIC.EFEC"
       CODCLI="2428"
       CODOP="2598"
       MONEDA="D"
@@ -107198,7 +107214,7 @@
     <ROW
       FECHA="20251020"
       IMPORTE="1115"
-      SALDO="1115"
+      SALDO="0"
       COMENTARIO="06/11/25 US$1115 SEPT. SANTANDER"
       CODCLI="2433"
       CODOP="2603"
@@ -107210,6 +107226,7 @@
       FECHA="20251120"
       IMPORTE="1115"
       SALDO="1115"
+      COMENTARIO="05/12/25 US$1115 OCTB.SANTANDER"
       CODCLI="2433"
       CODOP="2603"
       MONEDA="$"
@@ -107615,7 +107632,7 @@
     <ROW
       FECHA="20241220"
       IMPORTE="1350"
-      SALDO="350"
+      SALDO="0"
       COMENTARIO="03/12/24 US$650 JULIO ABONO"
       CODCLI="2436"
       CODOP="2607"
@@ -107626,7 +107643,7 @@
     <ROW
       FECHA="20250120"
       IMPORTE="1350"
-      SALDO="1350"
+      SALDO="1000"
       COMENTARIO="31/12/24 US$700 SALDO JULIO"
       CODCLI="2436"
       CODOP="2607"
@@ -107781,6 +107798,7 @@
       FECHA="20260320"
       IMPORTE="1350"
       SALDO="1350"
+      COMENTARIO="02/12/25 US$500 SDO DIC+ABNO ENERO"
       CODCLI="2436"
       CODOP="2607"
       MONEDA="D"
@@ -107791,6 +107809,7 @@
       FECHA="20260420"
       IMPORTE="1350"
       SALDO="1350"
+      COMENTARIO="04/12/25 US$200 ABNO ENERO MI DI"
       CODCLI="2436"
       CODOP="2607"
       MONEDA="D"
@@ -110057,7 +110076,8 @@
     <ROW
       FECHA="20251120"
       IMPORTE="160"
-      SALDO="160"
+      SALDO="0"
+      COMENTARIO="01/12/25 US$160 NOV. BROU"
       CODCLI="2448"
       CODOP="2617"
       MONEDA="D"
@@ -111454,7 +111474,8 @@
     <ROW
       FECHA="20251128"
       IMPORTE="500"
-      SALDO="500"
+      SALDO="0"
+      COMENTARIO="28/11/25 US$500 NOV. BROU"
       CODCLI="2452"
       CODOP="2622"
       MONEDA="D"
@@ -117390,7 +117411,7 @@
     <ROW
       FECHA="20250610"
       IMPORTE="290"
-      SALDO="290"
+      SALDO="0"
       COMENTARIO="02/06/25 US$290 FEBRERO BROU"
       CODCLI="2479"
       CODOP="2650"
@@ -117435,6 +117456,7 @@
       FECHA="20251010"
       IMPORTE="290"
       SALDO="290"
+      COMENTARIO="29/11/25 US$290 JUNIO  BROU"
       CODCLI="2479"
       CODOP="2650"
       MONEDA="D"
@@ -117948,7 +117970,8 @@
     <ROW
       FECHA="20250715"
       IMPORTE="200"
-      SALDO="200"
+      SALDO="0"
+      COMENTARIO="28/11/25 US$200 JULIO BROU"
       CODCLI="2483"
       CODOP="2654"
       MONEDA="D"
@@ -117958,7 +117981,8 @@
     <ROW
       FECHA="20250815"
       IMPORTE="200"
-      SALDO="200"
+      SALDO="0"
+      COMENTARIO="28/11/25 US$200 AGOSTO BROU"
       CODCLI="2483"
       CODOP="2654"
       MONEDA="D"
@@ -117968,7 +117992,8 @@
     <ROW
       FECHA="20250915"
       IMPORTE="200"
-      SALDO="200"
+      SALDO="0"
+      COMENTARIO="28/11/25 US$200 SEPTIEMBRE BROU"
       CODCLI="2483"
       CODOP="2654"
       MONEDA="D"
@@ -118544,7 +118569,7 @@
     <ROW
       FECHA="20250510"
       IMPORTE="1150"
-      SALDO="1150"
+      SALDO="0"
       COMENTARIO="20/05/25 US$1150 ENERO SANTANDER"
       CODCLI="2441"
       CODOP="2658"
@@ -118589,6 +118614,7 @@
       FECHA="20250910"
       IMPORTE="1150"
       SALDO="1150"
+      COMENTARIO="02/12/25 US$1150 MAYO SANTANDER"
       CODCLI="2441"
       CODOP="2658"
       MONEDA="D"
@@ -125231,7 +125257,7 @@
     <ROW
       FECHA="20251110"
       IMPORTE="200"
-      SALDO="200"
+      SALDO="0"
       COMENTARIO="03/09/25 $16.400 A41.15 JUL+AGOST.B"
       CODCLI="2516"
       CODOP="2689"
@@ -125265,6 +125291,7 @@
       FECHA="20260210"
       IMPORTE="200"
       SALDO="200"
+      COMENTARIO="25/11/25 $8200 A40.95 NOV. BROU"
       CODCLI="2516"
       CODOP="2689"
       MONEDA="D"
@@ -126775,7 +126802,8 @@
     <ROW
       FECHA="20251220"
       IMPORTE="815"
-      SALDO="815"
+      SALDO="0"
+      COMENTARIO="27/11/25 US$815 DIC. BROU"
       CODCLI="2520"
       CODOP="2696"
       MONEDA="D"
@@ -127298,7 +127326,8 @@
     <ROW
       FECHA="20251210"
       IMPORTE="235"
-      SALDO="235"
+      SALDO="0"
+      COMENTARIO="30/11/25 US$235 DIC. SANTANDER"
       CODCLI="2525"
       CODOP="2699"
       MONEDA="D"
@@ -128204,7 +128233,8 @@
     <ROW
       FECHA="20251220"
       IMPORTE="245"
-      SALDO="245"
+      SALDO="0"
+      COMENTARIO="02/12/25 US$245 DIC EFECTV."
       CODCLI="2511"
       CODOP="2702"
       MONEDA="D"
@@ -129228,7 +129258,8 @@
     <ROW
       FECHA="20251115"
       IMPORTE="320"
-      SALDO="320"
+      SALDO="0"
+      COMENTARIO="04/12/25 US$320 NOV. MI DINERO"
       CODCLI="2532"
       CODOP="2707"
       MONEDA="D"
@@ -129238,7 +129269,8 @@
     <ROW
       FECHA="20251215"
       IMPORTE="320"
-      SALDO="320"
+      SALDO="0"
+      COMENTARIO="04/12/25 US$320 DIC MI DINERO"
       CODCLI="2532"
       CODOP="2707"
       MONEDA="D"
@@ -132915,7 +132947,7 @@
     <ROW
       FECHA="20251120"
       IMPORTE="265"
-      SALDO="265"
+      SALDO="0"
       COMENTARIO="28/10/25 US$265 OCTB.MI DINERO"
       CODCLI="2551"
       CODOP="2725"
@@ -132927,6 +132959,7 @@
       FECHA="20251220"
       IMPORTE="265"
       SALDO="265"
+      COMENTARIO="27/11/25 US$265 NOV. MI DINERO"
       CODCLI="2551"
       CODOP="2725"
       MONEDA="D"
@@ -133274,7 +133307,8 @@
     <ROW
       FECHA="20251130"
       IMPORTE="305"
-      SALDO="305"
+      SALDO="0"
+      COMENTARIO="28/11/25 US$305 BROU NOV."
       CODCLI="2555"
       CODOP="2728"
       MONEDA="D"
@@ -134014,7 +134048,7 @@
     <ROW
       FECHA="20251010"
       IMPORTE="720"
-      SALDO="720"
+      SALDO="0"
       COMENTARIO="23/09/25 TIENE A FAVOR $720"
       CODCLI="2558"
       CODOP="2731"
@@ -134037,6 +134071,7 @@
       FECHA="20251210"
       IMPORTE="720"
       SALDO="720"
+      COMENTARIO="25/11/25 US$720 OCTB. SANTANDER"
       CODCLI="2558"
       CODOP="2731"
       MONEDA="D"
@@ -134896,7 +134931,8 @@
     <ROW
       FECHA="20251020"
       IMPORTE="360"
-      SALDO="360"
+      SALDO="0"
+      COMENTARIO="29/11/25 US$360 OCTB.EFECTV."
       CODCLI="2563"
       CODOP="2736"
       MONEDA="D"
@@ -135814,7 +135850,7 @@
     <ROW
       FECHA="20251015"
       IMPORTE="190"
-      SALDO="181"
+      SALDO="119"
       COMENTARIO="12/08/25 $3500 A41.20 SDO JUN+ABNJU"
       CODCLI="2566"
       CODOP="2739"
@@ -135881,6 +135917,7 @@
       FECHA="20260415"
       IMPORTE="190"
       SALDO="190"
+      COMENTARIO="04/12/25 $2500 A 40.30 ABNO OCTB."
       CODCLI="2566"
       CODOP="2739"
       MONEDA="D"
@@ -137100,7 +137137,8 @@
     <ROW
       FECHA="20251020"
       IMPORTE="450"
-      SALDO="450"
+      SALDO="0"
+      COMENTARIO="25/11/25 US$450 OCTB. MI DINERO"
       CODCLI="2572"
       CODOP="2745"
       MONEDA="D"
@@ -137978,7 +138016,7 @@
     <ROW
       FECHA="20250620"
       IMPORTE="400"
-      SALDO="135"
+      SALDO="0"
       COMENTARIO="23/07/25 US$200 ABNO FEBRERO MI DI"
       CODCLI="2562"
       CODOP="2749"
@@ -137989,7 +138027,7 @@
     <ROW
       FECHA="20250720"
       IMPORTE="400"
-      SALDO="400"
+      SALDO="0"
       COMENTARIO="21/08/25 US$200 SDO FEBRERO PREX"
       CODCLI="2562"
       CODOP="2749"
@@ -138000,7 +138038,7 @@
     <ROW
       FECHA="20250820"
       IMPORTE="400"
-      SALDO="400"
+      SALDO="0"
       COMENTARIO="30/10/25 $16.380 A40.95 MARZO PREX"
       CODCLI="2562"
       CODOP="2749"
@@ -138011,7 +138049,7 @@
     <ROW
       FECHA="20250920"
       IMPORTE="400"
-      SALDO="400"
+      SALDO="335"
       COMENTARIO="30/10/25 $16.380 ABRIL PREX"
       CODCLI="2562"
       CODOP="2749"
@@ -138045,6 +138083,7 @@
       FECHA="20251220"
       IMPORTE="400"
       SALDO="400"
+      COMENTARIO="01/12/25 US$135 SDO JUNIO PREX"
       CODCLI="2562"
       CODOP="2749"
       MONEDA="D"
@@ -138055,6 +138094,7 @@
       FECHA="20260120"
       IMPORTE="400"
       SALDO="400"
+      COMENTARIO="01/12/25 US$400 JULIO PREX"
       CODCLI="2562"
       CODOP="2749"
       MONEDA="D"
@@ -138065,6 +138105,7 @@
       FECHA="20260220"
       IMPORTE="400"
       SALDO="400"
+      COMENTARIO="01/12/25 US$400 AGOSTO PREX"
       CODCLI="2562"
       CODOP="2749"
       MONEDA="D"
@@ -138075,6 +138116,7 @@
       FECHA="20260320"
       IMPORTE="400"
       SALDO="400"
+      COMENTARIO="01/12/25 US$65 SEPT ABNO PREX"
       CODCLI="2562"
       CODOP="2749"
       MONEDA="D"
@@ -140559,7 +140601,7 @@
     <ROW
       FECHA="20250320"
       IMPORTE="1000"
-      SALDO="892"
+      SALDO="592"
       COMENTARIO="07/10/24 US$250 ABONA AGOSTO"
       CODCLI="2590"
       CODOP="2764"
@@ -140846,6 +140888,7 @@
       FECHA="20270520"
       IMPORTE="1000"
       SALDO="1000"
+      COMENTARIO="02/12/25 US$300 ABNO MARZ. BROU"
       CODCLI="2590"
       CODOP="2764"
       MONEDA="D"
@@ -141397,7 +141440,8 @@
     <ROW
       FECHA="20251120"
       IMPORTE="225"
-      SALDO="225"
+      SALDO="0"
+      COMENTARIO="29/11/25 US$225 NOV.MI DINERO"
       CODCLI="2594"
       CODOP="2767"
       MONEDA="D"
@@ -142490,7 +142534,7 @@
     <ROW
       FECHA="20250628"
       IMPORTE="685"
-      SALDO="350"
+      SALDO="0"
       COMENTARIO="26/03/25 US$200 ABONO SEPT. MI DINE"
       CODCLI="2599"
       CODOP="2772"
@@ -142501,7 +142545,7 @@
     <ROW
       FECHA="20250728"
       IMPORTE="685"
-      SALDO="685"
+      SALDO="635"
       COMENTARIO="09/04/25 US$200 SDO SEPT+ABNO OCTB."
       CODCLI="2599"
       CODOP="2772"
@@ -143337,7 +143381,8 @@
     <ROW
       FECHA="20251127"
       IMPORTE="1700"
-      SALDO="1700"
+      SALDO="0"
+      COMENTARIO="02/12/25 US$1700 NOV. BROU"
       CODCLI="2602"
       CODOP="2775"
       MONEDA="D"
@@ -144588,7 +144633,8 @@
     <ROW
       FECHA="20251110"
       IMPORTE="165"
-      SALDO="165"
+      SALDO="0"
+      COMENTARIO="29/11/25 US$165 NOV.EFECTV."
       CODCLI="2607"
       CODOP="2780"
       MONEDA="D"
@@ -147509,7 +147555,7 @@
     <ROW
       FECHA="20251210"
       IMPORTE="325"
-      SALDO="325"
+      SALDO="0"
       COMENTARIO="04/11/25 US$325 NOV.EFECTV."
       CODCLI="2623"
       CODOP="2796"
@@ -147521,6 +147567,7 @@
       FECHA="20260110"
       IMPORTE="325"
       SALDO="325"
+      COMENTARIO="02/12/25 US$325 DIC.EFECTV."
       CODCLI="2623"
       CODOP="2796"
       MONEDA="D"
@@ -148335,7 +148382,7 @@
     <ROW
       FECHA="20250720"
       IMPORTE="390"
-      SALDO="106"
+      SALDO="0"
       COMENTARIO="10/04/25 US$38 SALDO DIC. PREX"
       CODCLI="2626"
       CODOP="2799"
@@ -148346,7 +148393,7 @@
     <ROW
       FECHA="20250820"
       IMPORTE="390"
-      SALDO="390"
+      SALDO="296"
       COMENTARIO="10/04/25 US$212 ABONO ENERO PREX"
       CODCLI="2626"
       CODOP="2799"
@@ -148479,6 +148526,7 @@
       FECHA="20260820"
       IMPORTE="390"
       SALDO="390"
+      COMENTARIO="28/11/25 US$200 SDO JUL+ABNO AGOST."
       CODCLI="2626"
       CODOP="2799"
       MONEDA="D"
@@ -149588,7 +149636,7 @@
     <ROW
       FECHA="20251215"
       IMPORTE="400"
-      SALDO="400"
+      SALDO="0"
       COMENTARIO="30/09/25 $15.500 A40.95 OCTB.BROU"
       CODCLI="2631"
       CODOP="2803"
@@ -149611,6 +149659,7 @@
       FECHA="20260215"
       IMPORTE="400"
       SALDO="400"
+      COMENTARIO="02/12/25 $16.200 A 40.45 DIC.BROU"
       CODCLI="2631"
       CODOP="2803"
       MONEDA="D"
@@ -155060,7 +155109,7 @@
     <ROW
       FECHA="20250615"
       IMPORTE="300"
-      SALDO="150"
+      SALDO="0"
       COMENTARIO="02/11/25 US$150 ABNO JUNIO ITAU"
       CODCLI="2657"
       CODOP="2827"
@@ -155071,7 +155120,8 @@
     <ROW
       FECHA="20250715"
       IMPORTE="300"
-      SALDO="300"
+      SALDO="150"
+      COMENTARIO="29/11/25 US$300 SDOJUN+ABNO JUL"
       CODCLI="2657"
       CODOP="2827"
       MONEDA="D"
@@ -155995,7 +156045,8 @@
     <ROW
       FECHA="20251120"
       IMPORTE="395"
-      SALDO="395"
+      SALDO="0"
+      COMENTARIO="25/11/25 US$395 NOV. BROU"
       CODCLI="2660"
       CODOP="2830"
       MONEDA="D"
@@ -156750,7 +156801,7 @@
     <ROW
       FECHA="20251210"
       IMPORTE="190"
-      SALDO="190"
+      SALDO="0"
       COMENTARIO="03/11/25 US$190 NOV. MI DINERO"
       CODCLI="2663"
       CODOP="2833"
@@ -156762,6 +156813,7 @@
       FECHA="20260110"
       IMPORTE="190"
       SALDO="190"
+      COMENTARIO="03/12/25 US$190 DIC.MI DINERO"
       CODCLI="2663"
       CODOP="2833"
       MONEDA="D"
@@ -158948,7 +159000,7 @@
     <ROW
       FECHA="20250215"
       IMPORTE="500"
-      SALDO="167"
+      SALDO="0"
       COMENTARIO="20/06/25 US$333 ABNO SOBRECUOTA SAN"
       CODCLI="2676"
       CODOP="2844"
@@ -158981,7 +159033,7 @@
     <ROW
       FECHA="20250515"
       IMPORTE="375"
-      SALDO="5"
+      SALDO="0"
       COMENTARIO="14/07/25 US$375 ABRIL SANTANDER"
       CODCLI="2676"
       CODOP="2844"
@@ -158992,7 +159044,7 @@
     <ROW
       FECHA="20250615"
       IMPORTE="375"
-      SALDO="375"
+      SALDO="0"
       COMENTARIO="19/08/25 US$370 MAYO SANTANDER"
       CODCLI="2676"
       CODOP="2844"
@@ -159003,7 +159055,8 @@
     <ROW
       FECHA="20250715"
       IMPORTE="375"
-      SALDO="375"
+      SALDO="0"
+      COMENTARIO="01/12/25 US$167 SDO FEBRERO CONF."
       CODCLI="2676"
       CODOP="2844"
       MONEDA="D"
@@ -159013,7 +159066,8 @@
     <ROW
       FECHA="20250815"
       IMPORTE="375"
-      SALDO="375"
+      SALDO="297"
+      COMENTARIO="01/12/25 US$5 SDO MAYO SANTANDER"
       CODCLI="2676"
       CODOP="2844"
       MONEDA="D"
@@ -159024,6 +159078,7 @@
       FECHA="20250915"
       IMPORTE="375"
       SALDO="375"
+      COMENTARIO="01/12/25 US$375 JUNIO SANTANDER"
       CODCLI="2676"
       CODOP="2844"
       MONEDA="D"
@@ -159034,6 +159089,7 @@
       FECHA="20251015"
       IMPORTE="375"
       SALDO="375"
+      COMENTARIO="01/12/25 US$375 JULIO SANTANDER"
       CODCLI="2676"
       CODOP="2844"
       MONEDA="D"
@@ -159044,6 +159100,7 @@
       FECHA="20251115"
       IMPORTE="375"
       SALDO="375"
+      COMENTARIO="01/12/25 US$78 ABNO AGOSTO SANT."
       CODCLI="2676"
       CODOP="2844"
       MONEDA="D"
@@ -159670,7 +159727,7 @@
     <ROW
       FECHA="20251115"
       IMPORTE="200"
-      SALDO="200"
+      SALDO="100"
       COMENTARIO="17/09/25 US$100+4000 AGOST.EFECTV."
       CODCLI="2678"
       CODOP="2846"
@@ -159715,6 +159772,7 @@
       FECHA="20260315"
       IMPORTE="200"
       SALDO="200"
+      COMENTARIO="03/12/25 US$100 ABNO NOV EFECTV."
       CODCLI="2678"
       CODOP="2846"
       MONEDA="D"
@@ -160830,7 +160888,8 @@
     <ROW
       FECHA="20251110"
       IMPORTE="325"
-      SALDO="325"
+      SALDO="0"
+      COMENTARIO="28/11/25 US$325 BROU NOV."
       CODCLI="2682"
       CODOP="2850"
       MONEDA="D"
@@ -161400,7 +161459,7 @@
     <ROW
       FECHA="20250110"
       IMPORTE="200"
-      SALDO="18"
+      SALDO="0"
       COMENTARIO="03/12/24 $8.850 A 44.25 GIRO"
       CODCLI="2690"
       CODOP="2857"
@@ -161411,7 +161470,7 @@
     <ROW
       FECHA="20250210"
       IMPORTE="200"
-      SALDO="15"
+      SALDO="0"
       COMENTARIO="05/02/25 $8.152 A 44.70 GIRO ENERO"
       CODCLI="2690"
       CODOP="2857"
@@ -161422,7 +161481,7 @@
     <ROW
       FECHA="20250310"
       IMPORTE="200"
-      SALDO="12"
+      SALDO="0"
       COMENTARIO="07/04/25 $8000 A43.20 GIRO FEBRERO"
       CODCLI="2690"
       CODOP="2857"
@@ -161433,7 +161492,7 @@
     <ROW
       FECHA="20250410"
       IMPORTE="200"
-      SALDO="7"
+      SALDO="0"
       COMENTARIO="06/06/25 $8000 A42.50 GIRO MARZO"
       CODCLI="2690"
       CODOP="2857"
@@ -161444,7 +161503,7 @@
     <ROW
       FECHA="20250510"
       IMPORTE="200"
-      SALDO="200"
+      SALDO="103"
       COMENTARIO="02/07/25 $8000 A41.35 GIRO ABRIL"
       CODCLI="2690"
       CODOP="2857"
@@ -161456,6 +161515,7 @@
       FECHA="20250610"
       IMPORTE="200"
       SALDO="200"
+      COMENTARIO="04/12/25 $723 SDO ENERO PREX"
       CODCLI="2690"
       CODOP="2857"
       MONEDA="D"
@@ -161466,6 +161526,7 @@
       FECHA="20250710"
       IMPORTE="200"
       SALDO="200"
+      COMENTARIO="04/12/25 $603 SDO FEBRERO PREX"
       CODCLI="2690"
       CODOP="2857"
       MONEDA="D"
@@ -161476,6 +161537,7 @@
       FECHA="20250810"
       IMPORTE="200"
       SALDO="200"
+      COMENTARIO="04/12/25 $408 SDO MARZO PREX"
       CODCLI="2690"
       CODOP="2857"
       MONEDA="D"
@@ -161486,6 +161548,7 @@
       FECHA="20250910"
       IMPORTE="200"
       SALDO="200"
+      COMENTARIO="04/12/25 $281 SDO ABRIL PREX"
       CODCLI="2690"
       CODOP="2857"
       MONEDA="D"
@@ -161496,6 +161559,7 @@
       FECHA="20251010"
       IMPORTE="200"
       SALDO="200"
+      COMENTARIO="04/12/25 $3.899 ABNO MAYO PREX"
       CODCLI="2690"
       CODOP="2857"
       MONEDA="D"
@@ -164282,7 +164346,8 @@
     <ROW
       FECHA="20251215"
       IMPORTE="270"
-      SALDO="270"
+      SALDO="0"
+      COMENTARIO="28/11/25 US$270 BROU DIC."
       CODCLI="2704"
       CODOP="2871"
       MONEDA="D"
@@ -165109,7 +165174,7 @@
     <ROW
       FECHA="20250810"
       IMPORTE="400"
-      SALDO="400"
+      SALDO="0"
       COMENTARIO="06/11/25 US$400 JULIO PREX"
       CODCLI="2708"
       CODOP="2875"
@@ -165121,6 +165186,7 @@
       FECHA="20250910"
       IMPORTE="400"
       SALDO="400"
+      COMENTARIO="03/12/25 US$400 AGOSTO ITAU"
       CODCLI="2708"
       CODOP="2875"
       MONEDA="D"
@@ -167261,7 +167327,8 @@
     <ROW
       FECHA="20251120"
       IMPORTE="290"
-      SALDO="290"
+      SALDO="0"
+      COMENTARIO="26/11/25 US$290 NOV. BROU"
       CODCLI="2714"
       CODOP="2881"
       MONEDA="D"
@@ -168329,7 +168396,8 @@
     <ROW
       FECHA="20251210"
       IMPORTE="75"
-      SALDO="75"
+      SALDO="0"
+      COMENTARIO="05/12/25 US$75 DIC. BROU"
       CODCLI="2718"
       CODOP="2886"
       MONEDA="D"
@@ -168578,7 +168646,8 @@
     <ROW
       FECHA="20251130"
       IMPORTE="230"
-      SALDO="230"
+      SALDO="0"
+      COMENTARIO="27/11/25 US$230 NOV. PREX"
       CODCLI="2719"
       CODOP="2887"
       MONEDA="D"
@@ -168966,7 +169035,7 @@
     <ROW
       FECHA="20251210"
       IMPORTE="190"
-      SALDO="190"
+      SALDO="0"
       COMENTARIO="05/11/25 US$190 NOV. SANTANDER"
       CODCLI="2720"
       CODOP="2888"
@@ -168978,6 +169047,7 @@
       FECHA="20260110"
       IMPORTE="190"
       SALDO="190"
+      COMENTARIO="05/12/25 US$190 DIC. SANTANDER"
       CODCLI="2720"
       CODOP="2888"
       MONEDA="D"
@@ -169946,7 +170016,8 @@
     <ROW
       FECHA="20251115"
       IMPORTE="280"
-      SALDO="280"
+      SALDO="0"
+      COMENTARIO="25/11/25 US$280 NOV. SANTANDER"
       CODCLI="2723"
       CODOP="2891"
       MONEDA="D"
@@ -170634,7 +170705,7 @@
     <ROW
       FECHA="20251215"
       IMPORTE="280"
-      SALDO="280"
+      SALDO="0"
       COMENTARIO="18/11/25 US$280 NOV. BROU"
       CODCLI="2727"
       CODOP="2895"
@@ -170646,6 +170717,7 @@
       FECHA="20260115"
       IMPORTE="280"
       SALDO="280"
+      COMENTARIO="29/11/25 US$280 DIC. BROU"
       CODCLI="2727"
       CODOP="2895"
       MONEDA="D"
@@ -171278,7 +171350,7 @@
     <ROW
       FECHA="20251002"
       IMPORTE="125"
-      SALDO="125"
+      SALDO="0"
       COMENTARIO="31/10/25 US$125 SEPT. BROU"
       CODCLI="2731"
       CODOP="2899"
@@ -171290,6 +171362,7 @@
       FECHA="20251102"
       IMPORTE="125"
       SALDO="125"
+      COMENTARIO="01/12/25 US$125 OCTB. BROU"
       CODCLI="2731"
       CODOP="2899"
       MONEDA="D"
@@ -171714,7 +171787,8 @@
     <ROW
       FECHA="20251010"
       IMPORTE="320"
-      SALDO="320"
+      SALDO="0"
+      COMENTARIO="28/11/25 US$100+$8800 OCTB.EFECTV."
       CODCLI="2733"
       CODOP="2901"
       MONEDA="D"
@@ -172888,7 +172962,7 @@
     <ROW
       FECHA="20251110"
       IMPORTE="255"
-      SALDO="255"
+      SALDO="0"
       COMENTARIO="02/11/25 $10.582 A 41 OCTB.MI DINER"
       CODCLI="2740"
       CODOP="2908"
@@ -172900,6 +172974,7 @@
       FECHA="20251210"
       IMPORTE="255"
       SALDO="255"
+      COMENTARIO="01/12/25 $10.455 A 40.35 NOV.MI"
       CODCLI="2740"
       CODOP="2908"
       MONEDA="D"
@@ -173643,7 +173718,7 @@
     <ROW
       FECHA="20251125"
       IMPORTE="100"
-      SALDO="100"
+      SALDO="25"
       COMENTARIO="28/07/25 $3000 ABNO JULIO A40.55"
       CODCLI="2745"
       CODOP="2913"
@@ -173699,6 +173774,7 @@
       FECHA="20260425"
       IMPORTE="100"
       SALDO="100"
+      COMENTARIO="03/12/25 $3000 A 40 EFECTV.NOV."
       CODCLI="2745"
       CODOP="2913"
       MONEDA="D"
@@ -174127,7 +174203,8 @@
     <ROW
       FECHA="20251120"
       IMPORTE="375"
-      SALDO="375"
+      SALDO="0"
+      COMENTARIO="28/11/25 US$375 NOV. BROU"
       CODCLI="2748"
       CODOP="2916"
       MONEDA="D"
@@ -174584,7 +174661,8 @@
     <ROW
       FECHA="20251128"
       IMPORTE="225"
-      SALDO="225"
+      SALDO="0"
+      COMENTARIO="26/11/25 US$225 NOV. MI DINERO"
       CODCLI="2750"
       CODOP="2918"
       MONEDA="D"
@@ -175345,7 +175423,8 @@
     <ROW
       FECHA="20251125"
       IMPORTE="2300"
-      SALDO="2300"
+      SALDO="0"
+      COMENTARIO="01/12/25 $91.770 NOV.A 39.90 EFEC"
       CODCLI="2753"
       CODOP="2921"
       MONEDA="D"
@@ -176104,7 +176183,8 @@
     <ROW
       FECHA="20251127"
       IMPORTE="728"
-      SALDO="728"
+      SALDO="0"
+      COMENTARIO="26/11/25 US$728 NOV. SANTANDER"
       CODCLI="2757"
       CODOP="2925"
       MONEDA="D"
@@ -177227,7 +177307,8 @@
     <ROW
       FECHA="20251225"
       IMPORTE="325"
-      SALDO="325"
+      SALDO="0"
+      COMENTARIO="28/11/25 $13.146 A 40.55 MI DINERO"
       CODCLI="2761"
       CODOP="2929"
       MONEDA="D"
@@ -178042,7 +178123,8 @@
     <ROW
       FECHA="20251125"
       IMPORTE="365"
-      SALDO="365"
+      SALDO="0"
+      COMENTARIO="27/11/25 US$365 SANTANDER NOV."
       CODCLI="2764"
       CODOP="2932"
       MONEDA="D"
@@ -178289,7 +178371,8 @@
     <ROW
       FECHA="20251125"
       IMPORTE="235"
-      SALDO="235"
+      SALDO="0"
+      COMENTARIO="25/11/25 US$235 PREX NOV."
       CODCLI="2765"
       CODOP="2933"
       MONEDA="D"
@@ -179660,7 +179743,8 @@
     <ROW
       FECHA="20251210"
       IMPORTE="425"
-      SALDO="425"
+      SALDO="0"
+      COMENTARIO="02/12/25 US$425 DIC. ITAU"
       CODCLI="2774"
       CODOP="2942"
       MONEDA="D"
@@ -181408,7 +181492,8 @@
     <ROW
       FECHA="20251127"
       IMPORTE="1750"
-      SALDO="1750"
+      SALDO="0"
+      COMENTARIO="02/12/25 US$1750 NOV. BROU"
       CODCLI="2780"
       CODOP="2948"
       MONEDA="D"
@@ -183294,7 +183379,7 @@
     <ROW
       FECHA="20251125"
       IMPORTE="1450"
-      SALDO="1450"
+      SALDO="0"
       COMENTARIO="28/10/25 LE PAGO EN PESOS E.C OCTB."
       CODCLI="2788"
       CODOP="2956"
@@ -183306,6 +183391,7 @@
       FECHA="20251225"
       IMPORTE="1450"
       SALDO="1450"
+      COMENTARIO="01/12/25 $58.230+ US$20 NOV. EFEC"
       CODCLI="2788"
       CODOP="2956"
       MONEDA="D"
@@ -183510,7 +183596,8 @@
     <ROW
       FECHA="20251125"
       IMPORTE="350"
-      SALDO="350"
+      SALDO="0"
+      COMENTARIO="25/11/25 US$350 NOV. BROU"
       CODCLI="2789"
       CODOP="2957"
       MONEDA="D"
@@ -183900,7 +183987,8 @@
     <ROW
       FECHA="20251025"
       IMPORTE="700"
-      SALDO="700"
+      SALDO="0"
+      COMENTARIO="04/12/25 US$700 OCTB.ITAU"
       CODCLI="2790"
       CODOP="2958"
       MONEDA="D"
@@ -184417,7 +184505,8 @@
     <ROW
       FECHA="20251110"
       IMPORTE="220"
-      SALDO="220"
+      SALDO="0"
+      COMENTARIO="25/11/25 US$220 NOV.EFECTV."
       CODCLI="2792"
       CODOP="2960"
       MONEDA="D"
@@ -184689,7 +184778,8 @@
     <ROW
       FECHA="20251120"
       IMPORTE="620"
-      SALDO="620"
+      SALDO="0"
+      COMENTARIO="29/11/25 US$620 NOV.EFECTV."
       CODCLI="2793"
       CODOP="2961"
       MONEDA="D"
@@ -185064,7 +185154,8 @@
     <ROW
       FECHA="20251215"
       IMPORTE="240"
-      SALDO="240"
+      SALDO="0"
+      COMENTARIO="04/12/25 US$246 DICIMEBRE BROU"
       CODCLI="2794"
       CODOP="2962"
       MONEDA="D"
@@ -187667,7 +187758,8 @@
     <ROW
       FECHA="20251210"
       IMPORTE="295"
-      SALDO="295"
+      SALDO="0"
+      COMENTARIO="02/12/25 $12.000 A 40.20 BROU DIC"
       CODCLI="2805"
       CODOP="2973"
       MONEDA="D"
@@ -188392,7 +188484,8 @@
     <ROW
       FECHA="20251210"
       IMPORTE="540"
-      SALDO="540"
+      SALDO="0"
+      COMENTARIO="28/11/25 US$540 DIC. BROU"
       CODCLI="2812"
       CODOP="2980"
       MONEDA="D"
@@ -194229,7 +194322,8 @@
     <ROW
       FECHA="20251120"
       IMPORTE="615"
-      SALDO="615"
+      SALDO="0"
+      COMENTARIO="02/12/25 US$615 ITAU NOVIEMBRE"
       CODCLI="2840"
       CODOP="3009"
       MONEDA="D"
@@ -195852,7 +195946,8 @@
     <ROW
       FECHA="20251115"
       IMPORTE="750"
-      SALDO="750"
+      SALDO="0"
+      COMENTARIO="27/11/25 US$750 SANTANDER"
       CODCLI="2845"
       CODOP="3014"
       MONEDA="D"
@@ -196613,7 +196708,8 @@
     <ROW
       FECHA="20251120"
       IMPORTE="647"
-      SALDO="647"
+      SALDO="0"
+      COMENTARIO="01/12/25 US$647 SANTANDER"
       CODCLI="2848"
       CODOP="3017"
       MONEDA="D"
@@ -198257,7 +198353,8 @@
     <ROW
       FECHA="20251110"
       IMPORTE="595"
-      SALDO="595"
+      SALDO="0"
+      COMENTARIO="28/11/25 US$595 SANTANDER"
       CODCLI="2854"
       CODOP="3023"
       MONEDA="D"
@@ -199938,7 +200035,8 @@
     <ROW
       FECHA="20251125"
       IMPORTE="1600"
-      SALDO="1600"
+      SALDO="0"
+      COMENTARIO="24/11/25 US$1383+$8688 EFECTV."
       CODCLI="2861"
       CODOP="3030"
       MONEDA="D"
@@ -200531,7 +200629,8 @@
     <ROW
       FECHA="20251215"
       IMPORTE="670"
-      SALDO="670"
+      SALDO="0"
+      COMENTARIO="04/12/25 US$670 SANTANDER"
       CODCLI="2864"
       CODOP="3033"
       MONEDA="D"
@@ -200918,7 +201017,8 @@
     <ROW
       FECHA="20251215"
       IMPORTE="340"
-      SALDO="340"
+      SALDO="0"
+      COMENTARIO="02/12/25 $13.753 A 40.45 PREX"
       CODCLI="2865"
       CODOP="3034"
       MONEDA="D"
@@ -201464,7 +201564,8 @@
     <ROW
       FECHA="20251215"
       IMPORTE="235"
-      SALDO="235"
+      SALDO="0"
+      COMENTARIO="05/12/25 US$235 SANTANDER"
       CODCLI="2868"
       CODOP="3037"
       MONEDA="D"
@@ -202539,11 +202640,665 @@
   </RECORD>
   <RECORD>
     <ROW
+      FECHA="20251225"
+      IMPORTE="300"
+      SALDO="300"
+      CODCLI="2872"
+      CODOP="3041"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260125"
+      IMPORTE="300"
+      SALDO="300"
+      CODCLI="2872"
+      CODOP="3041"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260225"
+      IMPORTE="300"
+      SALDO="300"
+      CODCLI="2872"
+      CODOP="3041"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260325"
+      IMPORTE="300"
+      SALDO="300"
+      CODCLI="2872"
+      CODOP="3041"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260425"
+      IMPORTE="300"
+      SALDO="300"
+      CODCLI="2872"
+      CODOP="3041"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260525"
+      IMPORTE="300"
+      SALDO="300"
+      CODCLI="2872"
+      CODOP="3041"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260625"
+      IMPORTE="300"
+      SALDO="300"
+      CODCLI="2872"
+      CODOP="3041"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260725"
+      IMPORTE="300"
+      SALDO="300"
+      CODCLI="2872"
+      CODOP="3041"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260825"
+      IMPORTE="300"
+      SALDO="300"
+      CODCLI="2872"
+      CODOP="3041"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260925"
+      IMPORTE="300"
+      SALDO="300"
+      CODCLI="2872"
+      CODOP="3041"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20261025"
+      IMPORTE="300"
+      SALDO="300"
+      CODCLI="2872"
+      CODOP="3041"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20261125"
+      IMPORTE="300"
+      SALDO="300"
+      CODCLI="2872"
+      CODOP="3041"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20251220"
+      IMPORTE="1000"
+      SALDO="1000"
+      CODCLI="2873"
+      CODOP="3042"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260120"
+      IMPORTE="1000"
+      SALDO="1000"
+      CODCLI="2873"
+      CODOP="3042"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260220"
+      IMPORTE="1000"
+      SALDO="1000"
+      CODCLI="2873"
+      CODOP="3042"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260320"
+      IMPORTE="1000"
+      SALDO="1000"
+      CODCLI="2873"
+      CODOP="3042"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260420"
+      IMPORTE="1000"
+      SALDO="1000"
+      CODCLI="2873"
+      CODOP="3042"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260520"
+      IMPORTE="1000"
+      SALDO="1000"
+      CODCLI="2873"
+      CODOP="3042"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20251225"
+      IMPORTE="330"
+      SALDO="330"
+      CODCLI="2874"
+      CODOP="3043"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260125"
+      IMPORTE="330"
+      SALDO="330"
+      CODCLI="2874"
+      CODOP="3043"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260225"
+      IMPORTE="330"
+      SALDO="330"
+      CODCLI="2874"
+      CODOP="3043"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260325"
+      IMPORTE="330"
+      SALDO="330"
+      CODCLI="2874"
+      CODOP="3043"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260425"
+      IMPORTE="330"
+      SALDO="330"
+      CODCLI="2874"
+      CODOP="3043"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260525"
+      IMPORTE="330"
+      SALDO="330"
+      CODCLI="2874"
+      CODOP="3043"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260625"
+      IMPORTE="330"
+      SALDO="330"
+      CODCLI="2874"
+      CODOP="3043"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260725"
+      IMPORTE="330"
+      SALDO="330"
+      CODCLI="2874"
+      CODOP="3043"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260825"
+      IMPORTE="330"
+      SALDO="330"
+      CODCLI="2874"
+      CODOP="3043"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260925"
+      IMPORTE="330"
+      SALDO="330"
+      CODCLI="2874"
+      CODOP="3043"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20261025"
+      IMPORTE="330"
+      SALDO="330"
+      CODCLI="2874"
+      CODOP="3043"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20261125"
+      IMPORTE="330"
+      SALDO="330"
+      CODCLI="2874"
+      CODOP="3043"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20261225"
+      IMPORTE="330"
+      SALDO="330"
+      CODCLI="2874"
+      CODOP="3043"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20270125"
+      IMPORTE="330"
+      SALDO="330"
+      CODCLI="2874"
+      CODOP="3043"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20270225"
+      IMPORTE="330"
+      SALDO="330"
+      CODCLI="2874"
+      CODOP="3043"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20270325"
+      IMPORTE="330"
+      SALDO="330"
+      CODCLI="2874"
+      CODOP="3043"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20270425"
+      IMPORTE="330"
+      SALDO="330"
+      CODCLI="2874"
+      CODOP="3043"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20270525"
+      IMPORTE="330"
+      SALDO="330"
+      CODCLI="2874"
+      CODOP="3043"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20270625"
+      IMPORTE="330"
+      SALDO="330"
+      CODCLI="2874"
+      CODOP="3043"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20270725"
+      IMPORTE="330"
+      SALDO="330"
+      CODCLI="2874"
+      CODOP="3043"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20270825"
+      IMPORTE="330"
+      SALDO="330"
+      CODCLI="2874"
+      CODOP="3043"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20270925"
+      IMPORTE="330"
+      SALDO="330"
+      CODCLI="2874"
+      CODOP="3043"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20271025"
+      IMPORTE="330"
+      SALDO="330"
+      CODCLI="2874"
+      CODOP="3043"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20271125"
+      IMPORTE="330"
+      SALDO="330"
+      CODCLI="2874"
+      CODOP="3043"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260105"
+      IMPORTE="900"
+      SALDO="900"
+      CODCLI="2875"
+      CODOP="3044"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260205"
+      IMPORTE="900"
+      SALDO="900"
+      CODCLI="2875"
+      CODOP="3044"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260305"
+      IMPORTE="900"
+      SALDO="900"
+      CODCLI="2875"
+      CODOP="3044"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260405"
+      IMPORTE="900"
+      SALDO="900"
+      CODCLI="2875"
+      CODOP="3044"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260505"
+      IMPORTE="900"
+      SALDO="900"
+      CODCLI="2875"
+      CODOP="3044"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260605"
+      IMPORTE="900"
+      SALDO="900"
+      CODCLI="2875"
+      CODOP="3044"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260705"
+      IMPORTE="900"
+      SALDO="900"
+      CODCLI="2875"
+      CODOP="3044"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260805"
+      IMPORTE="900"
+      SALDO="900"
+      CODCLI="2875"
+      CODOP="3044"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260905"
+      IMPORTE="900"
+      SALDO="900"
+      CODCLI="2875"
+      CODOP="3044"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20261005"
+      IMPORTE="900"
+      SALDO="900"
+      CODCLI="2875"
+      CODOP="3044"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20261105"
+      IMPORTE="900"
+      SALDO="900"
+      CODCLI="2875"
+      CODOP="3044"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20261205"
+      IMPORTE="900"
+      SALDO="900"
+      CODCLI="2875"
+      CODOP="3044"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260115"
+      IMPORTE="800"
+      SALDO="800"
+      CODCLI="2876"
+      CODOP="3045"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260215"
+      IMPORTE="800"
+      SALDO="800"
+      CODCLI="2876"
+      CODOP="3045"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260315"
+      IMPORTE="800"
+      SALDO="800"
+      CODCLI="2876"
+      CODOP="3045"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260415"
+      IMPORTE="800"
+      SALDO="800"
+      CODCLI="2876"
+      CODOP="3045"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260515"
+      IMPORTE="800"
+      SALDO="800"
+      CODCLI="2876"
+      CODOP="3045"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      FECHA="20260615"
+      IMPORTE="800"
+      SALDO="800"
+      CODCLI="2876"
+      CODOP="3045"
+      MONEDA="D"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
       IMPORTE="0"
       SALDO="0"
-      COMENTARIO="21/11/25 $9.600 A 41 SDO AGOST+ABNO"
-      CODCLI="2579"
-      CODOP="2753"
+      COMENTARIO="03/12/25 US$200 ABNO MAYO PREX"
+      CODCLI="2218"
+      CODOP="2379"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      IMPORTE="0"
+      SALDO="0"
+      COMENTARIO="04/12/25 $4.582 A40.20 SDO FEBRE"
+      CODCLI="1748"
+      CODOP="1871"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      IMPORTE="0"
+      SALDO="0"
+      COMENTARIO="04/12/25 $11.055 A40.20 MARZO MI DI"
+      CODCLI="1748"
+      CODOP="1871"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      IMPORTE="0"
+      SALDO="0"
+      COMENTARIO="04/12/25 $4.341 A 40.20 ABNO ABRIL"
+      CODCLI="1748"
+      CODOP="1871"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      IMPORTE="0"
+      SALDO="0"
+      COMENTARIO="03/12/25 US$200 ABNO MAYO PREX"
+      CODCLI="2218"
+      CODOP="2379"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      IMPORTE="0"
+      SALDO="0"
+      COMENTARIO="02/12/25 $16.120 SDO JUN+ABNO JUL"
+      CODCLI="2599"
+      CODOP="2772"
+    />
+  </RECORD>
+  <RECORD>
+    <ROW
+      IMPORTE="0"
+      SALDO="0"
+      COMENTARIO="29/11/25 $5000 SDO DIC+ABNO ENERO"
+      CODCLI="1840"
+      CODOP="1967"
     />
   </RECORD>
 </RECORDS>

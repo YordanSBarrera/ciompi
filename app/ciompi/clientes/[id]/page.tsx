@@ -25,6 +25,7 @@ import { Print as PrintIcon } from '@mui/icons-material';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import ModalConfirmarEliminar from './ModalConfirmarEliminacion';
 
 export default function ClienteDetailPage() {
   const params = useParams();
@@ -442,41 +443,14 @@ export default function ClienteDetailPage() {
         </Paper>
 
         {/* Diálogo de confirmación */}
-        <Dialog
-          open={confirmDialog.open}
-          onClose={handleCancelEliminar}
-          aria-labelledby="alert-dialog-title"
-          aria-describedby="alert-dialog-description"
-        >
-          <DialogTitle id="alert-dialog-title">
-            Confirmar eliminación
-          </DialogTitle>
-          <DialogContent>
-            <DialogContentText id="alert-dialog-description">
-              ¿Estás seguro de que deseas eliminar al cliente "
-              {confirmDialog.clienteNombre}"? Esta acción no se puede deshacer.
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCancelEliminar} disabled={deleting}>
-              Cancelar
-            </Button>
-            <Button
-              onClick={handleConfirmEliminar}
-              color="error"
-              variant="contained"
-              disabled={deleting}
-            >
-              {deleting ? 'Eliminando...' : 'Eliminar'}
-            </Button>
-          </DialogActions>
-        </Dialog>
-
+        <ModalConfirmarEliminar open={confirmDialog.open} onClose={handleCancelEliminar} clienteNombre={confirmDialog.clienteNombre} deleting={deleting} onConfirmEliminar={handleConfirmEliminar} />
+      
         {/* Snackbar para notificaciones */}
         <Snackbar
           open={snackbar.open}
           autoHideDuration={6000}
           onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         >
           <Alert
             onClose={handleCloseSnackbar}

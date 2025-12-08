@@ -57,7 +57,6 @@ import {
   coloresComunes,
   colorMap,
 } from '@/lib/color';
-import { marcaVehiculos } from '@/lib/utils';
 
 interface FormularioVehiculoProps {
   open: boolean;
@@ -68,29 +67,6 @@ interface FormularioVehiculoProps {
   vehiculo?: VehiculoType | null;
   title: string;
 }
-
-const marcasComunes = [
-  'Toyota',
-  'Honda',
-  'Ford',
-  'Chevrolet',
-  'Nissan',
-  'Hyundai',
-  'Kia',
-  'Volkswagen',
-  'BMW',
-  'Mercedes-Benz',
-  'Audi',
-  'Mazda',
-  'Subaru',
-  'Mitsubishi',
-  'Suzuki',
-  'Peugeot',
-  'Renault',
-  'Fiat',
-  'Volvo',
-  'Jeep',
-];
 
 export default function FormularioVehiculo({
   open,
@@ -516,9 +492,18 @@ export default function FormularioVehiculo({
                     <Grid container spacing={{ xs: 2, sm: 3 }}>
                       {/* Marca */}
                       <Grid size={{ xs: 12, sm: 6 }}>
-                        <FormControl
+                        <TextField
                           fullWidth
+                          label="Marca *"
+                          value={formData.Marca}
+                          onChange={e =>
+                            handleInputChange('Marca', e.target.value)
+                          }
                           error={!!errors.Marca}
+                          helperText={
+                            errors.Marca || `${formData.Marca.length}/50`
+                          }
+                          inputProps={{ maxLength: 50 }}
                           sx={{
                             '& .MuiOutlinedInput-root': {
                               borderRadius: 2,
@@ -533,55 +518,18 @@ export default function FormularioVehiculo({
                                 boxShadow: `0 0 0 2px ${azulBase}20`,
                               },
                             },
+                            '& .MuiInputLabel-root': {
+                              fontWeight: 600,
+                            },
                           }}
-                        >
-                          <InputLabel sx={{ fontWeight: 600 }}>
-                            Marca *
-                          </InputLabel>
-                          <Select
-                            value={formData.Marca}
-                            onChange={e =>
-                              handleInputChange('Marca', e.target.value)
-                            }
-                            label="Marca *"
-                            startAdornment={
+                          InputProps={{
+                            startAdornment: (
                               <InputAdornment position="start">
                                 <BuildIcon sx={{ color: azulBase }} />
                               </InputAdornment>
-                            }
-                          >
-                            {marcaVehiculos.map(marca => (
-                              <MenuItem
-                                key={marca}
-                                value={marca}
-                                sx={{ py: 1.5 }}
-                              >
-                                <Box
-                                  sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 2,
-                                  }}
-                                >
-                                  <Chip
-                                    label={marca.charAt(0)}
-                                    size="small"
-                                    sx={{
-                                      backgroundColor: azulBase,
-                                      color: blanco,
-                                      fontWeight: 600,
-                                      width: 32,
-                                      height: 32,
-                                    }}
-                                  />
-                                  <Typography sx={{ fontWeight: 500 }}>
-                                    {marca}
-                                  </Typography>
-                                </Box>
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
+                            ),
+                          }}
+                        />
                         <Collapse in={!!errors.Marca}>
                           <Box
                             sx={{

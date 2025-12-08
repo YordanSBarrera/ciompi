@@ -6,6 +6,11 @@ import Empresa from '@/models/empresa';
 import { NextResponse, NextRequest } from 'next/server';
 import { getUserIdFromToken } from '@/lib/server-utils';
 
+// Forzar registro de modelos para populate (evita MissingSchemaError)
+void Cliente;
+void Vehiculo;
+void Empresa;
+
 export async function GET(request: NextRequest) {
   try {
     await connectDB();

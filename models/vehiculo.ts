@@ -14,6 +14,21 @@ const vehiculoSchema = new Schema(
       default: true,
       required: false,
     },
+    // Campos para Soft Delete
+    eliminado: {
+      type: Boolean,
+      default: false,
+      required: false,
+    },
+    fechaEliminacion: {
+      type: Date,
+      required: false,
+    },
+    usuarioEliminacion: {
+      type: Schema.Types.ObjectId,
+      ref: 'Usuario',
+      required: false,
+    },
     usuarioCreacion: {
       type: Schema.Types.ObjectId,
       ref: 'Usuario',
@@ -38,6 +53,7 @@ const vehiculoSchema = new Schema(
 
 // Índices para mejorar rendimiento
 vehiculoSchema.index({ disponible: 1 });
+vehiculoSchema.index({ eliminado: 1 });
 
 // Limpiar el modelo si ya existe para forzar la recreación
 if (models.Vehiculo) {

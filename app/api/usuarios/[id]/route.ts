@@ -1,8 +1,12 @@
 import { connectDB } from '@/db/dbConnection';
 import { getUserIdFromToken } from '@/lib/server-utils';
 import Usuario from '@/models/Usuario';
+import Financiamiento from '@/models/financiamiento';
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
+
+// Forzar registro de modelos para populate
+void Financiamiento;
 
 // GET - Obtener usuario por ID
 export async function GET(
@@ -142,7 +146,7 @@ export async function PUT(
   }
 }
 
-// DELETE - Eliminar usuario
+// DELETE - Eliminar usuario (soft delete)
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -151,14 +155,65 @@ export async function DELETE(
     await connectDB();
     const { id } = await params;
 
-    const usuarioEliminado = await Usuario.findByIdAndDelete(id);
-
-    if (!usuarioEliminado) {
+    // Verificar que el usuario existe
+    const usuario = await Usuario.findById(id);
+    if (!usuario) {
       return NextResponse.json(
         { error: 'Usuario no encontrado' },
         { status: 404 }
       );
     }
+
+    // Verificar si ya está eliminado
+    if (usuario.eliminado) {
+      return NextResponse.json(
+        { error: 'El usuario ya fue eliminado anteriormente' },
+        { status: 400 }
+      );
+    }
+
+    // Verificar si está asociado a financiamientos ACTIVOS como usuarioRegistro
+    const financiamientoActivo = await Financiamiento.findOne({
+      $or: [
+        { usuarioRegistro: id },
+        { usuarioCreacion: id }
+      ],
+      estadoFinanciamiento: { $in: ['activo', 'en_mora'] }
+    });
+
+    if (financiamientoActivo) {
+      return NextResponse.json(
+        { 
+          error: 'No se puede eliminar el usuario porque tiene financiamientos activos asociados',
+          financiamientoId: financiamientoActivo._id 
+        },
+        { status: 409 } // Conflict
+      );
+    }
+
+    // Obtener ID del usuario que realiza la eliminación
+    const currentUserId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb';
+
+    // Verificar que no se está eliminando a sí mismo
+    if (id === currentUserId) {
+      return NextResponse.json(
+        { error: 'No puedes eliminarte a ti mismo' },
+        { status: 400 }
+      );
+    }
+
+    // Soft delete: marcar como eliminado y cambiar estado a inactivo
+    const usuarioEliminado = await Usuario.findByIdAndUpdate(
+      id,
+      {
+        eliminado: true,
+        fechaEliminacion: new Date(),
+        usuarioEliminacion: currentUserId,
+        usuarioModificacion: currentUserId,
+        estado: 'inactivo',
+      },
+      { new: true }
+    ).select('-password');
 
     return NextResponse.json({
       success: true,
