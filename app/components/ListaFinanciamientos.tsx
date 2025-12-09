@@ -36,6 +36,7 @@ import {
   Add as AddIcon,
   Print as PrintIcon,
   Delete as DeleteIcon,
+  Edit as EditIcon,
 } from '@mui/icons-material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { Menu, MenuItem } from '@mui/material';
@@ -168,6 +169,11 @@ export default function ListaFinanciamientos({
   const handleClickVerDetalles = (id: string) => {
     handleMenuClose();
     router.push(`/ciompi/financiamiento/${id}`);
+  };
+
+  const handleClickEditar = (id: string) => {
+    handleMenuClose();
+    router.push(`/ciompi/financiamiento/${id}/editar`);
   };
 
   const handleClickImprimir = (id: string) => {
@@ -671,6 +677,14 @@ export default function ListaFinanciamientos({
                           sx={{ fontSize: 18, mr: 1, color: azulBase }}
                         />
                         Ver Detalles
+                      </MenuItem>
+                      <MenuItem
+                        onClick={() => handleClickEditar(fin._id || '')}
+                      >
+                        <EditIcon
+                          sx={{ fontSize: 18, mr: 1, color: azulOscuro }}
+                        />
+                        Editar
                       </MenuItem>
                       {onImprimir && (
                         <MenuItem
