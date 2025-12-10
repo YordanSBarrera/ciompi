@@ -178,18 +178,28 @@ export default function EditarFinanciamientoPage() {
             );
           }
 
-          // Preparar cuotas futuras
+          // Preparar cuotas futuras (separar normales de extras)
           const cuotasFuturasForm: CuotaFutura[] = [];
+          const cuotasExtrasForm: CuotaFutura[] = [];
+          const numCuotasNormales = fin.cuotas || 12;
+          
           if (fin.cuotasFuturas && fin.cuotasFuturas.length > 0) {
             fin.cuotasFuturas.forEach(cf => {
-              cuotasFuturasForm.push({
+              const cuotaData = {
                 numeroCuota: cf.numeroCuota,
                 fechaVencimiento:
                   typeof cf.fechaVencimiento === 'string'
                     ? cf.fechaVencimiento.split('T')[0]
                     : new Date(cf.fechaVencimiento).toISOString().split('T')[0],
                 valorCuota: cf.valorCuota,
-              });
+              };
+              
+              // Si el número de cuota es mayor que el número de cuotas normales, es una cuota extra
+              if (cf.numeroCuota > numCuotasNormales) {
+                cuotasExtrasForm.push(cuotaData);
+              } else {
+                cuotasFuturasForm.push(cuotaData);
+              }
             });
           }
 
@@ -221,6 +231,12 @@ export default function EditarFinanciamientoPage() {
 
           setIncluirCostosDocumentacion((fin.costosDocumentacion || 0) > 0);
           setIncluirGastosExtras((fin.gastosExtras || 0) > 0);
+          
+          // Cargar cuotas extras si existen
+          if (cuotasExtrasForm.length > 0) {
+            setCuotasExtras(cuotasExtrasForm);
+            setMostrarCuotasExtras(true);
+          }
           
           // Marcar que los datos se cargaron
           datosCargadosRef.current = true;
@@ -425,8 +441,10 @@ export default function EditarFinanciamientoPage() {
 
   const handleAgregarCuotaExtra = () => {
     if (nuevaCuotaExtra.valorCuota > 0 && nuevaCuotaExtra.fechaCuota) {
+      // El número de cuota extra debe ser mayor que el número de cuotas normales
+      const numeroCuotaExtra = formData.cuotas + cuotasExtras.length + 1;
       const nuevaCuota: CuotaFutura = {
-        numeroCuota: cuotasExtras.length + 1,
+        numeroCuota: numeroCuotaExtra,
         fechaVencimiento: nuevaCuotaExtra.fechaCuota,
         valorCuota: nuevaCuotaExtra.valorCuota,
       };
@@ -440,9 +458,10 @@ export default function EditarFinanciamientoPage() {
 
   const handleEliminarCuotaExtra = (index: number) => {
     const nuevasCuotasExtras = cuotasExtras.filter((_, i) => i !== index);
+    // Renumerar las cuotas extras para que sean consecutivas después de las cuotas normales
     const cuotasRenumeradas = nuevasCuotasExtras.map((cuota, i) => ({
       ...cuota,
-      numeroCuota: i + 1,
+      numeroCuota: formData.cuotas + i + 1,
     }));
     setCuotasExtras(cuotasRenumeradas);
   };
@@ -501,12 +520,19 @@ export default function EditarFinanciamientoPage() {
         return cliente;
       });
 
+      // Combinar cuotas futuras normales con cuotas extras
+      const todasLasCuotasFuturas = [
+        ...formData.cuotasFuturas,
+        ...cuotasExtras,
+      ].sort((a, b) => a.numeroCuota - b.numeroCuota);
+
       const dataToSend = {
         ...formData,
         cliente: clientesData[0],
         cliente2: clientesData[1] || undefined,
         costoVehiculo: formData.valorBase,
         cuotasExtras: cuotasExtras.length,
+        cuotasFuturas: todasLasCuotasFuturas,
         cuotasExtrasDetalle: cuotasExtras,
         fechaVenta: formData.fechaPrimeraCuota, // Usar fechaPrimeraCuota como fechaVenta si no está definida
       };

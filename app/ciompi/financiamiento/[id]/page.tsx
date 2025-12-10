@@ -33,6 +33,7 @@ import {
   Add as AddIcon,
   Visibility as VisibilityIcon,
   Print as PrintIcon,
+  Edit as EditIcon,
 } from '@mui/icons-material';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
@@ -1330,6 +1331,16 @@ export default function FinanciamientoDetailPage() {
               </Button>
             </Box>
             <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button
+                component={Link}
+                href={`/ciompi/financiamiento/${id}/editar`}
+                variant="contained"
+                color="primary"
+                size="large"
+                startIcon={<EditIcon />}
+              >
+                Editar Financiamiento
+              </Button>
               <Button
                 variant="contained"
                 color="primary"
