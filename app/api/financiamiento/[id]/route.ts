@@ -3,7 +3,7 @@ import { RouteParams } from '@/lib/types';
 import Financiamiento from '@/models/financiamiento';
 import Vehiculo from '@/models/vehiculo';
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserIdFromToken } from '@/lib/server-utils';
+import { getUserIdFromToken, parseLocalDate } from '@/lib/server-utils';
 
 export async function GET(
   request: NextRequest,
@@ -227,15 +227,15 @@ export async function PUT(
     const costoVehiculo = body.costoVehiculo ?? body.valorBase ?? financiamientoExistente.costoVehiculo;
     const valorBase = body.valorBase ?? body.costoVehiculo ?? financiamientoExistente.valorBase ?? costoVehiculo;
 
-    // Calcular fechas
+    // Calcular fechas (usando parseLocalDate para evitar desfase de timezone)
     const fechaPrimeraCuota = body.fechaPrimeraCuota
-      ? new Date(body.fechaPrimeraCuota)
+      ? parseLocalDate(body.fechaPrimeraCuota)
       : financiamientoExistente.fechaPrimeraCuota;
 
     let fechaUltimaCuota = financiamientoExistente.fechaUltimaCuota;
     if (body.cuotasFuturas && body.cuotasFuturas.length > 0) {
       const ultimaCuota = body.cuotasFuturas[body.cuotasFuturas.length - 1];
-      fechaUltimaCuota = new Date(ultimaCuota.fechaVencimiento);
+      fechaUltimaCuota = parseLocalDate(ultimaCuota.fechaVencimiento);
     } else if (body.cuotas && body.fechaPrimeraCuota) {
       fechaUltimaCuota = new Date(fechaPrimeraCuota);
       fechaUltimaCuota.setMonth(fechaUltimaCuota.getMonth() + (body.cuotas || financiamientoExistente.cuotas) - 1);
@@ -258,16 +258,16 @@ export async function PUT(
       montoTotal: body.montoTotal ?? financiamientoExistente.montoTotal,
       fechaPrimeraCuota,
       fechaUltimaCuota,
-      fechaVenta: body.fechaVenta ? new Date(body.fechaVenta) : financiamientoExistente.fechaVenta,
+      fechaVenta: body.fechaVenta ? parseLocalDate(body.fechaVenta) : financiamientoExistente.fechaVenta,
       observaciones: body.observaciones ?? financiamientoExistente.observaciones,
       usuarioModificacion: userId,
     };
 
-    // Actualizar cuotasFuturas si vienen
+    // Actualizar cuotasFuturas si vienen (usando parseLocalDate para evitar desfase)
     if (body.cuotasFuturas) {
       datosActualizados.cuotasFuturas = body.cuotasFuturas.map((cf: any) => ({
         numeroCuota: cf.numeroCuota,
-        fechaVencimiento: new Date(cf.fechaVencimiento),
+        fechaVencimiento: parseLocalDate(cf.fechaVencimiento),
         valorCuota: cf.valorCuota,
       }));
     }

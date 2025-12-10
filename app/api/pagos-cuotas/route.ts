@@ -2,7 +2,7 @@ import { connectDB } from '@/db/dbConnection';
 import PagoCuota from '@/models/pagoCuota';
 import Financiamiento from '@/models/financiamiento';
 import { NextResponse, NextRequest } from 'next/server';
-import { getUserIdFromToken } from '@/lib/server-utils';
+import { getUserIdFromToken, parseLocalDate } from '@/lib/server-utils';
 
 export async function GET() {
   try {
@@ -79,9 +79,10 @@ export async function POST(request: NextRequest) {
     // Permitir múltiples pagos de la misma cuota (pagos parciales)
     // No verificamos duplicados, ya que una cuota puede pagarse en múltiples pagos
 
-    // Crear nuevo pago
+    // Crear nuevo pago (usando parseLocalDate para evitar desfase de timezone)
     const nuevoPago = new PagoCuota({
       ...body,
+      fechaPago: parseLocalDate(body.fechaPago), // Convertir fecha correctamente
       // Para pagos extra, guardamos el número de cuota si se proporciona (cuotasTotal + numeroCuotaExtra)
       // Para pagos normales, guardamos el número de cuota normalmente
       numeroCuota: body.esExtra && body.numeroCuota ? body.numeroCuota : (body.esExtra ? undefined : body.numeroCuota),
