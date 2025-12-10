@@ -207,12 +207,16 @@ export default function EditarFinanciamientoPage() {
             clientes: clientesArray.length > 0 ? clientesArray : [''],
             vehiculo:
               typeof fin.vehiculo === 'object' && fin.vehiculo._id
-                ? fin.vehiculo._id
-                : fin.vehiculo || '',
+                ? fin.vehiculo._id.toString()
+                : typeof fin.vehiculo === 'string'
+                  ? fin.vehiculo
+                  : '',
             empresa:
               typeof fin.empresa === 'object' && fin.empresa._id
-                ? fin.empresa._id
-                : (fin.empresa as string),
+                ? fin.empresa._id.toString()
+                : typeof fin.empresa === 'string'
+                  ? fin.empresa
+                  : '',
             valorBase: fin.valorBase || fin.costoVehiculo || 0,
             costosDocumentacion: fin.costosDocumentacion || 0,
             gastosExtras: fin.gastosExtras || 0,
@@ -522,7 +526,7 @@ export default function EditarFinanciamientoPage() {
 
       // Combinar cuotas futuras normales con cuotas extras
       const todasLasCuotasFuturas = [
-        ...formData.cuotasFuturas,
+        ...(formData.cuotasFuturas || []),
         ...cuotasExtras,
       ].sort((a, b) => a.numeroCuota - b.numeroCuota);
 
