@@ -90,14 +90,15 @@ export async function PUT(
         const montoPagado =
           datosActualizados.montoPagado ?? financiamientoExistente.montoPagado;
 
-        datosActualizados.cuotasPendientes =
-          financiamientoExistente.cuotas - cuotasPagadas;
-        datosActualizados.saldoPendiente =
-          financiamientoExistente.montoTotal - montoPagado;
+        // Calcular total de cuotas incluyendo extras
+        const cuotasTotales = financiamientoExistente.cuotas + (financiamientoExistente.cuotasExtras || 0);
 
-        // Verificar si está finalizado
+        datosActualizados.cuotasPendientes = Math.max(0, cuotasTotales - cuotasPagadas);
+        datosActualizados.saldoPendiente = Math.max(0, financiamientoExistente.montoTotal - montoPagado);
+
+        // Verificar si está finalizado (incluyendo cuotas extras)
         if (
-          cuotasPagadas >= financiamientoExistente.cuotas ||
+          cuotasPagadas >= cuotasTotales ||
           montoPagado >= financiamientoExistente.montoTotal
         ) {
           datosActualizados.estadoFinanciamiento = 'finalizado';
@@ -272,25 +273,19 @@ export async function PUT(
       }));
     }
 
-    // Recalcular cuotasPendientes y saldoPendiente si cambian cuotas o montoTotal
+    // Recalcular cuotasPendientes y saldoPendiente incluyendo cuotas extras
     const cuotasPagadas = financiamientoExistente.cuotasPagadas || 0;
     const montoPagado = financiamientoExistente.montoPagado || 0;
     
-    if (body.cuotas !== undefined || body.montoTotal !== undefined) {
-      const cuotasTotales = datosActualizados.cuotas + (datosActualizados.cuotasExtras || 0);
-      datosActualizados.cuotasPendientes = cuotasTotales - cuotasPagadas;
-      datosActualizados.saldoPendiente = datosActualizados.montoTotal - montoPagado;
-    } else {
-      // Asegurar que estén calculados correctamente
-      const cuotasTotales = datosActualizados.cuotas + (datosActualizados.cuotasExtras || 0);
-      datosActualizados.cuotasPendientes = cuotasTotales - cuotasPagadas;
-      datosActualizados.saldoPendiente = datosActualizados.montoTotal - montoPagado;
-    }
+    // Calcular total de cuotas (normales + extras)
+    const cuotasTotales = datosActualizados.cuotas + (datosActualizados.cuotasExtras || 0);
+    datosActualizados.cuotasPendientes = Math.max(0, cuotasTotales - cuotasPagadas);
+    datosActualizados.saldoPendiente = Math.max(0, datosActualizados.montoTotal - montoPagado);
 
     // Recalcular estado del financiamiento
-    // Si todas las cuotas están pagadas o el monto pagado >= monto total, está finalizado
+    // Si todas las cuotas (incluyendo extras) están pagadas o el monto pagado >= monto total, está finalizado
     if (
-      cuotasPagadas >= datosActualizados.cuotas ||
+      cuotasPagadas >= cuotasTotales ||
       montoPagado >= datosActualizados.montoTotal
     ) {
       datosActualizados.estadoFinanciamiento = 'finalizado';

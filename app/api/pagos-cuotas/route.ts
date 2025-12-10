@@ -117,21 +117,24 @@ export async function POST(request: NextRequest) {
         pagosPorCuota[numCuota] += pago.montoPago;
       });
 
-    // Contar cuántas cuotas están completamente pagadas
+    // Calcular total de cuotas incluyendo extras
+    const cuotasTotales = financiamiento.cuotas + (financiamiento.cuotasExtras || 0);
+
+    // Contar cuántas cuotas están completamente pagadas (incluyendo extras)
     let cuotasPagadas = 0;
-    for (let i = 1; i <= financiamiento.cuotas; i++) {
+    for (let i = 1; i <= cuotasTotales; i++) {
       const totalPagadoCuota = pagosPorCuota[i] || 0;
       if (totalPagadoCuota >= financiamiento.valorCuota) {
         cuotasPagadas++;
       }
     }
 
-    const cuotasPendientes = financiamiento.cuotas - cuotasPagadas;
-    const saldoPendiente = financiamiento.montoTotal - montoPagado;
+    const cuotasPendientes = Math.max(0, cuotasTotales - cuotasPagadas);
+    const saldoPendiente = Math.max(0, financiamiento.montoTotal - montoPagado);
 
     let estadoFinanciamiento = financiamiento.estadoFinanciamiento;
     if (
-      cuotasPagadas >= financiamiento.cuotas ||
+      cuotasPagadas >= cuotasTotales ||
       montoPagado >= financiamiento.montoTotal
     ) {
       estadoFinanciamiento = 'finalizado';
@@ -229,21 +232,24 @@ export async function DELETE(request: NextRequest) {
           pagosPorCuota[numCuota] += p.montoPago;
         });
 
-      // Contar cuántas cuotas están completamente pagadas
+      // Calcular total de cuotas incluyendo extras
+      const cuotasTotales = financiamiento.cuotas + (financiamiento.cuotasExtras || 0);
+
+      // Contar cuántas cuotas están completamente pagadas (incluyendo extras)
       let cuotasPagadas = 0;
-      for (let i = 1; i <= financiamiento.cuotas; i++) {
+      for (let i = 1; i <= cuotasTotales; i++) {
         const totalPagadoCuota = pagosPorCuota[i] || 0;
         if (totalPagadoCuota >= financiamiento.valorCuota) {
           cuotasPagadas++;
         }
       }
 
-      const cuotasPendientes = financiamiento.cuotas - cuotasPagadas;
-      const saldoPendiente = financiamiento.montoTotal - montoPagado;
+      const cuotasPendientes = Math.max(0, cuotasTotales - cuotasPagadas);
+      const saldoPendiente = Math.max(0, financiamiento.montoTotal - montoPagado);
 
       let estadoFinanciamiento = 'activo';
       if (
-        cuotasPagadas >= financiamiento.cuotas ||
+        cuotasPagadas >= cuotasTotales ||
         montoPagado >= financiamiento.montoTotal
       ) {
         estadoFinanciamiento = 'finalizado';
