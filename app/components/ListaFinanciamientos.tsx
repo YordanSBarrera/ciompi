@@ -54,6 +54,7 @@ import {
   turquesa,
 } from '@/lib/color';
 import { useRouter } from 'next/navigation';
+import { getCurrentUser, isAdmin } from '@/lib/utils';
 
 interface PaginationData {
   page: number;
@@ -103,6 +104,12 @@ export default function ListaFinanciamientos({
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [esAdministrativo, setEsAdministrativo] = React.useState(false);
+
+  React.useEffect(() => {
+    const user = getCurrentUser();
+    setEsAdministrativo(user ? isAdmin(user.rol) : false);
+  }, []);
 
   // Debounce para la búsqueda
   const searchTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
@@ -533,7 +540,7 @@ export default function ListaFinanciamientos({
                 <TableCell>
                   <Typography variant="body2" fontWeight={600}>
                     {typeof fin.vehiculo === 'object'
-                      ? `${fin.vehiculo.Marca} ${fin.vehiculo.Modelo}`
+                      ? `${fin.vehiculo.Marca?? 'no encontrado'} ${fin.vehiculo.Modelo?? 'no encontrado '}`
                       : '-'}
                   </Typography>
                   <Typography variant="caption" color={grisTexto}>
@@ -678,39 +685,45 @@ export default function ListaFinanciamientos({
                         />
                         Ver Detalles
                       </MenuItem>
-                      <MenuItem
-                        onClick={() => handleClickEditar(fin._id || '')}
-                      >
-                        <EditIcon
-                          sx={{ fontSize: 18, mr: 1, color: azulOscuro }}
-                        />
-                        Editar
-                      </MenuItem>
-                      {onImprimir && (
-                        <MenuItem
-                          onClick={() => handleClickImprimir(fin._id || '')}
-                        >
-                          <PrintIcon
-                            sx={{ fontSize: 18, mr: 1, color: azulOscuro }}
-                          />
-                          Imprimir
-                        </MenuItem>
+                      {esAdministrativo && (
+                        <>
+                          <MenuItem
+                            onClick={() => handleClickEditar(fin._id || '')}
+                          >
+                            <EditIcon
+                              sx={{ fontSize: 18, mr: 1, color: azulOscuro }}
+                            />
+                            Editar
+                          </MenuItem>
+                          {onImprimir && (
+                            <MenuItem
+                              onClick={() =>
+                                handleClickImprimir(fin._id || '')
+                              }
+                            >
+                              <PrintIcon
+                                sx={{ fontSize: 18, mr: 1, color: azulOscuro }}
+                              />
+                              Imprimir
+                            </MenuItem>
+                          )}
+                          <MenuItem
+                            onClick={() =>
+                              handleClickEliminarWrapper(
+                                fin._id || '',
+                                getFinanciamientoNombre(fin)
+                              )
+                            }
+                          >
+                            <DeleteIcon
+                              sx={{ fontSize: 18, mr: 1, color: 'error.main' }}
+                            />
+                            <Typography variant="body2" color="error.main">
+                              Eliminar
+                            </Typography>
+                          </MenuItem>
+                        </>
                       )}
-                      <MenuItem
-                        onClick={() =>
-                          handleClickEliminarWrapper(
-                            fin._id || '',
-                            getFinanciamientoNombre(fin)
-                          )
-                        }
-                      >
-                        <DeleteIcon
-                          sx={{ fontSize: 18, mr: 1, color: 'error.main' }}
-                        />
-                        <Typography variant="body2" color="error.main">
-                          Eliminar
-                        </Typography>
-                      </MenuItem>
                     </Menu>
                   </Stack>
                 </TableCell>
