@@ -54,7 +54,7 @@ import {
   turquesa,
 } from '@/lib/color';
 import { useRouter } from 'next/navigation';
-import { getCurrentUser, isAdmin } from '@/lib/utils';
+import {  isAdmin } from '@/lib/utils';
 
 interface PaginationData {
   page: number;
@@ -104,12 +104,7 @@ export default function ListaFinanciamientos({
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [esAdministrativo, setEsAdministrativo] = React.useState(false);
-
-  React.useEffect(() => {
-    const user = getCurrentUser();
-    setEsAdministrativo(user ? isAdmin(user.rol) : false);
-  }, []);
+  const esAdministrativo = isAdmin();
 
   // Debounce para la búsqueda
   const searchTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);

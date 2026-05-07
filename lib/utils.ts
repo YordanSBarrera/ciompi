@@ -68,12 +68,14 @@ export enum Roles {
   Usuario = 'Usuario',
 }
 
-export const isAdmin = (role: string): boolean => {
-  return role === Roles.Administrativo;
+export const isAdmin = (): boolean => {
+  const user = getCurrentUser();
+  return user ? user.rol === Roles.Administrativo : false;
 };
 
-export const isUser = (role: string): boolean => {
-  return role === Roles.Usuario;
+export const isUser = (): boolean => {
+  const user = getCurrentUser();
+  return user ? user.rol === Roles.Usuario : false;
 };
 
 /**
