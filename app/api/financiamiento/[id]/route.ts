@@ -1,5 +1,4 @@
 import { connectDB } from '@/db/dbConnection';
-import { RouteParams } from '@/lib/types';
 import Financiamiento from '@/models/financiamiento';
 import Vehiculo from '@/models/vehiculo';
 import { NextRequest, NextResponse } from 'next/server';
@@ -16,7 +15,10 @@ export async function GET(
     const financiamiento = await Financiamiento.findById(id)
       .populate('cliente', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
       .populate('cliente2', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
-      .populate('vehiculo', 'Marca Modelo Matricula Padron Año Color Descripcion disponible')
+      .populate(
+        'vehiculo',
+        'Marca Modelo Matricula Padron Año Color Descripcion disponible'
+      )
       .populate('empresa', 'nombre descripcion telefono')
       .populate('usuarioRegistro', 'nombre usuario email')
       .populate('usuarioCreacion', 'nombre usuario email')
@@ -95,10 +97,18 @@ export async function PUT(
           datosActualizados.montoPagado ?? financiamientoExistente.montoPagado;
 
         // Calcular total de cuotas incluyendo extras
-        const cuotasTotales = financiamientoExistente.cuotas + (financiamientoExistente.cuotasExtras || 0);
+        const cuotasTotales =
+          financiamientoExistente.cuotas +
+          (financiamientoExistente.cuotasExtras || 0);
 
-        datosActualizados.cuotasPendientes = Math.max(0, cuotasTotales - cuotasPagadas);
-        datosActualizados.saldoPendiente = Math.max(0, financiamientoExistente.montoTotal - montoPagado);
+        datosActualizados.cuotasPendientes = Math.max(
+          0,
+          cuotasTotales - cuotasPagadas
+        );
+        datosActualizados.saldoPendiente = Math.max(
+          0,
+          financiamientoExistente.montoTotal - montoPagado
+        );
 
         // Verificar si está finalizado (incluyendo cuotas extras)
         if (
@@ -118,9 +128,18 @@ export async function PUT(
         datosActualizados,
         { new: true, runValidators: true }
       )
-        .populate('cliente', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
-        .populate('cliente2', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
-        .populate('vehiculo', 'Marca Modelo Matricula Padron Año Color Descripcion disponible')
+        .populate(
+          'cliente',
+          'NOMBRE TELEFONO cedula correo DIRECCION profesion'
+        )
+        .populate(
+          'cliente2',
+          'NOMBRE TELEFONO cedula correo DIRECCION profesion'
+        )
+        .populate(
+          'vehiculo',
+          'Marca Modelo Matricula Padron Año Color Descripcion disponible'
+        )
         .populate('empresa', 'nombre descripcion telefono')
         .populate('usuarioRegistro', 'nombre usuario')
         .populate('usuarioCreacion', 'nombre usuario email')
@@ -159,7 +178,11 @@ export async function PUT(
 
     // Manejar segundo cliente (si existe)
     let cliente2Id = body.cliente2;
-    if (body.clientes && Array.isArray(body.clientes) && body.clientes.length > 1) {
+    if (
+      body.clientes &&
+      Array.isArray(body.clientes) &&
+      body.clientes.length > 1
+    ) {
       const segundoCliente = body.clientes[1];
       if (typeof segundoCliente === 'object' && segundoCliente.NOMBRE) {
         const Cliente = (await import('@/models/cliente')).default;
@@ -229,8 +252,15 @@ export async function PUT(
     }
 
     // Manejar costoVehiculo y valorBase
-    const costoVehiculo = body.costoVehiculo ?? body.valorBase ?? financiamientoExistente.costoVehiculo;
-    const valorBase = body.valorBase ?? body.costoVehiculo ?? financiamientoExistente.valorBase ?? costoVehiculo;
+    const costoVehiculo =
+      body.costoVehiculo ??
+      body.valorBase ??
+      financiamientoExistente.costoVehiculo;
+    const valorBase =
+      body.valorBase ??
+      body.costoVehiculo ??
+      financiamientoExistente.valorBase ??
+      costoVehiculo;
 
     // Calcular fechas (usando parseLocalDate para evitar desfase de timezone)
     const fechaPrimeraCuota = body.fechaPrimeraCuota
@@ -243,7 +273,11 @@ export async function PUT(
       fechaUltimaCuota = parseLocalDate(ultimaCuota.fechaVencimiento);
     } else if (body.cuotas && body.fechaPrimeraCuota) {
       fechaUltimaCuota = new Date(fechaPrimeraCuota);
-      fechaUltimaCuota.setMonth(fechaUltimaCuota.getMonth() + (body.cuotas || financiamientoExistente.cuotas) - 1);
+      fechaUltimaCuota.setMonth(
+        fechaUltimaCuota.getMonth() +
+          (body.cuotas || financiamientoExistente.cuotas) -
+          1
+      );
     }
 
     // Preparar datos actualizados
@@ -254,17 +288,25 @@ export async function PUT(
       empresa: body.empresa ?? financiamientoExistente.empresa,
       costoVehiculo,
       valorBase,
-      costosDocumentacion: body.costosDocumentacion ?? financiamientoExistente.costosDocumentacion ?? 0,
-      gastosExtras: body.gastosExtras ?? financiamientoExistente.gastosExtras ?? 0,
-      cuotasExtras: body.cuotasExtras ?? financiamientoExistente.cuotasExtras ?? 0,
+      costosDocumentacion:
+        body.costosDocumentacion ??
+        financiamientoExistente.costosDocumentacion ??
+        0,
+      gastosExtras:
+        body.gastosExtras ?? financiamientoExistente.gastosExtras ?? 0,
+      cuotasExtras:
+        body.cuotasExtras ?? financiamientoExistente.cuotasExtras ?? 0,
       cuotas: body.cuotas ?? financiamientoExistente.cuotas,
       valorCuota: body.valorCuota ?? financiamientoExistente.valorCuota,
       interesTotal: body.interesTotal ?? financiamientoExistente.interesTotal,
       montoTotal: body.montoTotal ?? financiamientoExistente.montoTotal,
       fechaPrimeraCuota,
       fechaUltimaCuota,
-      fechaVenta: body.fechaVenta ? parseLocalDate(body.fechaVenta) : financiamientoExistente.fechaVenta,
-      observaciones: body.observaciones ?? financiamientoExistente.observaciones,
+      fechaVenta: body.fechaVenta
+        ? parseLocalDate(body.fechaVenta)
+        : financiamientoExistente.fechaVenta,
+      observaciones:
+        body.observaciones ?? financiamientoExistente.observaciones,
       usuarioModificacion: userId,
     };
 
@@ -280,11 +322,18 @@ export async function PUT(
     // Recalcular cuotasPendientes y saldoPendiente incluyendo cuotas extras
     const cuotasPagadas = financiamientoExistente.cuotasPagadas || 0;
     const montoPagado = financiamientoExistente.montoPagado || 0;
-    
+
     // Calcular total de cuotas (normales + extras)
-    const cuotasTotales = datosActualizados.cuotas + (datosActualizados.cuotasExtras || 0);
-    datosActualizados.cuotasPendientes = Math.max(0, cuotasTotales - cuotasPagadas);
-    datosActualizados.saldoPendiente = Math.max(0, datosActualizados.montoTotal - montoPagado);
+    const cuotasTotales =
+      datosActualizados.cuotas + (datosActualizados.cuotasExtras || 0);
+    datosActualizados.cuotasPendientes = Math.max(
+      0,
+      cuotasTotales - cuotasPagadas
+    );
+    datosActualizados.saldoPendiente = Math.max(
+      0,
+      datosActualizados.montoTotal - montoPagado
+    );
 
     // Recalcular estado del financiamiento
     // Si todas las cuotas (incluyendo extras) están pagadas o el monto pagado >= monto total, está finalizado
@@ -297,21 +346,28 @@ export async function PUT(
       datosActualizados.saldoPendiente = 0;
     } else {
       // Si no está finalizado, verificar si hay cuotas vencidas para determinar si está en_mora
-      // Para esto necesitamos consultar los pagos, pero por ahora mantenemos 'activo' 
+      // Para esto necesitamos consultar los pagos, pero por ahora mantenemos 'activo'
       // a menos que el estado actual sea 'cancelado' (no lo cambiamos)
       if (financiamientoExistente.estadoFinanciamiento !== 'cancelado') {
         // Verificar si hay cuotas vencidas consultando las cuotasFuturas
         const hoy = new Date();
         hoy.setHours(0, 0, 0, 0);
         let tieneCuotasVencidas = false;
-        
-        if (datosActualizados.cuotasFuturas && datosActualizados.cuotasFuturas.length > 0) {
+
+        if (
+          datosActualizados.cuotasFuturas &&
+          datosActualizados.cuotasFuturas.length > 0
+        ) {
           // Buscar la primera cuota no pagada que esté vencida
-          for (let i = cuotasPagadas; i < datosActualizados.cuotasFuturas.length; i++) {
+          for (
+            let i = cuotasPagadas;
+            i < datosActualizados.cuotasFuturas.length;
+            i++
+          ) {
             const cuota = datosActualizados.cuotasFuturas[i];
             const fechaVenc = new Date(cuota.fechaVencimiento);
             fechaVenc.setHours(0, 0, 0, 0);
-            
+
             if (fechaVenc < hoy) {
               tieneCuotasVencidas = true;
               break;
@@ -319,16 +375,22 @@ export async function PUT(
           }
         } else if (datosActualizados.fechaPrimeraCuota) {
           // Si no hay cuotasFuturas, verificar la primera cuota pendiente
-          const fechaPrimeraPendiente = new Date(datosActualizados.fechaPrimeraCuota);
-          fechaPrimeraPendiente.setMonth(fechaPrimeraPendiente.getMonth() + cuotasPagadas);
+          const fechaPrimeraPendiente = new Date(
+            datosActualizados.fechaPrimeraCuota
+          );
+          fechaPrimeraPendiente.setMonth(
+            fechaPrimeraPendiente.getMonth() + cuotasPagadas
+          );
           fechaPrimeraPendiente.setHours(0, 0, 0, 0);
-          
+
           if (fechaPrimeraPendiente < hoy) {
             tieneCuotasVencidas = true;
           }
         }
-        
-        datosActualizados.estadoFinanciamiento = tieneCuotasVencidas ? 'en_mora' : 'activo';
+
+        datosActualizados.estadoFinanciamiento = tieneCuotasVencidas
+          ? 'en_mora'
+          : 'activo';
       }
       // Si está cancelado, mantenemos el estado cancelado
     }
@@ -340,7 +402,10 @@ export async function PUT(
     )
       .populate('cliente', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
       .populate('cliente2', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
-      .populate('vehiculo', 'Marca Modelo Matricula Padron Año Color Descripcion disponible')
+      .populate(
+        'vehiculo',
+        'Marca Modelo Matricula Padron Año Color Descripcion disponible'
+      )
       .populate('empresa', 'nombre descripcion telefono')
       .populate('usuarioRegistro', 'nombre usuario')
       .populate('usuarioCreacion', 'nombre usuario email')
