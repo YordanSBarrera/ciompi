@@ -1,6 +1,7 @@
 'use client';
 import { grisClaro, grisMedio } from '@/lib/color';
 import { FinanciamientoType, PagoCuotaType } from '@/lib/types';
+import { isAdmin } from '@/lib/utils';
 import AuthGuard from '@/app/components/AuthGuard';
 import PagoCuotaModal from '@/app/components/PagoCuotaModal';
 import {
@@ -1345,16 +1346,18 @@ export default function FinanciamientoDetailPage() {
               </Button>
             </Box>
             <Box sx={{ display: 'flex', gap: 2 }}>
-              <Button
-                component={Link}
-                href={`/ciompi/financiamiento/${id}/editar`}
-                variant="contained"
-                color="primary"
-                size="large"
-                startIcon={<EditIcon />}
-              >
-                Editar Financiamiento
-              </Button>
+              {isAdmin() && (
+                <Button
+                  component={Link}
+                  href={`/ciompi/financiamiento/${id}/editar`}
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                  startIcon={<EditIcon />}
+                >
+                  Editar Financiamiento
+                </Button>
+              )}
               <Button
                 variant="contained"
                 color="primary"

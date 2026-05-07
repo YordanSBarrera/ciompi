@@ -1,6 +1,7 @@
 'use client';
 import { grisClaro, grisMedio, azulBase } from '@/lib/color';
 import { EmpresaType } from '@/lib/types';
+import { isAdmin } from '@/lib/utils';
 import { useEliminarEmpresa } from '@/app/hook/useEliminarEmpresa';
 import AuthGuard from '@/app/components/AuthGuard';
 import {
@@ -431,26 +432,30 @@ export default function EmpresaDetailPage() {
             }}
           >
             <Box>
-              <Button
-                onClick={() => handleClickEliminar(id, empresa.nombre)}
-                variant="contained"
-                color="error"
-                size="large"
-                disabled={deleting}
-              >
-                {deleting ? 'Eliminando...' : 'Eliminar Empresa'}
-              </Button>
+              {isAdmin() && (
+                <Button
+                  onClick={() => handleClickEliminar(id, empresa.nombre)}
+                  variant="contained"
+                  color="error"
+                  size="large"
+                  disabled={deleting}
+                >
+                  {deleting ? 'Eliminando...' : 'Eliminar Empresa'}
+                </Button>
+              )}
             </Box>
             <Box sx={{ display: 'flex', gap: 2 }}>
-              <Button
-                component={Link}
-                href={`/ciompi/empresas/${id}/editar`}
-                variant="contained"
-                color="primary"
-                size="large"
-              >
-                Editar Empresa
-              </Button>
+              {isAdmin() && (
+                <Button
+                  component={Link}
+                  href={`/ciompi/empresas/${id}/editar`}
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                >
+                  Editar Empresa
+                </Button>
+              )}
 
               <Button
                 component={Link}

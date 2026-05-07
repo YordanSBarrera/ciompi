@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { grisClaro, grisMedio, azulBase } from '@/lib/color';
 import { VehiculoType, VehiculoFormType } from '@/lib/types';
+import { isAdmin } from '@/lib/utils';
 import AuthGuard from '@/app/components/AuthGuard';
 import {
   Alert,
@@ -456,28 +457,32 @@ export default function VehiculoDetallePage({
             }}
           >
             <Box>
-              <Button
-                onClick={() =>
-                  setConfirmDialog({ open: true, vehiculoId: vehiculo._id! })
-                }
-                variant="contained"
-                color="error"
-                size="large"
-              >
-                Eliminar Vehículo
-              </Button>
+              {isAdmin() && (
+                <Button
+                  onClick={() =>
+                    setConfirmDialog({ open: true, vehiculoId: vehiculo._id! })
+                  }
+                  variant="contained"
+                  color="error"
+                  size="large"
+                >
+                  Eliminar Vehículo
+                </Button>
+              )}
             </Box>
 
             <Box sx={{ display: 'flex', gap: 2 }}>
-              <Button
-                component={Link}
-                href={`/ciompi/vehiculos/${vehiculo._id}/editar`}
-                variant="contained"
-                color="primary"
-                size="large"
-              >
-                Editar Vehículo
-              </Button>
+              {isAdmin() && (
+                <Button
+                  component={Link}
+                  href={`/ciompi/vehiculos/${vehiculo._id}/editar`}
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                >
+                  Editar Vehículo
+                </Button>
+              )}
 
               <Button
                 component={Link}
