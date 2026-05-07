@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { getAuthHeaders } from '@/lib/utils';
 
 interface ConfirmDialog {
   open: boolean;
@@ -49,6 +50,7 @@ export function useEliminarEmpresa({
     try {
       const response = await fetch(`/api/empresas/${confirmDialog.empresaId}`, {
         method: 'DELETE',
+        headers: getAuthHeaders(),
       });
 
       const result = await response.json();

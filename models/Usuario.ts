@@ -1,6 +1,6 @@
 import { Schema, model, models } from 'mongoose';
 import bcrypt from 'bcryptjs';
-import { Roles } from '@/lib/utils';
+import { UsuarioRoles, UsuarioEstado } from '@/lib/const';
 
 const usuarioSchema = new Schema(
   {
@@ -36,13 +36,13 @@ const usuarioSchema = new Schema(
     },
     rol: {
       type: String,
-      enum: [Roles.Administrativo, Roles.Usuario],
-      default: Roles.Usuario,
+      enum: [UsuarioRoles.Administrativo, UsuarioRoles.Usuario],
+      default: UsuarioRoles.Usuario,
     },
     estado: {
       type: String,
-      enum: ['activo', 'inactivo'],
-      default: 'activo',
+      enum: [UsuarioEstado.Activo, UsuarioEstado.Inactivo],
+      default: UsuarioEstado.Activo,
     },
     cargo: {
       type: String,

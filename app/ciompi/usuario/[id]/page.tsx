@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { grisClaro, grisMedio } from '@/lib/color';
 import { Usuario } from '@/lib/types';
-import { isAdmin } from '@/lib/utils';
+import { getAuthHeaders, isAdmin } from '@/lib/utils';
 import AuthGuard from '@/app/components/AuthGuard';
 import {
   Alert,
@@ -82,6 +82,7 @@ export default function UsuarioDetallesPage() {
     try {
       const response = await fetch(`/api/usuarios/${confirmDialog.usuarioId}`, {
         method: 'DELETE',
+        headers: getAuthHeaders(),
       });
 
       if (response.ok) {

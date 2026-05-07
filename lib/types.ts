@@ -1,4 +1,4 @@
-import { Roles } from './utils';
+import { UsuarioRoles, UsuarioEstado } from './const';
 
 export interface ClienteType {
   NOMBRE: string;
@@ -94,8 +94,8 @@ export interface Usuario {
   email: string;
   nombre: string;
   avatar?: Avatar | string; // Puede ser objeto o string simple
-  rol: Roles;
-  estado: 'activo' | 'inactivo';
+  rol: UsuarioRoles;
+  estado: UsuarioEstado;
   // Campos de Soft Delete
   eliminado?: boolean;
   fechaEliminacion?: Date;

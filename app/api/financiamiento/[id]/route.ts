@@ -3,7 +3,7 @@ import { RouteParams } from '@/lib/types';
 import Financiamiento from '@/models/financiamiento';
 import Vehiculo from '@/models/vehiculo';
 import { NextRequest, NextResponse } from 'next/server';
-import { getUserIdFromToken, parseLocalDate } from '@/lib/server-utils';
+import { parseLocalDate, requireAdminAuth } from '@/lib/server-utils';
 
 export async function GET(
   request: NextRequest,
@@ -44,6 +44,11 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = requireAdminAuth(request);
+    if (!auth.authorized) {
+      return auth.response;
+    }
+
     await connectDB();
     const { id } = await params;
     const body = await request.json();
@@ -58,8 +63,7 @@ export async function PUT(
       );
     }
 
-    // Obtener usuario del token
-    const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb';
+    const userId = auth.user.id;
 
     // Si viene un modo simple (solo actualizar campos básicos), usar la lógica anterior
     if (body.modoSimple === true) {
@@ -357,6 +361,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = requireAdminAuth(request);
+    if (!auth.authorized) {
+      return auth.response;
+    }
+
     await connectDB();
     const { id } = await params;
 
@@ -375,7 +384,7 @@ export async function DELETE(
 
     // Si tenía un vehículo asignado, marcarlo como disponible nuevamente
     if (financiamiento.vehiculo) {
-      const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb';
+      const userId = auth.user.id;
       await Vehiculo.findByIdAndUpdate(financiamiento.vehiculo, {
         disponible: true,
         usuarioModificacion: userId,

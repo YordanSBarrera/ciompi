@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { grisClaro, grisMedio, azulBase } from '@/lib/color';
 import { VehiculoType, VehiculoFormType } from '@/lib/types';
-import { isAdmin } from '@/lib/utils';
+import { getAuthHeaders, isAdmin } from '@/lib/utils';
 import AuthGuard from '@/app/components/AuthGuard';
 import {
   Alert,
@@ -82,6 +82,7 @@ export default function VehiculoDetallePage({
         `/api/vehiculos/${confirmDialog.vehiculoId}`,
         {
           method: 'DELETE',
+          headers: getAuthHeaders(),
         }
       );
 
