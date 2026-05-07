@@ -39,7 +39,7 @@ import {
   Add as AddIcon,
 } from '@mui/icons-material';
 import { ClienteType } from '@/lib/types';
-import { formatCedula } from '@/lib/utils';
+import { formatCedula, isAdmin } from '@/lib/utils';
 import { useEliminarCliente } from '@/app/hook/useEliminarCliente';
 import {
   azulBase,
@@ -115,6 +115,7 @@ export default function ListaClientes({
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const esAdministrativo = isAdmin();
   const emptyData = '-';
 
   // Helper function to truncate text
@@ -662,27 +663,37 @@ export default function ListaClientes({
                         />
                         Ver Detalles
                       </MenuItem>
-                      <MenuItem onClick={() => handleClickEditar(cliente._id)}>
-                        <EditIcon
-                          sx={{ fontSize: 18, mr: 1, color: azulBase }}
-                        />
-                        Editar
-                      </MenuItem>
-                      <MenuItem
-                        onClick={() =>
-                          handleClickEliminarWrapper(
-                            cliente._id,
-                            cliente.NOMBRE
-                          )
-                        }
-                      >
-                        <DeleteIcon
-                          sx={{ fontSize: 18, mr: 1, color: 'error.main' }}
-                        />
-                        <Typography variant="body2" color="error.main">
-                          Eliminar
-                        </Typography>
-                      </MenuItem>
+                      {esAdministrativo && (
+                        <>
+                          <MenuItem
+                            onClick={() => handleClickEditar(cliente._id)}
+                          >
+                            <EditIcon
+                              sx={{ fontSize: 18, mr: 1, color: azulBase }}
+                            />
+                            Editar
+                          </MenuItem>
+                          <MenuItem
+                            onClick={() =>
+                              handleClickEliminarWrapper(
+                                cliente._id,
+                                cliente.NOMBRE
+                              )
+                            }
+                          >
+                            <DeleteIcon
+                              sx={{
+                                fontSize: 18,
+                                mr: 1,
+                                color: 'error.main',
+                              }}
+                            />
+                            <Typography variant="body2" color="error.main">
+                              Eliminar
+                            </Typography>
+                          </MenuItem>
+                        </>
+                      )}
                     </Menu>
                   </Stack>
                 </TableCell>
