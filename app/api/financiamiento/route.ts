@@ -4,7 +4,7 @@ import Cliente from '@/models/cliente';
 import Vehiculo from '@/models/vehiculo';
 import Empresa from '@/models/empresa';
 import { NextResponse, NextRequest } from 'next/server';
-import { getUserIdFromToken } from '@/lib/server-utils';
+import { getUserIdFromToken, parseLocalDate } from '@/lib/server-utils';
 
 // Forzar registro de modelos para populate (evita MissingSchemaError)
 void Cliente;
@@ -156,14 +156,14 @@ export async function POST(request: NextRequest) {
     const costoVehiculo = body.costoVehiculo || body.valorBase || 0;
     const valorBase = body.valorBase || body.costoVehiculo || 0;
 
-    // Calcular fechas y montos
-    const fechaPrimeraCuota = new Date(body.fechaPrimeraCuota);
+    // Calcular fechas y montos (usando parseLocalDate para evitar desfase de timezone)
+    const fechaPrimeraCuota = parseLocalDate(body.fechaPrimeraCuota);
 
     // Si hay cuotasFuturas, usar la última fecha de ahí, sino calcular
     let fechaUltimaCuota = new Date(fechaPrimeraCuota);
     if (body.cuotasFuturas && body.cuotasFuturas.length > 0) {
       const ultimaCuota = body.cuotasFuturas[body.cuotasFuturas.length - 1];
-      fechaUltimaCuota = new Date(ultimaCuota.fechaVencimiento);
+      fechaUltimaCuota = parseLocalDate(ultimaCuota.fechaVencimiento);
     } else {
       fechaUltimaCuota.setMonth(fechaUltimaCuota.getMonth() + body.cuotas - 1);
     }
@@ -182,7 +182,7 @@ export async function POST(request: NextRequest) {
       cuotasFuturas: body.cuotasFuturas
         ? body.cuotasFuturas.map((cf: any) => ({
             numeroCuota: cf.numeroCuota,
-            fechaVencimiento: new Date(cf.fechaVencimiento),
+            fechaVencimiento: parseLocalDate(cf.fechaVencimiento),
             valorCuota: cf.valorCuota,
           }))
         : undefined,
@@ -198,7 +198,7 @@ export async function POST(request: NextRequest) {
       montoPagado: 0,
       estadoFinanciamiento: 'activo',
       observaciones: body.observaciones,
-      fechaVenta: body.fechaVenta || new Date(),
+      fechaVenta: body.fechaVenta ? parseLocalDate(body.fechaVenta) : new Date(),
       usuarioRegistro: body.usuarioRegistro || userId,
       usuarioCreacion: body.usuarioRegistro || userId,
       usuarioModificacion: userId,

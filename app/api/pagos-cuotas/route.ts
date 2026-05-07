@@ -2,7 +2,7 @@ import { connectDB } from '@/db/dbConnection';
 import PagoCuota from '@/models/pagoCuota';
 import Financiamiento from '@/models/financiamiento';
 import { NextResponse, NextRequest } from 'next/server';
-import { getUserIdFromToken } from '@/lib/server-utils';
+import { getUserIdFromToken, parseLocalDate } from '@/lib/server-utils';
 
 export async function GET() {
   try {
@@ -79,9 +79,10 @@ export async function POST(request: NextRequest) {
     // Permitir múltiples pagos de la misma cuota (pagos parciales)
     // No verificamos duplicados, ya que una cuota puede pagarse en múltiples pagos
 
-    // Crear nuevo pago
+    // Crear nuevo pago (usando parseLocalDate para evitar desfase de timezone)
     const nuevoPago = new PagoCuota({
       ...body,
+      fechaPago: parseLocalDate(body.fechaPago), // Convertir fecha correctamente
       // Para pagos extra, guardamos el número de cuota si se proporciona (cuotasTotal + numeroCuotaExtra)
       // Para pagos normales, guardamos el número de cuota normalmente
       numeroCuota: body.esExtra && body.numeroCuota ? body.numeroCuota : (body.esExtra ? undefined : body.numeroCuota),
@@ -116,21 +117,24 @@ export async function POST(request: NextRequest) {
         pagosPorCuota[numCuota] += pago.montoPago;
       });
 
-    // Contar cuántas cuotas están completamente pagadas
+    // Calcular total de cuotas incluyendo extras
+    const cuotasTotales = financiamiento.cuotas + (financiamiento.cuotasExtras || 0);
+
+    // Contar cuántas cuotas están completamente pagadas (incluyendo extras)
     let cuotasPagadas = 0;
-    for (let i = 1; i <= financiamiento.cuotas; i++) {
+    for (let i = 1; i <= cuotasTotales; i++) {
       const totalPagadoCuota = pagosPorCuota[i] || 0;
       if (totalPagadoCuota >= financiamiento.valorCuota) {
         cuotasPagadas++;
       }
     }
 
-    const cuotasPendientes = financiamiento.cuotas - cuotasPagadas;
-    const saldoPendiente = financiamiento.montoTotal - montoPagado;
+    const cuotasPendientes = Math.max(0, cuotasTotales - cuotasPagadas);
+    const saldoPendiente = Math.max(0, financiamiento.montoTotal - montoPagado);
 
     let estadoFinanciamiento = financiamiento.estadoFinanciamiento;
     if (
-      cuotasPagadas >= financiamiento.cuotas ||
+      cuotasPagadas >= cuotasTotales ||
       montoPagado >= financiamiento.montoTotal
     ) {
       estadoFinanciamiento = 'finalizado';
@@ -228,21 +232,24 @@ export async function DELETE(request: NextRequest) {
           pagosPorCuota[numCuota] += p.montoPago;
         });
 
-      // Contar cuántas cuotas están completamente pagadas
+      // Calcular total de cuotas incluyendo extras
+      const cuotasTotales = financiamiento.cuotas + (financiamiento.cuotasExtras || 0);
+
+      // Contar cuántas cuotas están completamente pagadas (incluyendo extras)
       let cuotasPagadas = 0;
-      for (let i = 1; i <= financiamiento.cuotas; i++) {
+      for (let i = 1; i <= cuotasTotales; i++) {
         const totalPagadoCuota = pagosPorCuota[i] || 0;
         if (totalPagadoCuota >= financiamiento.valorCuota) {
           cuotasPagadas++;
         }
       }
 
-      const cuotasPendientes = financiamiento.cuotas - cuotasPagadas;
-      const saldoPendiente = financiamiento.montoTotal - montoPagado;
+      const cuotasPendientes = Math.max(0, cuotasTotales - cuotasPagadas);
+      const saldoPendiente = Math.max(0, financiamiento.montoTotal - montoPagado);
 
       let estadoFinanciamiento = 'activo';
       if (
-        cuotasPagadas >= financiamiento.cuotas ||
+        cuotasPagadas >= cuotasTotales ||
         montoPagado >= financiamiento.montoTotal
       ) {
         estadoFinanciamiento = 'finalizado';

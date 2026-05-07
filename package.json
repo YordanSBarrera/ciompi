@@ -10,7 +10,7 @@
     "reset-usuarios": "node scripts/resetUsuarios.js",
     "ver-xml": "node scripts/ver-ejemplos-xml.js",
     "validar-xml": "node scripts/validar-xml.js",
-    "migrar": "node scripts/migracion-v3-fechas-reales.js",
+    "migrar": "node scripts/migracion-v3-fechas-reales.js"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

@@ -3,6 +3,20 @@ import jwt from 'jsonwebtoken';
 const JWT_SECRET = process.env.JWT_SECRET;
 
 /**
+ * Parsea una fecha string (YYYY-MM-DD) a Date al mediodía local
+ * Evita problemas de timezone donde la fecha se guarda 1 día antes
+ * @param dateString - Fecha en formato "YYYY-MM-DD" o ISO string
+ * @returns Date object al mediodía local
+ */
+export function parseLocalDate(dateString: string): Date {
+  if (!dateString) return new Date();
+  // Extraer solo la parte de fecha (YYYY-MM-DD) si viene con tiempo
+  const [year, month, day] = dateString.split('T')[0].split('-').map(Number);
+  // Crear fecha al mediodía local para evitar desfase de timezone
+  return new Date(year, month - 1, day, 12, 0, 0);
+}
+
+/**
  * Extrae el ID del usuario del token JWT de la request
  * SOLO USAR EN SERVER-SIDE (API routes, Server Components)
  */

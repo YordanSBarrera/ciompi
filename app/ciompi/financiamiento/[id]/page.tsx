@@ -33,6 +33,7 @@ import {
   Add as AddIcon,
   Visibility as VisibilityIcon,
   Print as PrintIcon,
+  Edit as EditIcon,
 } from '@mui/icons-material';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
@@ -170,7 +171,25 @@ export default function FinanciamientoDetailPage() {
     ) {
       financiamiento.cuotasFuturas.forEach(cuota => {
         const fechaVencimiento = new Date(cuota.fechaVencimiento);
-        const montoPagado = pagosPorCuota[cuota.numeroCuota] || 0;
+        const esExtra = cuota.numeroCuota > financiamiento.cuotas;
+        
+        // Calcular pagos para esta cuota específica
+        let montoPagado = 0;
+        if (esExtra) {
+          // Para cuotas extras, buscar pagos extras con este número de cuota
+          montoPagado = pagos
+            .filter(
+              pago =>
+                pago.esExtra &&
+                pago.numeroCuota === cuota.numeroCuota &&
+                pago.estadoPago === 'confirmado'
+            )
+            .reduce((sum, pago) => sum + pago.montoPago, 0);
+        } else {
+          // Para cuotas normales, usar el cálculo existente
+          montoPagado = pagosPorCuota[cuota.numeroCuota] || 0;
+        }
+        
         const pagada = montoPagado >= cuota.valorCuota;
         const montoPendiente = Math.max(0, cuota.valorCuota - montoPagado);
 
@@ -178,7 +197,7 @@ export default function FinanciamientoDetailPage() {
           numeroCuota: cuota.numeroCuota,
           fechaVencimiento,
           valorCuota: cuota.valorCuota,
-          esExtra: false,
+          esExtra: esExtra,
           pagada,
           montoPagado,
           montoPendiente,
@@ -210,68 +229,64 @@ export default function FinanciamientoDetailPage() {
       }
     }
 
-    // Agregar cuotas extras si existen
-    // Nota: Las cuotas extras no están en cuotasFuturas, así que las calculamos
-    // basándonos en cuotasExtras y fechaUltimaCuota
+    // Agregar cuotas extras si existen y no están ya en cuotasFuturas
+    // Solo si no hay cuotasFuturas o si hay menos cuotas extras de las esperadas
     if (financiamiento.cuotasExtras && financiamiento.cuotasExtras > 0) {
-      // Obtener la fecha de la última cuota normal
-      const fechaUltima =
-        todasLasCuotas.length > 0
-          ? new Date(todasLasCuotas[todasLasCuotas.length - 1].fechaVencimiento)
-          : financiamiento.cuotasFuturas &&
-              financiamiento.cuotasFuturas.length > 0
-            ? new Date(
-                financiamiento.cuotasFuturas[
-                  financiamiento.cuotasFuturas.length - 1
-                ].fechaVencimiento
-              )
-            : new Date(financiamiento.fechaUltimaCuota);
+      // Contar cuántas cuotas extras ya están en todasLasCuotas
+      const cuotasExtrasExistentes = todasLasCuotas.filter(
+        c => c.esExtra
+      ).length;
+      
+      // Si faltan cuotas extras, generarlas
+      if (cuotasExtrasExistentes < financiamiento.cuotasExtras) {
+        // Obtener la fecha de la última cuota normal
+        const fechaUltima =
+          todasLasCuotas.length > 0
+            ? new Date(todasLasCuotas[todasLasCuotas.length - 1].fechaVencimiento)
+            : financiamiento.cuotasFuturas &&
+                financiamiento.cuotasFuturas.length > 0
+              ? new Date(
+                  financiamiento.cuotasFuturas[
+                    financiamiento.cuotasFuturas.length - 1
+                  ].fechaVencimiento
+                )
+              : new Date(financiamiento.fechaUltimaCuota);
 
-      // Obtener todos los pagos extras para verificar cuáles están pagados
-      const pagosExtras = pagos.filter(
-        pago => pago.esExtra && pago.estadoPago === 'confirmado'
-      );
+        // Obtener el número de cuota más alto para las extras
+        const maxNumeroCuota = todasLasCuotas.length > 0
+          ? Math.max(...todasLasCuotas.map(c => c.numeroCuota))
+          : financiamiento.cuotas;
 
-      for (let i = 1; i <= financiamiento.cuotasExtras; i++) {
-        const fechaVencimiento = new Date(fechaUltima);
-        fechaVencimiento.setMonth(fechaVencimiento.getMonth() + i);
+        // Generar solo las cuotas extras faltantes
+        const cuotasExtrasFaltantes = financiamiento.cuotasExtras - cuotasExtrasExistentes;
+        for (let i = 1; i <= cuotasExtrasFaltantes; i++) {
+          const fechaVencimiento = new Date(fechaUltima);
+          fechaVencimiento.setMonth(fechaVencimiento.getMonth() + i);
 
-        // Verificar si hay algún pago extra que corresponda a esta cuota
-        // Como las cuotas extras pueden no tener número específico, verificamos por fecha aproximada
-        const pagada = pagosExtras.some(pago => {
-          const fechaPago = new Date(pago.fechaPago);
-          // Considerar pagada si la fecha de pago está dentro de un mes de la fecha de vencimiento
-          const diferenciaMeses = Math.abs(
-            (fechaPago.getTime() - fechaVencimiento.getTime()) /
-              (1000 * 60 * 60 * 24 * 30)
+          const numeroCuotaExtra = maxNumeroCuota + i;
+          const montoPagadoExtra = pagos
+            .filter(
+              pago =>
+                pago.esExtra &&
+                pago.numeroCuota === numeroCuotaExtra &&
+                pago.estadoPago === 'confirmado'
+            )
+            .reduce((sum, pago) => sum + pago.montoPago, 0);
+          const montoPendienteExtra = Math.max(
+            0,
+            financiamiento.valorCuota - montoPagadoExtra
           );
-          return diferenciaMeses < 1.5; // Tolerancia de 1.5 meses
-        });
 
-        // Para cuotas extras, calcular monto pagado si tienen numeroCuota
-        const numeroCuotaExtra = financiamiento.cuotas + i;
-        const montoPagadoExtra = pagos
-          .filter(
-            pago =>
-              pago.esExtra &&
-              pago.numeroCuota === numeroCuotaExtra &&
-              pago.estadoPago === 'confirmado'
-          )
-          .reduce((sum, pago) => sum + pago.montoPago, 0);
-        const montoPendienteExtra = Math.max(
-          0,
-          financiamiento.valorCuota - montoPagadoExtra
-        );
-
-        todasLasCuotas.push({
-          numeroCuota: numeroCuotaExtra,
-          fechaVencimiento,
-          valorCuota: financiamiento.valorCuota, // O el valor específico si está disponible
-          esExtra: true,
-          pagada: montoPagadoExtra >= financiamiento.valorCuota,
-          montoPagado: montoPagadoExtra,
-          montoPendiente: montoPendienteExtra,
-        });
+          todasLasCuotas.push({
+            numeroCuota: numeroCuotaExtra,
+            fechaVencimiento,
+            valorCuota: financiamiento.valorCuota,
+            esExtra: true,
+            pagada: montoPagadoExtra >= financiamiento.valorCuota,
+            montoPagado: montoPagadoExtra,
+            montoPendiente: montoPendienteExtra,
+          });
+        }
       }
     }
 
@@ -1331,6 +1346,16 @@ export default function FinanciamientoDetailPage() {
             </Box>
             <Box sx={{ display: 'flex', gap: 2 }}>
               <Button
+                component={Link}
+                href={`/ciompi/financiamiento/${id}/editar`}
+                variant="contained"
+                color="primary"
+                size="large"
+                startIcon={<EditIcon />}
+              >
+                Editar Financiamiento
+              </Button>
+              <Button
                 variant="contained"
                 color="primary"
                 size="large"
@@ -1358,6 +1383,7 @@ export default function FinanciamientoDetailPage() {
           cuotasTotal={financiamiento.cuotas}
           cuotasExtras={financiamiento.cuotasExtras || 0}
           pagos={pagos}
+          cuotasFuturas={financiamiento.cuotasFuturas || []}
           onPagoRegistrado={handlePagoRegistrado}
         />
 
