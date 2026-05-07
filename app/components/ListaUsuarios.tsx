@@ -55,6 +55,7 @@ import {
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { useRouter } from 'next/navigation';
 import { isAdmin } from '@/lib/utils';
+import { UsuarioRoles } from '@/lib/const';
 
 interface ListaUsuariosProps {
   usuarios: Usuario[];
@@ -154,11 +155,9 @@ export default function ListaUsuarios({
 
   const getRolColor = (rol: string) => {
     switch (rol) {
-      case 'admin':
-        return 'error';
-      case 'Administrativo':
+      case UsuarioRoles.Administrativo:
         return 'warning';
-      case 'Usuario':
+      case UsuarioRoles.Usuario:
         return 'info';
       default:
         return 'default';
@@ -202,7 +201,7 @@ export default function ListaUsuarios({
             }}
           />
 
-          {onAgregarUsuario && (
+          {onAgregarUsuario && isAdmin() && (
             <Button
               variant="contained"
               startIcon={<AddIcon />}
