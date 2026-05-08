@@ -55,6 +55,7 @@ import {
 } from '@/lib/color';
 import { useRouter } from 'next/navigation';
 import {  isAdmin } from '@/lib/utils';
+import { formatMoney, normalizarMoneda } from '@/lib/moneda';
 
 interface PaginationData {
   page: number;
@@ -123,14 +124,6 @@ export default function ListaFinanciamientos({
     handleCancelEliminar,
     handleCloseSnackbar,
   } = useEliminarFinanciamiento({ onFinanciamientoEliminado });
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    }).format(amount);
-  };
 
   const formatDate = (date: Date | string) => {
     return new Date(date).toLocaleDateString('es-UY');
@@ -414,6 +407,15 @@ export default function ListaFinanciamientos({
                   fontSize: '0.875rem',
                 }}
               >
+                Mon.
+              </TableCell>
+              <TableCell
+                sx={{
+                  color: blanco,
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                }}
+              >
                 Costo
               </TableCell>
               <TableCell
@@ -486,7 +488,7 @@ export default function ListaFinanciamientos({
           <TableBody>
             {filteredFinanciamientos.length === 0 && (
               <TableRow>
-                <TableCell colSpan={mostrarAtrasos ? 10 : 8} align="center">
+                <TableCell colSpan={mostrarAtrasos ? 11 : 9} align="center">
                   <Typography variant="body1" color={grisTexto} sx={{ py: 4 }}>
                     {filter
                       ? 'No se encontraron financiamientos que coincidan con la búsqueda'
@@ -545,8 +547,18 @@ export default function ListaFinanciamientos({
                   </Typography>
                 </TableCell>
                 <TableCell>
+                  <Chip
+                    label={normalizarMoneda(fin.moneda)}
+                    size="small"
+                    variant="outlined"
+                  />
+                </TableCell>
+                <TableCell>
                   <Typography variant="body2" fontWeight={600}>
-                    {formatCurrency(fin.costoVehiculo)}
+                    {formatMoney(
+                      fin.costoVehiculo,
+                      normalizarMoneda(fin.moneda)
+                    )}
                   </Typography>
                 </TableCell>
                 <TableCell>
@@ -599,7 +611,10 @@ export default function ListaFinanciamientos({
                       fontWeight={600}
                       color="error.main"
                     >
-                      {formatCurrency(fin.montoAtrasado || 0)}
+                      {formatMoney(
+                        fin.montoAtrasado || 0,
+                        normalizarMoneda(fin.moneda)
+                      )}
                     </Typography>
                   </TableCell>
                 )}

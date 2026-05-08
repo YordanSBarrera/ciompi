@@ -2,6 +2,7 @@
 import { grisClaro, grisMedio } from '@/lib/color';
 import { FinanciamientoType, PagoCuotaType } from '@/lib/types';
 import { isAdmin } from '@/lib/utils';
+import { formatMoney, normalizarMoneda } from '@/lib/moneda';
 import AuthGuard from '@/app/components/AuthGuard';
 import PagoCuotaModal from '@/app/components/PagoCuotaModal';
 import {
@@ -124,13 +125,10 @@ export default function FinanciamientoDetailPage() {
     }
   }, [id]);
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    }).format(amount);
-  };
+  const monedaContrato = normalizarMoneda(financiamiento?.moneda);
+
+  const formatCurrency = (amount: number) =>
+    formatMoney(amount, monedaContrato);
 
   const formatDate = (date: Date | string) => {
     return new Date(date).toLocaleDateString('es-UY');
@@ -431,12 +429,27 @@ export default function FinanciamientoDetailPage() {
                 Registrado el {formatDate(financiamiento.createdAt || '')}
               </Typography>
             </Box>
-            <Chip
-              label={financiamiento.estadoFinanciamiento}
-              color={getEstadoColor(financiamiento.estadoFinanciamiento) as any}
-              variant="filled"
-              sx={{ fontSize: '1rem', padding: '8px 16px' }}
-            />
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 1,
+                alignItems: 'flex-end',
+              }}
+            >
+              <Chip
+                label={`Moneda: ${monedaContrato}`}
+                color="default"
+                variant="outlined"
+                sx={{ fontSize: '0.9rem' }}
+              />
+              <Chip
+                label={financiamiento.estadoFinanciamiento}
+                color={getEstadoColor(financiamiento.estadoFinanciamiento) as any}
+                variant="filled"
+                sx={{ fontSize: '1rem', padding: '8px 16px' }}
+              />
+            </Box>
           </Box>
 
           <Divider sx={{ my: 3 }} />
@@ -1381,6 +1394,7 @@ export default function FinanciamientoDetailPage() {
           open={pagoModalOpen}
           onClose={() => setPagoModalOpen(false)}
           financiamientoId={financiamiento._id || ''}
+          moneda={monedaContrato}
           valorCuota={financiamiento.valorCuota}
           cuotasPagadas={financiamiento.cuotasPagadas}
           cuotasTotal={financiamiento.cuotas}

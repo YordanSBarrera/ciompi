@@ -3,6 +3,8 @@ import Cliente from '@/models/cliente';
 import Financiamiento from '@/models/financiamiento';
 import PagoCuota from '@/models/pagoCuota';
 import { NextRequest, NextResponse } from 'next/server';
+import { normalizarMoneda } from '@/lib/moneda';
+import { CuotaEstado, MonedaTipo } from '@/lib/const';
 
 interface CuotaDetalle {
   numeroCuota: number;
@@ -16,8 +18,9 @@ interface CuotaDetalle {
   financiamientoNumero?: string;
   vehiculo: any;
   empresa: any;
-  estado: 'pagada' | 'parcial' | 'vencida' | 'pendiente';
+  estado: CuotaEstado;
   diasAtraso?: number;
+  moneda: MonedaTipo;
 }
 
 interface ResumenFinanciamiento {
@@ -35,6 +38,7 @@ interface ResumenFinanciamiento {
   cuotasPendientes: number;
   cuotasVencidas: number;
   progreso: number;
+  moneda: MonedaTipo;
 }
 
 interface EstadoCuenta {
@@ -51,6 +55,15 @@ interface EstadoCuenta {
     totalCuotasPendientes: number;
     totalCuotasVencidas: number;
     montoVencido: number;
+    montosPorMoneda: Record<
+      MonedaTipo,
+      {
+        totalMontoFinanciado: number;
+        totalMontoPagado: number;
+        totalSaldoPendiente: number;
+        montoVencido: number;
+      }
+    >;
   };
 }
 
@@ -93,10 +106,7 @@ function generarTodasLasCuotas(
   }> = [];
 
   // Si hay cuotasFuturas definidas, usarlas
-  if (
-    financiamiento.cuotasFuturas &&
-    financiamiento.cuotasFuturas.length > 0
-  ) {
+  if (financiamiento.cuotasFuturas && financiamiento.cuotasFuturas.length > 0) {
     financiamiento.cuotasFuturas.forEach((cuota: any) => {
       const fechaVencimiento = new Date(cuota.fechaVencimiento);
       const montoPagado = pagosPorCuota[cuota.numeroCuota] || 0;
@@ -217,10 +227,7 @@ export async function GET(request: NextRequest) {
 
     // Buscar todos los financiamientos donde el cliente es cliente principal o cliente2
     const financiamientos = await Financiamiento.find({
-      $or: [
-        { cliente: cliente._id },
-        { cliente2: cliente._id },
-      ],
+      $or: [{ cliente: cliente._id }, { cliente2: cliente._id }],
     })
       .populate('cliente', 'NOMBRE TELEFONO cedula DIRECCION correo profesion')
       .populate('cliente2', 'NOMBRE TELEFONO cedula DIRECCION correo profesion')
@@ -243,6 +250,20 @@ export async function GET(request: NextRequest) {
           totalCuotasPendientes: 0,
           totalCuotasVencidas: 0,
           montoVencido: 0,
+          montosPorMoneda: {
+            USD: {
+              totalMontoFinanciado: 0,
+              totalMontoPagado: 0,
+              totalSaldoPendiente: 0,
+              montoVencido: 0,
+            },
+            UYU: {
+              totalMontoFinanciado: 0,
+              totalMontoPagado: 0,
+              totalSaldoPendiente: 0,
+              montoVencido: 0,
+            },
+          },
         },
       });
     }
@@ -271,21 +292,21 @@ export async function GET(request: NextRequest) {
         const vencida = !cuota.pagada && fechaVenc < hoy;
 
         // Determinar estado
-        let estado: 'pagada' | 'parcial' | 'vencida' | 'pendiente';
+        let estado: CuotaEstado;
         let diasAtraso: number | undefined;
 
         if (cuota.pagada) {
-          estado = 'pagada';
+          estado = CuotaEstado.Pagada;
         } else if (cuota.montoPagado > 0) {
-          estado = 'parcial';
+          estado = CuotaEstado.Parcial;
         } else if (vencida) {
-          estado = 'vencida';
+          estado = CuotaEstado.Vencida;
           cuotasVencidasFin++;
           diasAtraso = Math.floor(
             (hoy.getTime() - fechaVenc.getTime()) / (1000 * 60 * 60 * 24)
           );
         } else {
-          estado = 'pendiente';
+          estado = CuotaEstado.Pendiente;
         }
 
         todasLasCuotas.push({
@@ -300,16 +321,21 @@ export async function GET(request: NextRequest) {
           financiamientoNumero: financiamiento._id?.toString().slice(-8),
           vehiculo: financiamiento.vehiculo,
           empresa: financiamiento.empresa,
-          estado,
+          estado: estado as CuotaEstado,
           diasAtraso,
+          moneda: normalizarMoneda(financiamiento.moneda) as MonedaTipo,
         });
       });
 
       // Calcular progreso del financiamiento
-      const totalCuotas = financiamiento.cuotas + (financiamiento.cuotasExtras || 0);
-      const progreso = totalCuotas > 0 
-        ? Math.round(((financiamiento.cuotasPagadas || 0) / totalCuotas) * 100)
-        : 0;
+      const totalCuotas =
+        financiamiento.cuotas + (financiamiento.cuotasExtras || 0);
+      const progreso =
+        totalCuotas > 0
+          ? Math.round(
+              ((financiamiento.cuotasPagadas || 0) / totalCuotas) * 100
+            )
+          : 0;
 
       // Crear resumen del financiamiento
       resumenesFinanciamientos.push({
@@ -327,6 +353,7 @@ export async function GET(request: NextRequest) {
         cuotasPendientes: cuotas.length - (financiamiento.cuotasPagadas || 0),
         cuotasVencidas: cuotasVencidasFin,
         progreso,
+        moneda: normalizarMoneda(financiamiento.moneda) as MonedaTipo,
       });
     }
 
@@ -360,6 +387,29 @@ export async function GET(request: NextRequest) {
       montoVencido: todasLasCuotas
         .filter(c => c.estado === 'vencida')
         .reduce((sum, c) => sum + c.montoPendiente, 0),
+      montosPorMoneda: (() => {
+        const vacío = {
+          totalMontoFinanciado: 0,
+          totalMontoPagado: 0,
+          totalSaldoPendiente: 0,
+          montoVencido: 0,
+        };
+        const agg: Record<'USD' | 'UYU', typeof vacío> = {
+          USD: { ...vacío },
+          UYU: { ...vacío },
+        };
+        for (const fin of resumenesFinanciamientos) {
+          const m = fin.moneda;
+          agg[m].totalMontoFinanciado += fin.montoTotal;
+          agg[m].totalMontoPagado += fin.montoPagado;
+          agg[m].totalSaldoPendiente += fin.saldoPendiente;
+        }
+        for (const c of todasLasCuotas) {
+          if (c.estado !== CuotaEstado.Vencida) continue;
+          agg[c.moneda].montoVencido += c.montoPendiente;
+        }
+        return agg;
+      })(),
     };
 
     const estadoCuenta: EstadoCuenta = {
@@ -380,4 +430,3 @@ export async function GET(request: NextRequest) {
     );
   }
 }
-

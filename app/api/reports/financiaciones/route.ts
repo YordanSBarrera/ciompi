@@ -1,6 +1,7 @@
 import { connectDB } from '@/db/dbConnection';
 import Financiamiento from '@/models/financiamiento';
 import { NextRequest, NextResponse } from 'next/server';
+import { formatMoney, normalizarMoneda } from '@/lib/moneda';
 
 export async function GET(request: NextRequest) {
   try {
@@ -58,13 +59,24 @@ function generateFinanciacionesReportHTML(
       ? 'FINANCIACIONES ACTIVAS'
       : 'LISTADO DE FINANCIACIONES';
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-UY', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    }).format(amount);
+  const sumarPorMoneda = (code: 'USD' | 'UYU') => {
+    let mt = 0;
+    let sp = 0;
+    let mr = 0;
+    for (const fin of financiamientos) {
+      if (normalizarMoneda(fin.moneda) !== code) continue;
+      mt += fin.montoTotal || 0;
+      sp += fin.saldoPendiente || 0;
+      mr += fin.montoPagado || 0;
+    }
+    return { mt, sp, mr };
   };
+
+  const usdTotals = sumarPorMoneda('USD');
+  const uyuTotals = sumarPorMoneda('UYU');
+
+  const formatForFin = (fin: any, amount: number) =>
+    formatMoney(amount || 0, normalizarMoneda(fin.moneda));
 
   const formatDate = (date: Date | string) => {
     if (!date) return '-';
@@ -90,20 +102,6 @@ function generateFinanciacionesReportHTML(
     };
     return colores[estado] || '#757575';
   };
-
-  // Calcular totales
-  const montoTotal = financiamientos.reduce(
-    (sum, fin) => sum + (fin.montoTotal || 0),
-    0
-  );
-  const saldoPendiente = financiamientos.reduce(
-    (sum, fin) => sum + (fin.saldoPendiente || 0),
-    0
-  );
-  const montoRecaudado = financiamientos.reduce(
-    (sum, fin) => sum + (fin.montoPagado || 0),
-    0
-  );
 
   const html = `
 <!DOCTYPE html>
@@ -284,16 +282,30 @@ function generateFinanciacionesReportHTML(
       <div class="value">${financiamientos.length}</div>
     </div>
     <div class="summary-box success">
-      <h3>Monto Total</h3>
-      <div class="value">${formatCurrency(montoTotal)}</div>
+      <h3>USD — Monto total</h3>
+      <div class="value">${formatMoney(usdTotals.mt, 'USD')}</div>
     </div>
     <div class="summary-box warning">
-      <h3>Saldo Pendiente</h3>
-      <div class="value">${formatCurrency(saldoPendiente)}</div>
+      <h3>USD — Saldo pendiente</h3>
+      <div class="value">${formatMoney(usdTotals.sp, 'USD')}</div>
     </div>
     <div class="summary-box danger">
-      <h3>Monto Recaudado</h3>
-      <div class="value">${formatCurrency(montoRecaudado)}</div>
+      <h3>USD — Recaudado</h3>
+      <div class="value">${formatMoney(usdTotals.mr, 'USD')}</div>
+    </div>
+  </div>
+  <div class="summary">
+    <div class="summary-box primary">
+      <h3>UYU — Monto total</h3>
+      <div class="value">${formatMoney(uyuTotals.mt, 'UYU')}</div>
+    </div>
+    <div class="summary-box success">
+      <h3>UYU — Saldo pendiente</h3>
+      <div class="value">${formatMoney(uyuTotals.sp, 'UYU')}</div>
+    </div>
+    <div class="summary-box warning">
+      <h3>UYU — Recaudado</h3>
+      <div class="value">${formatMoney(uyuTotals.mr, 'UYU')}</div>
     </div>
   </div>
   
@@ -304,6 +316,7 @@ function generateFinanciacionesReportHTML(
         <th style="width: 3%;">#</th>
         <th style="width: 15%;">Cliente</th>
         <th style="width: 12%;">Vehículo</th>
+        <th style="width: 4%;" class="text-center">Mon.</th>
         <th style="width: 8%;">Matrícula</th>
         <th style="width: 8%;" class="text-right">Costo</th>
         <th style="width: 5%;" class="text-center">Cuotas</th>
@@ -338,13 +351,14 @@ function generateFinanciacionesReportHTML(
           <td class="text-center">${index + 1}</td>
           <td><strong>${clienteNombre}</strong></td>
           <td>${vehiculoInfo}</td>
+          <td class="text-center">${normalizarMoneda(fin.moneda)}</td>
           <td>${matricula}</td>
-          <td class="text-right">${formatCurrency(fin.costoVehiculo || 0)}</td>
+          <td class="text-right">${formatForFin(fin, fin.costoVehiculo || 0)}</td>
           <td class="text-center">${fin.cuotas || 0}</td>
           <td class="text-center">${fin.cuotasPagadas || 0}</td>
-          <td class="text-right">${formatCurrency(fin.valorCuota || 0)}</td>
-          <td class="text-right"><strong>${formatCurrency(fin.montoTotal || 0)}</strong></td>
-          <td class="text-right">${formatCurrency(fin.saldoPendiente || 0)}</td>
+          <td class="text-right">${formatForFin(fin, fin.valorCuota || 0)}</td>
+          <td class="text-right"><strong>${formatForFin(fin, fin.montoTotal || 0)}</strong></td>
+          <td class="text-right">${formatForFin(fin, fin.saldoPendiente || 0)}</td>
           <td class="text-center">
             <span class="estado-badge" style="background: ${estadoColor}20; color: ${estadoColor};">
               ${getEstadoLabel(fin.estadoFinanciamiento || 'activo')}

@@ -2,6 +2,7 @@ import { connectDB } from '@/db/dbConnection';
 import Cliente from '@/models/cliente';
 import Financiamiento from '@/models/financiamiento';
 import PagoCuota from '@/models/pagoCuota';
+import { formatMoney, normalizarMoneda } from '@/lib/moneda';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Función para escapar HTML y prevenir errores
@@ -235,6 +236,7 @@ export async function GET(request: NextRequest) {
           montoPendiente: cuota.montoPendiente,
           pagada: cuota.pagada,
           esExtra: cuota.esExtra,
+          moneda: financiamiento.moneda,
           financiamientoId: financiamiento._id?.toString() || '',
           financiamientoNumero: financiamiento._id?.toString().slice(-8),
           vehiculo: financiamiento.vehiculo,
@@ -257,6 +259,7 @@ export async function GET(request: NextRequest) {
         empresa: financiamiento.empresa,
         estadoFinanciamiento: financiamiento.estadoFinanciamiento,
         fechaVenta: financiamiento.fechaVenta,
+        moneda: financiamiento.moneda,
         montoTotal: financiamiento.montoTotal,
         montoPagado: financiamiento.montoPagado || 0,
         saldoPendiente: financiamiento.saldoPendiente || 0,
@@ -274,6 +277,35 @@ export async function GET(request: NextRequest) {
       const fechaB = new Date(b.fechaVencimiento);
       return fechaA.getTime() - fechaB.getTime();
     });
+
+    const montosPorMoneda = {
+      USD: {
+        totalFinanciado: 0,
+        totalPagado: 0,
+        totalSaldoPendiente: 0,
+        montoVencido: 0,
+      },
+      UYU: {
+        totalFinanciado: 0,
+        totalPagado: 0,
+        totalSaldoPendiente: 0,
+        montoVencido: 0,
+      },
+    };
+
+    for (const fin of resumenesFinanciamientos) {
+      const m = normalizarMoneda(fin.moneda);
+      montosPorMoneda[m].totalFinanciado += fin.montoTotal || 0;
+      montosPorMoneda[m].totalPagado += fin.montoPagado || 0;
+      montosPorMoneda[m].totalSaldoPendiente += fin.saldoPendiente || 0;
+    }
+
+    for (const c of todasLasCuotas) {
+      if (c.estado === 'vencida') {
+        const m = normalizarMoneda(c.moneda);
+        montosPorMoneda[m].montoVencido += c.montoPendiente || 0;
+      }
+    }
 
     // Calcular resumen general
     const resumen = {
@@ -298,6 +330,7 @@ export async function GET(request: NextRequest) {
       montoVencido: todasLasCuotas
         .filter(c => c.estado === 'vencida')
         .reduce((sum, c) => sum + c.montoPendiente, 0),
+      montosPorMoneda,
     };
 
     // Generar HTML para impresión
@@ -336,13 +369,8 @@ function generateEstadoCuentaReportHTML(
     day: 'numeric',
   });
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-UY', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    }).format(amount);
-  };
+  const fmt = (amount: number, moneda?: unknown) =>
+    formatMoney(amount, normalizarMoneda(moneda));
 
   const formatDate = (date: Date | string) => {
     if (!date) return '-';
@@ -352,6 +380,20 @@ function generateEstadoCuentaReportHTML(
       return '-';
     }
   };
+
+  const extraClienteHtml =
+    (cliente.cedula
+      ? `<p><strong>Cédula:</strong> ${escapeHtml(cliente.cedula)}</p>`
+      : '') +
+    (cliente.TELEFONO
+      ? `<p><strong>Teléfono:</strong> ${escapeHtml(cliente.TELEFONO)}</p>`
+      : '') +
+    (cliente.DIRECCION
+      ? `<p><strong>Dirección:</strong> ${escapeHtml(cliente.DIRECCION)}</p>`
+      : '') +
+    (cliente.correo
+      ? `<p><strong>Email:</strong> ${escapeHtml(cliente.correo)}</p>`
+      : '');
 
   const getEstadoLabel = (estado: string) => {
     const estados: { [key: string]: string } = {
@@ -388,6 +430,11 @@ function generateEstadoCuentaReportHTML(
     if (estado === 'vencida') return '#f44336';
     return '#757575';
   };
+
+  const lineaMontosVencidos =
+    resumen.montoVencido > 0
+      ? `<div style="font-size: 7px; margin-top: 3px;">Montos vencidos | USD: ${fmt(resumen.montosPorMoneda.USD.montoVencido, 'USD')} | UYU: ${fmt(resumen.montosPorMoneda.UYU.montoVencido, 'UYU')}</div>`
+      : '';
 
   const html = `
 <!DOCTYPE html>
@@ -583,10 +630,7 @@ function generateEstadoCuentaReportHTML(
   <!-- Información del Cliente -->
   <div class="cliente-info">
     <h2>Cliente: ${escapeHtml(cliente.NOMBRE || 'N/A')}</h2>
-    ${cliente.cedula ? `<p><strong>Cédula:</strong> ${escapeHtml(cliente.cedula)}</p>` : ''}
-    ${cliente.TELEFONO ? `<p><strong>Teléfono:</strong> ${escapeHtml(cliente.TELEFONO)}</p>` : ''}
-    ${cliente.DIRECCION ? `<p><strong>Dirección:</strong> ${escapeHtml(cliente.DIRECCION)}</p>` : ''}
-    ${cliente.correo ? `<p><strong>Email:</strong> ${escapeHtml(cliente.correo)}</p>` : ''}
+    ${extraClienteHtml}
   </div>
 
   <!-- Resumen General -->
@@ -598,15 +642,24 @@ function generateEstadoCuentaReportHTML(
     </div>
     <div class="summary-box">
       <h3>Monto Total Financiado</h3>
-      <div class="value">${formatCurrency(resumen.totalMontoFinanciado)}</div>
+      <div class="value" style="font-size:10px;line-height:1.35;">
+        <div>USD: ${fmt(resumen.montosPorMoneda.USD.totalFinanciado, 'USD')}</div>
+        <div>UYU: ${fmt(resumen.montosPorMoneda.UYU.totalFinanciado, 'UYU')}</div>
+      </div>
     </div>
     <div class="summary-box success">
       <h3>Monto Pagado</h3>
-      <div class="value">${formatCurrency(resumen.totalMontoPagado)}</div>
+      <div class="value" style="font-size:10px;line-height:1.35;">
+        <div>USD: ${fmt(resumen.montosPorMoneda.USD.totalPagado, 'USD')}</div>
+        <div>UYU: ${fmt(resumen.montosPorMoneda.UYU.totalPagado, 'UYU')}</div>
+      </div>
     </div>
     <div class="summary-box warning">
       <h3>Saldo Pendiente</h3>
-      <div class="value">${formatCurrency(resumen.totalSaldoPendiente)}</div>
+      <div class="value" style="font-size:10px;line-height:1.35;">
+        <div>USD: ${fmt(resumen.montosPorMoneda.USD.totalSaldoPendiente, 'USD')}</div>
+        <div>UYU: ${fmt(resumen.montosPorMoneda.UYU.totalSaldoPendiente, 'UYU')}</div>
+      </div>
     </div>
     <div class="summary-box">
       <h3>Total Cuotas</h3>
@@ -623,7 +676,7 @@ function generateEstadoCuentaReportHTML(
     <div class="summary-box error">
       <h3>Cuotas Vencidas</h3>
       <div class="value">${resumen.totalCuotasVencidas}</div>
-      ${resumen.montoVencido > 0 ? `<div style="font-size: 7px; margin-top: 3px;">Monto: ${formatCurrency(resumen.montoVencido)}</div>` : ''}
+      ${lineaMontosVencidos}
     </div>
   </div>
 
@@ -648,7 +701,11 @@ function generateEstadoCuentaReportHTML(
         .map((fin, index) => {
           const vehiculoInfo =
             typeof fin.vehiculo === 'object' && fin.vehiculo
-              ? `${fin.vehiculo.Marca || ''} ${fin.vehiculo.Modelo || ''}`.trim()
+              ? (
+                  String(fin.vehiculo.Marca || '').trim() +
+                  ' ' +
+                  String(fin.vehiculo.Modelo || '').trim()
+                ).trim() || 'N/A'
               : 'N/A';
           const empresaInfo =
             typeof fin.empresa === 'object' && fin.empresa
@@ -666,10 +723,10 @@ function generateEstadoCuentaReportHTML(
               ${getEstadoLabel(fin.estadoFinanciamiento)}
             </span>
           </td>
-          <td class="text-right">${formatCurrency(fin.montoTotal)}</td>
-          <td class="text-right" style="color: #4caf50;">${formatCurrency(fin.montoPagado)}</td>
-          <td class="text-right" style="color: #ff9800;">${formatCurrency(fin.saldoPendiente)}</td>
-          <td class="text-center">${fin.cuotasPagadas}/${fin.cuotasTotal}${fin.cuotasVencidas > 0 ? ` (${fin.cuotasVencidas} vencidas)` : ''}</td>
+          <td class="text-right">${fmt(fin.montoTotal, fin.moneda)}</td>
+          <td class="text-right" style="color: #4caf50;">${fmt(fin.montoPagado, fin.moneda)}</td>
+          <td class="text-right" style="color: #ff9800;">${fmt(fin.saldoPendiente, fin.moneda)}</td>
+          <td class="text-center">${fin.cuotasPagadas}/${fin.cuotasTotal}${fin.cuotasVencidas > 0 ? ' (' + fin.cuotasVencidas + ' vencidas)' : ''}</td>
           <td class="text-center">${fin.progreso}%</td>
         </tr>
       `;
@@ -699,7 +756,11 @@ function generateEstadoCuentaReportHTML(
         .map((cuota, index) => {
           const vehiculoInfo =
             typeof cuota.vehiculo === 'object' && cuota.vehiculo
-              ? `${cuota.vehiculo.Marca || ''} ${cuota.vehiculo.Modelo || ''}`.trim()
+              ? (
+                  String(cuota.vehiculo.Marca || '').trim() +
+                  ' ' +
+                  String(cuota.vehiculo.Modelo || '').trim()
+                ).trim() || 'N/A'
               : 'N/A';
           const estadoColor = getCuotaEstadoColor(cuota.estado);
           const bgColor =
@@ -716,9 +777,9 @@ function generateEstadoCuentaReportHTML(
           <td style="font-size: 6px;">${escapeHtml(vehiculoInfo)}</td>
           <td class="text-center">#${cuota.numeroCuota}${cuota.esExtra ? ' (E)' : ''}</td>
           <td class="text-center">${formatDate(cuota.fechaVencimiento)}</td>
-          <td class="text-right">${formatCurrency(cuota.valorCuota)}</td>
-          <td class="text-right" style="color: #4caf50;">${formatCurrency(cuota.montoPagado || 0)}</td>
-          <td class="text-right" style="color: #f44336;">${formatCurrency(cuota.montoPendiente || 0)}</td>
+          <td class="text-right">${fmt(cuota.valorCuota, cuota.moneda)}</td>
+          <td class="text-right" style="color: #4caf50;">${fmt(cuota.montoPagado || 0, cuota.moneda)}</td>
+          <td class="text-right" style="color: #f44336;">${fmt(cuota.montoPendiente || 0, cuota.moneda)}</td>
           <td class="text-center">
             <span class="estado-badge" style="background: ${estadoColor}20; color: ${estadoColor};">
               ${getCuotaEstadoLabel(cuota.estado, cuota.diasAtraso)}

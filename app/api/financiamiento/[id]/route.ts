@@ -3,6 +3,7 @@ import Financiamiento from '@/models/financiamiento';
 import Vehiculo from '@/models/vehiculo';
 import { NextRequest, NextResponse } from 'next/server';
 import { parseLocalDate, requireAdminAuth } from '@/lib/server-utils';
+import { normalizarMoneda } from '@/lib/moneda';
 
 export async function GET(
   request: NextRequest,
@@ -286,6 +287,10 @@ export async function PUT(
       cliente2: cliente2Id || undefined,
       vehiculo: vehiculoNuevo,
       empresa: body.empresa ?? financiamientoExistente.empresa,
+      moneda:
+        body.moneda !== undefined
+          ? normalizarMoneda(body.moneda)
+          : normalizarMoneda(financiamientoExistente.moneda),
       costoVehiculo,
       valorBase,
       costosDocumentacion:

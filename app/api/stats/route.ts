@@ -33,19 +33,30 @@ export async function GET() {
       Financiamiento.countDocuments({ estadoFinanciamiento: 'en_mora' }),
     ]);
 
-    // Estadísticas de financiamientos
+    // Estadísticas de financiamientos (por moneda; histórico sin campo → USD)
     const financiamientosData = await Financiamiento.find().select(
-      'montoTotal saldoPendiente estadoFinanciamiento'
+      'montoTotal saldoPendiente montoPagado moneda'
     );
-    const montoTotalFinanciado = financiamientosData.reduce(
-      (sum, f) => sum + (f.montoTotal || 0),
-      0
-    );
-    const saldoPendienteTotal = financiamientosData.reduce(
-      (sum, f) => sum + (f.saldoPendiente || 0),
-      0
-    );
-    const montoRecaudado = montoTotalFinanciado - saldoPendienteTotal;
+    type Acum = { montoTotal: number; saldoPendiente: number; montoRecaudado: number };
+    const vacío: Acum = {
+      montoTotal: 0,
+      saldoPendiente: 0,
+      montoRecaudado: 0,
+    };
+    const montosPorMoneda: Record<'USD' | 'UYU', Acum> = {
+      USD: { ...vacío },
+      UYU: { ...vacío },
+    };
+    for (const f of financiamientosData) {
+      const m =
+        f.moneda === 'UYU' ? 'UYU' : 'USD';
+      const mt = f.montoTotal || 0;
+      const sp = f.saldoPendiente || 0;
+      const pag = f.montoPagado || 0;
+      montosPorMoneda[m].montoTotal += mt;
+      montosPorMoneda[m].saldoPendiente += sp;
+      montosPorMoneda[m].montoRecaudado += pag;
+    }
 
     // Clientes y vehículos creados hoy
     const hoy = new Date();
@@ -80,9 +91,7 @@ export async function GET() {
           cancelados: financiamientosCancelados,
           enMora: financiamientosEnMora,
           hoy: financiamientosHoy,
-          montoTotal: montoTotalFinanciado,
-          saldoPendiente: saldoPendienteTotal,
-          montoRecaudado: montoRecaudado,
+          montosPorMoneda,
         },
         empresas: {
           total: totalEmpresas,

@@ -45,6 +45,11 @@ import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import {
+  formatMoney,
+  normalizarMoneda,
+  MONEDAS_FINANCIAMIENTO,
+} from '@/lib/moneda';
 
 // Función para cargar clientes
 async function cargarClientes(): Promise<ClienteType[]> {
@@ -117,6 +122,7 @@ export default function NuevoFinanciamientoPage() {
     clientes: [''],
     vehiculo: '',
     empresa: '',
+    moneda: 'USD',
     valorBase: 0,
     costosDocumentacion: 0,
     gastosExtras: 0,
@@ -459,13 +465,8 @@ export default function NuevoFinanciamientoPage() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-UY', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    }).format(amount);
-  };
+  const formatCurrency = (amount: number) =>
+    formatMoney(amount, normalizarMoneda(formData.moneda));
 
   if (loading) {
     return (
@@ -741,6 +742,24 @@ export default function NuevoFinanciamientoPage() {
                           </Typography>
                         </MenuItem>
                       ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <FormControl fullWidth required>
+                  <InputLabel>Moneda del financiamiento</InputLabel>
+                  <Select
+                    name="moneda"
+                    value={normalizarMoneda(formData.moneda)}
+                    onChange={handleSelectChange}
+                    label="Moneda del financiamiento"
+                  >
+                    {MONEDAS_FINANCIAMIENTO.map(code => (
+                      <MenuItem key={code} value={code}>
+                        {code === 'USD' ? 'USD — Dólar estadounidense' : 'UYU — Peso uruguayo'}
+                      </MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
               </Grid>

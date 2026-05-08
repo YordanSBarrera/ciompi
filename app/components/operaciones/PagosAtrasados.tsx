@@ -24,6 +24,7 @@ import {
   Visibility as VisibilityIcon,
 } from '@mui/icons-material';
 import Link from 'next/link';
+import { formatMoney, normalizarMoneda } from '@/lib/moneda';
 
 // Interfaz para cuotas atrasadas
 interface CuotaAtrasada {
@@ -31,6 +32,7 @@ interface CuotaAtrasada {
   fechaVencimiento: Date | string;
   valorCuota: number;
   financiamientoId: string;
+  moneda?: string;
   cliente: any;
   vehiculo: any;
   empresa: any;
@@ -197,13 +199,6 @@ export default function PagosAtrasados() {
                   const formatDate = (date: Date) => {
                     return date.toLocaleDateString('es-UY');
                   };
-                  const formatCurrency = (amount: number) => {
-                    return new Intl.NumberFormat('en-US', {
-                      style: 'currency',
-                      currency: 'USD',
-                      minimumFractionDigits: 2,
-                    }).format(amount);
-                  };
 
                   return (
                     <TableRow
@@ -236,7 +231,10 @@ export default function PagosAtrasados() {
                         />
                       </TableCell>
                       <TableCell align="right">
-                        {formatCurrency(cuota.valorCuota)}
+                        {formatMoney(
+                          cuota.valorCuota,
+                          normalizarMoneda(cuota.moneda)
+                        )}
                       </TableCell>
                       <TableCell align="center">
                         <Tooltip title="Ver detalles del financiamiento">
