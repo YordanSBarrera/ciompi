@@ -37,10 +37,31 @@ export function formatMoney(
   moneda: MonedaFinanciamiento = MONEDA_FINANCIAMIENTO_DEFAULT
 ): string {
   const locale = moneda === MonedaTipo.UYU ? 'es-UY' : 'en-US';
-  const texto = new Intl.NumberFormat(locale, {
+  const formatiador = new Intl.NumberFormat(locale, {
     style: 'currency',
     currency: moneda,
     minimumFractionDigits: 2,
-  }).format(amount);
-  return aplicarSimboloMonedaUruguaya(texto, moneda as MonedaTipo);
+  });
+  ////*** para crear un espacio entre el simbolo U$S y el numero */
+
+  const symbols: Record<string, string> = {
+    USD: 'U$S',
+    UYU: '$U',
+  };
+  const parts = formatiador.formatToParts(amount);
+  const numberValue = parts
+    .filter(part => part.type !== 'currency' && part.type !== 'literal')
+    .map(part => part.value)
+    .join('')
+    .trim();
+
+  // 5. Retornamos el símbolo elegido + espacio + número formateado
+  return `${symbols[moneda]} ${numberValue}`;
+  //.........
+
+  //************ mas simple, devuelve valores de Intl internacional donde U$S10 estan juntos por norma ********** */
+  // return aplicarSimboloMonedaUruguaya(
+  //   formatiador.format(amount),
+  //   moneda as MonedaTipo
+  // );
 }

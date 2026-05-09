@@ -40,6 +40,7 @@ import {
 } from '@/lib/color';
 import CardDG from './CardDG';
 import { formatMoney, type MonedaFinanciamiento } from '@/lib/moneda';
+import { MonedaTipo } from '@/lib/const';
 
 interface StatsData {
   clientes: {
@@ -176,7 +177,7 @@ export default function DatosGeneralesPage() {
               <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
                 Totales por moneda de cada financiamiento.
               </Typography>
-              {(['USD', 'UYU'] as const).map(moneda => {
+              {([MonedaTipo.USD, MonedaTipo.UYU] as const).map(moneda => {
                 const datos = stats?.financiamientos.montosPorMoneda?.[
                   moneda
                 ] ?? {
