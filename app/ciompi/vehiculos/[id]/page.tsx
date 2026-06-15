@@ -1,9 +1,14 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { grisClaro, grisMedio, azulBase } from '@/lib/color';
-import { VehiculoType, VehiculoFormType } from '@/lib/types';
+import {
+  VehiculoDetalleType,
+  VehiculoFormType,
+  FinanciamientoActivoResumen,
+} from '@/lib/types';
 import { getAuthHeaders, isAdmin } from '@/lib/utils';
 import AuthGuard from '@/app/components/AuthGuard';
+import FormularioVehiculo from '@/app/components/FormularioVehiculo';
 import {
   Alert,
   Box,
@@ -26,7 +31,7 @@ interface VehiculoDetallePageProps {
   params: Promise<{ id: string }>;
 }
 
-async function cargarVehiculo(id: string): Promise<VehiculoType> {
+async function cargarVehiculo(id: string): Promise<VehiculoDetalleType> {
   try {
     const response = await fetch(`/api/vehiculos/${id}`);
     if (!response.ok) {
@@ -43,7 +48,9 @@ async function cargarVehiculo(id: string): Promise<VehiculoType> {
 export default function VehiculoDetallePage({
   params,
 }: VehiculoDetallePageProps) {
-  const [vehiculo, setVehiculo] = useState<VehiculoType | null>(null);
+  const [vehiculo, setVehiculo] = useState<VehiculoDetalleType | null>(null);
+  const [financiamientoActivo, setFinanciamientoActivo] =
+    useState<FinanciamientoActivoResumen | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [confirmDialog, setConfirmDialog] = useState({
@@ -55,6 +62,7 @@ export default function VehiculoDetallePage({
     message: '',
     severity: 'success' as 'success' | 'error' | 'info' | 'warning',
   });
+  const [formularioOpen, setFormularioOpen] = useState(false);
 
   useEffect(() => {
     const loadVehiculo = async () => {
@@ -64,6 +72,7 @@ export default function VehiculoDetallePage({
         setError(null);
         const datosVehiculo = await cargarVehiculo(id);
         setVehiculo(datosVehiculo);
+        setFinanciamientoActivo(datosVehiculo.financiamientoActivo ?? null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error desconocido');
       } finally {
@@ -73,6 +82,52 @@ export default function VehiculoDetallePage({
 
     loadVehiculo();
   }, [params]);
+
+  const handleGuardarVehiculo = async (vehiculoData: VehiculoFormType) => {
+    if (!vehiculo?._id) {
+      return { success: false, error: 'Vehículo no encontrado' };
+    }
+
+    try {
+      const response = await fetch(`/api/vehiculos/${vehiculo._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(vehiculoData),
+      });
+
+      if (response.ok) {
+        const updatedVehiculo: VehiculoDetalleType = await response.json();
+        setVehiculo(updatedVehiculo);
+        setFinanciamientoActivo(updatedVehiculo.financiamientoActivo ?? null);
+        setSnackbar({
+          open: true,
+          message: 'Vehículo actualizado exitosamente',
+          severity: 'success',
+        });
+        return { success: true };
+      }
+
+      const errorData = await response.json();
+      const errorMessage =
+        errorData.message || errorData.error || 'Error al actualizar vehículo';
+      if (response.status === 409) {
+        setSnackbar({
+          open: true,
+          message: errorMessage,
+          severity: 'warning',
+        });
+      }
+      return { success: false, error: errorMessage };
+    } catch (err) {
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : 'Error de conexión',
+      };
+    }
+  };
 
   const handleEliminar = async () => {
     if (!confirmDialog.vehiculoId) return;
@@ -150,6 +205,8 @@ export default function VehiculoDetallePage({
       </Container>
     );
   }
+
+  const estaDisponible = !financiamientoActivo && vehiculo.disponible !== false;
 
   return (
     <AuthGuard>
@@ -309,6 +366,21 @@ export default function VehiculoDetallePage({
                   </Box>
                 </Grid>
 
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Box sx={{ mb: 3 }}>
+                    <Typography
+                      variant="body2"
+                      color="textSecondary"
+                      gutterBottom
+                    >
+                      Disponible
+                    </Typography>
+                    <Typography variant="body1">
+                      {estaDisponible ? 'Sí' : 'No'}
+                    </Typography>
+                  </Box>
+                </Grid>
+
                 {vehiculo.Descripcion && (
                   <Grid size={{ xs: 12 }}>
                     <Box sx={{ mb: 3 }}>
@@ -326,6 +398,22 @@ export default function VehiculoDetallePage({
                   </Grid>
                 )}
               </Grid>
+              {financiamientoActivo && (
+                <Alert severity="warning" sx={{ mb: 3 }}>
+                  Este vehículo está asociado a un{' '}
+                  <Link
+                    href={`/ciompi/financiamiento/${financiamientoActivo._id}`}
+                    style={{ fontWeight: 600 }}
+                  >
+                    financiamiento activo
+                  </Link>
+                  {financiamientoActivo.clienteNombre
+                    ? ` del cliente ${financiamientoActivo.clienteNombre}`
+                    : ''}{' '}
+                  (estado: {financiamientoActivo.estadoFinanciamiento}). Por eso
+                  no puede estar disponible.
+                </Alert>
+              )}
             </Grid>
 
             {/* Información del Sistema */}
@@ -475,8 +563,7 @@ export default function VehiculoDetallePage({
             <Box sx={{ display: 'flex', gap: 2 }}>
               {isAdmin() && (
                 <Button
-                  component={Link}
-                  href={`/ciompi/vehiculos/${vehiculo._id}/editar`}
+                  onClick={() => setFormularioOpen(true)}
                   variant="contained"
                   color="primary"
                   size="large"
@@ -525,6 +612,14 @@ export default function VehiculoDetallePage({
             </Button>
           </DialogActions>
         </Dialog>
+
+        <FormularioVehiculo
+          open={formularioOpen}
+          onClose={() => setFormularioOpen(false)}
+          onSave={handleGuardarVehiculo}
+          vehiculo={vehiculo}
+          title="Editar Vehículo"
+        />
 
         {/* Snackbar */}
         <Snackbar

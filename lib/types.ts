@@ -156,6 +156,16 @@ export interface VehiculoFormType {
   disponible?: boolean;
 }
 
+export interface FinanciamientoActivoResumen {
+  _id: string;
+  estadoFinanciamiento: string;
+  clienteNombre?: string;
+}
+
+export interface VehiculoDetalleType extends VehiculoType {
+  financiamientoActivo?: FinanciamientoActivoResumen | null;
+}
+
 // Tipos para Financiamiento
 export interface CuotaFuturaType {
   numeroCuota: number;

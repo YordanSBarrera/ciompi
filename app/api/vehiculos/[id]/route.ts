@@ -25,7 +25,30 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(vehiculoEncontrado);
+    const financiamientoActivo = await Financiamiento.findOne({
+      vehiculo: id,
+      estadoFinanciamiento: { $in: ['activo', 'en_mora'] },
+    })
+      .select('_id estadoFinanciamiento cliente')
+      .populate('cliente', 'NOMBRE')
+      .lean();
+
+    const vehiculoData = vehiculoEncontrado.toObject();
+    return NextResponse.json({
+      ...vehiculoData,
+      financiamientoActivo: financiamientoActivo
+        ? {
+            _id: financiamientoActivo._id,
+            estadoFinanciamiento: financiamientoActivo.estadoFinanciamiento,
+            clienteNombre:
+              typeof financiamientoActivo.cliente === 'object' &&
+              financiamientoActivo.cliente !== null &&
+              'NOMBRE' in financiamientoActivo.cliente
+                ? (financiamientoActivo.cliente as { NOMBRE?: string }).NOMBRE
+                : undefined,
+          }
+        : null,
+    });
   } catch (error: any) {
     return NextResponse.json({ message: error.message }, { status: 404 });
   }
@@ -48,6 +71,29 @@ export async function PUT(
     const data = await request.json();
 
     const { id } = await params;
+
+    const financiamientoActivo = await Financiamiento.findOne({
+      vehiculo: id,
+      estadoFinanciamiento: { $in: ['activo', 'en_mora'] },
+    })
+      .select('_id estadoFinanciamiento cliente')
+      .populate('cliente', 'NOMBRE')
+      .lean();
+
+    if (financiamientoActivo) {
+      if (data.disponible === true) {
+        return NextResponse.json(
+          {
+            error:
+              'No se puede marcar como disponible: el vehículo está asociado a un financiamiento activo',
+            financiamientoId: financiamientoActivo._id,
+          },
+          { status: 409 }
+        );
+      }
+      data.disponible = false;
+    }
+
     const vehiculoUpdated = await Vehiculo.findByIdAndUpdate(
       id,
       { ...data, usuarioModificacion: userId },
@@ -70,7 +116,21 @@ export async function PUT(
       'nombre usuario email'
     );
 
-    return NextResponse.json(vehiculoUpdated);
+    return NextResponse.json({
+      ...vehiculoUpdated.toObject(),
+      financiamientoActivo: financiamientoActivo
+        ? {
+            _id: financiamientoActivo._id,
+            estadoFinanciamiento: financiamientoActivo.estadoFinanciamiento,
+            clienteNombre:
+              typeof financiamientoActivo.cliente === 'object' &&
+              financiamientoActivo.cliente !== null &&
+              'NOMBRE' in financiamientoActivo.cliente
+                ? (financiamientoActivo.cliente as { NOMBRE?: string }).NOMBRE
+                : undefined,
+          }
+        : null,
+    });
   } catch (error: any) {
     return NextResponse.json({ message: error.message }, { status: 400 });
   }
