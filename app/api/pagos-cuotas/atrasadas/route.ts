@@ -25,6 +25,7 @@ export async function GET() {
       fechaVencimiento: Date;
       valorCuota: number;
       financiamientoId: string;
+      moneda?: string;
       cliente: any;
       vehiculo: any;
       empresa: any;
@@ -77,6 +78,7 @@ export async function GET() {
               fechaVencimiento,
               valorCuota: cuota.valorCuota,
               financiamientoId: financiamiento._id?.toString() || '',
+              moneda: financiamiento.moneda,
               cliente: financiamiento.cliente,
               vehiculo: financiamiento.vehiculo,
               empresa: financiamiento.empresa,
@@ -109,6 +111,7 @@ export async function GET() {
               fechaVencimiento,
               valorCuota: financiamiento.valorCuota,
               financiamientoId: financiamiento._id?.toString() || '',
+              moneda: financiamiento.moneda,
               cliente: financiamiento.cliente,
               vehiculo: financiamiento.vehiculo,
               empresa: financiamiento.empresa,

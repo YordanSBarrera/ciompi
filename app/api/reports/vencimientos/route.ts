@@ -3,6 +3,7 @@ import { connectDB } from '@/db/dbConnection';
 import Financiamiento from '@/models/financiamiento';
 import PagoCuota from '@/models/pagoCuota';
 import Empresa from '@/models/empresa';
+import { formatMoney, normalizarMoneda } from '@/lib/moneda';
 
 export async function GET(request: NextRequest) {
   try {
@@ -165,18 +166,17 @@ function generateVencimientosReportHTML(
     0
   );
 
-  const totalMonto = financiamientos.reduce(
-    (sum, fin) => sum + (fin.montoTotalPorVencer || 0),
-    0
+  const totalPorMoneda = financiamientos.reduce(
+    (acc, fin) => {
+      const m = normalizarMoneda(fin.moneda);
+      acc[m] += fin.montoTotalPorVencer || 0;
+      return acc;
+    },
+    { USD: 0, UYU: 0 }
   );
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-UY', {
-      style: 'currency',
-      currency: 'UYU',
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
+  const formatCurrency = (amount: number, fin: any) =>
+    formatMoney(amount, normalizarMoneda(fin.moneda));
 
   const formatDate = (date: Date | string) => {
     return new Date(date).toLocaleDateString('es-UY', {
@@ -408,9 +408,12 @@ function generateVencimientosReportHTML(
       <h3>Total Cuotas</h3>
       <div class="value">${totalCuotas}</div>
     </div>
-    <div class="summary-box warning">
+      <div class="summary-box warning">
       <h3>Total Monto</h3>
-      <div class="value">${formatCurrency(totalMonto)}</div>
+      <div class="value" style="font-size:11px;line-height:1.35;">
+        <div>USD: ${formatMoney(totalPorMoneda.USD, 'USD')}</div>
+        <div>UYU: ${formatMoney(totalPorMoneda.UYU, 'UYU')}</div>
+      </div>
     </div>
   </div>
   
@@ -451,14 +454,14 @@ function generateVencimientosReportHTML(
           <td>${clienteNombre}</td>
           <td>${vehiculoInfo}</td>
           <td class="text-center">${fin.totalCuotasPorVencer}</td>
-          <td class="text-right">${formatCurrency(fin.montoTotalPorVencer)}</td>
+          <td class="text-right">${formatCurrency(fin.montoTotalPorVencer, fin)}</td>
           <td class="text-center">${
             proximaCuota
               ? `#${proximaCuota.numeroCuota} - ${formatDate(proximaCuota.fechaVencimiento)}`
               : 'N/A'
           }</td>
           <td class="text-right">${
-            proximaCuota ? formatCurrency(proximaCuota.valorCuota) : 'N/A'
+            proximaCuota ? formatCurrency(proximaCuota.valorCuota, fin) : 'N/A'
           }</td>
         </tr>
       `;

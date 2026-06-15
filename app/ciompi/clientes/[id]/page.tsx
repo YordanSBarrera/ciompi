@@ -1,7 +1,7 @@
 'use client';
-import { blanco, grisClaro, grisMedio } from '@/lib/color';
+import { grisClaro, grisMedio } from '@/lib/color';
 import { ClienteType } from '@/lib/types';
-import { formatCedula } from '@/lib/utils';
+import { formatCedula, isAdmin } from '@/lib/utils';
 import { useEliminarCliente } from '@/app/hook/useEliminarCliente';
 import AuthGuard from '@/app/components/AuthGuard';
 import {
@@ -10,11 +10,6 @@ import {
   Button,
   CircularProgress,
   Container,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
   Divider,
   Grid,
   Paper,
@@ -394,16 +389,21 @@ export default function ClienteDetailPage() {
             }}
           >
             <Box>
-              <Button
-                onClick={() => handleClickEliminar(cliente._id, cliente.NOMBRE)}
-                variant="contained"
-                color="error"
-                size="large"
-                disabled={deleting}
-              >
-                {deleting ? 'Eliminando...' : 'Eliminar Cliente'}
-              </Button>
+              {isAdmin() && (
+                <Button
+                  onClick={() =>
+                    handleClickEliminar(cliente._id, cliente.NOMBRE)
+                  }
+                  variant="contained"
+                  color="error"
+                  size="large"
+                  disabled={deleting}
+                >
+                  {deleting ? 'Eliminando...' : 'Eliminar Cliente'}
+                </Button>
+              )}
             </Box>
+
             <Box sx={{ display: 'flex', gap: 2 }}>
               <Button
                 variant="contained"
@@ -420,16 +420,17 @@ export default function ClienteDetailPage() {
                 Imprimir Detalles
               </Button>
 
-              <Button
-                component={Link}
-                href={`/ciompi/clientes/${id}/editar`}
-                variant="contained"
-                color="primary"
-                size="large"
-              >
-                Editar Cliente
-              </Button>
-
+              {isAdmin() && (
+                <Button
+                  component={Link}
+                  href={`/ciompi/clientes/${id}/editar`}
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                >
+                  Editar Cliente
+                </Button>
+              )}
               <Button
                 component={Link}
                 href="/ciompi/clientes"
@@ -443,8 +444,14 @@ export default function ClienteDetailPage() {
         </Paper>
 
         {/* Diálogo de confirmación */}
-        <ModalConfirmarEliminar open={confirmDialog.open} onClose={handleCancelEliminar} clienteNombre={confirmDialog.clienteNombre} deleting={deleting} onConfirmEliminar={handleConfirmEliminar} />
-      
+        <ModalConfirmarEliminar
+          open={confirmDialog.open}
+          onClose={handleCancelEliminar}
+          clienteNombre={confirmDialog.clienteNombre}
+          deleting={deleting}
+          onConfirmEliminar={handleConfirmEliminar}
+        />
+
         {/* Snackbar para notificaciones */}
         <Snackbar
           open={snackbar.open}

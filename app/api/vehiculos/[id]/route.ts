@@ -1,5 +1,5 @@
 import { connectDB } from '@/db/dbConnection';
-import { getUserIdFromToken } from '@/lib/server-utils';
+import { requireAdminAuth } from '@/lib/server-utils';
 import Vehiculo from '@/models/vehiculo';
 import Financiamiento from '@/models/financiamiento';
 import { NextRequest, NextResponse } from 'next/server';
@@ -25,7 +25,30 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(vehiculoEncontrado);
+    const financiamientoActivo = await Financiamiento.findOne({
+      vehiculo: id,
+      estadoFinanciamiento: { $in: ['activo', 'en_mora'] },
+    })
+      .select('_id estadoFinanciamiento cliente')
+      .populate('cliente', 'NOMBRE')
+      .lean();
+
+    const vehiculoData = vehiculoEncontrado.toObject();
+    return NextResponse.json({
+      ...vehiculoData,
+      financiamientoActivo: financiamientoActivo
+        ? {
+            _id: financiamientoActivo._id,
+            estadoFinanciamiento: financiamientoActivo.estadoFinanciamiento,
+            clienteNombre:
+              typeof financiamientoActivo.cliente === 'object' &&
+              financiamientoActivo.cliente !== null &&
+              'NOMBRE' in financiamientoActivo.cliente
+                ? (financiamientoActivo.cliente as { NOMBRE?: string }).NOMBRE
+                : undefined,
+          }
+        : null,
+    });
   } catch (error: any) {
     return NextResponse.json({ message: error.message }, { status: 404 });
   }
@@ -36,14 +59,41 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = requireAdminAuth(request);
+    if (!auth.authorized) {
+      return auth.response;
+    }
+
     await connectDB();
 
-    // Obtener ID del usuario desde el token con fallback
-    const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb';
+    const userId = auth.user.id;
 
     const data = await request.json();
 
     const { id } = await params;
+
+    const financiamientoActivo = await Financiamiento.findOne({
+      vehiculo: id,
+      estadoFinanciamiento: { $in: ['activo', 'en_mora'] },
+    })
+      .select('_id estadoFinanciamiento cliente')
+      .populate('cliente', 'NOMBRE')
+      .lean();
+
+    if (financiamientoActivo) {
+      if (data.disponible === true) {
+        return NextResponse.json(
+          {
+            error:
+              'No se puede marcar como disponible: el vehículo está asociado a un financiamiento activo',
+            financiamientoId: financiamientoActivo._id,
+          },
+          { status: 409 }
+        );
+      }
+      data.disponible = false;
+    }
+
     const vehiculoUpdated = await Vehiculo.findByIdAndUpdate(
       id,
       { ...data, usuarioModificacion: userId },
@@ -66,7 +116,21 @@ export async function PUT(
       'nombre usuario email'
     );
 
-    return NextResponse.json(vehiculoUpdated);
+    return NextResponse.json({
+      ...vehiculoUpdated.toObject(),
+      financiamientoActivo: financiamientoActivo
+        ? {
+            _id: financiamientoActivo._id,
+            estadoFinanciamiento: financiamientoActivo.estadoFinanciamiento,
+            clienteNombre:
+              typeof financiamientoActivo.cliente === 'object' &&
+              financiamientoActivo.cliente !== null &&
+              'NOMBRE' in financiamientoActivo.cliente
+                ? (financiamientoActivo.cliente as { NOMBRE?: string }).NOMBRE
+                : undefined,
+          }
+        : null,
+    });
   } catch (error: any) {
     return NextResponse.json({ message: error.message }, { status: 400 });
   }
@@ -77,6 +141,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = requireAdminAuth(request);
+    if (!auth.authorized) {
+      return auth.response;
+    }
+
     await connectDB();
     const { id } = await params;
 
@@ -114,7 +183,7 @@ export async function DELETE(
     }
 
     // Obtener ID del usuario para auditoría
-    const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb';
+    const userId = auth.user.id;
 
     // Soft delete: marcar como eliminado en lugar de borrar
     const vehiculoEliminado = await Vehiculo.findByIdAndUpdate(

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { grisClaro, grisMedio } from '@/lib/color';
 import { Usuario } from '@/lib/types';
+import { getAuthHeaders, isAdmin } from '@/lib/utils';
 import AuthGuard from '@/app/components/AuthGuard';
 import {
   Alert,
@@ -81,6 +82,7 @@ export default function UsuarioDetallesPage() {
     try {
       const response = await fetch(`/api/usuarios/${confirmDialog.usuarioId}`, {
         method: 'DELETE',
+        headers: getAuthHeaders(),
       });
 
       if (response.ok) {
@@ -462,30 +464,34 @@ export default function UsuarioDetallesPage() {
             }}
           >
             <Box>
-              <Button
-                onClick={() =>
-                  setConfirmDialog({
-                    open: true,
-                    usuarioId: usuario._id || null,
-                  })
-                }
-                variant="contained"
-                color="error"
-                size="large"
-              >
-                Eliminar Usuario
-              </Button>
+              {isAdmin() && (
+                <Button
+                  onClick={() =>
+                    setConfirmDialog({
+                      open: true,
+                      usuarioId: usuario._id || null,
+                    })
+                  }
+                  variant="contained"
+                  color="error"
+                  size="large"
+                >
+                  Eliminar Usuario
+                </Button>
+              )}
             </Box>
             <Box sx={{ display: 'flex', gap: 2 }}>
-              <Button
-                component={Link}
-                href={`/ciompi/usuario/${usuarioId}/editar`}
-                variant="contained"
-                color="primary"
-                size="large"
-              >
-                Editar Usuario
-              </Button>
+              {isAdmin() && (
+                <Button
+                  component={Link}
+                  href={`/ciompi/usuario/${usuarioId}/editar`}
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                >
+                  Editar Usuario
+                </Button>
+              )}
 
               <Button
                 component={Link}

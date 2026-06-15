@@ -1,5 +1,5 @@
 import { connectDB } from '@/db/dbConnection';
-import { getUserIdFromToken } from '@/lib/server-utils';
+import { requireAdminAuth } from '@/lib/server-utils';
 import Usuario from '@/models/Usuario';
 import Financiamiento from '@/models/financiamiento';
 import { NextResponse } from 'next/server';
@@ -58,11 +58,15 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = requireAdminAuth(request);
+    if (!auth.authorized) {
+      return auth.response;
+    }
+
     await connectDB();
     const { id } = await params;
 
-    // Obtener ID del usuario desde el token con fallback
-    const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb';
+    const userId = auth.user.id;
     const body = await request.json();
 
     // Validar campos requeridos
@@ -152,6 +156,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = requireAdminAuth(request);
+    if (!auth.authorized) {
+      return auth.response;
+    }
+
     await connectDB();
     const { id } = await params;
 
@@ -192,7 +201,7 @@ export async function DELETE(
     }
 
     // Obtener ID del usuario que realiza la eliminación
-    const currentUserId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb';
+    const currentUserId = auth.user.id;
 
     // Verificar que no se está eliminando a sí mismo
     if (id === currentUserId) {

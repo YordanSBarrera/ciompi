@@ -54,6 +54,7 @@ import {
   naranja,
   colorMap,
 } from '@/lib/color';
+import { isAdmin } from '@/lib/utils';
 
 interface ListaVehiculosProps {
   vehiculos: VehiculoType[];
@@ -100,6 +101,7 @@ export default function ListaVehiculos({
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const esAdministrativo = isAdmin();
 
   const filteredVehiculos = vehiculos.filter(vehiculo => {
     // Solo filtro de búsqueda general
@@ -658,20 +660,32 @@ export default function ListaVehiculos({
                           />
                           Ver Detalles
                         </MenuItem>
-                        <MenuItem onClick={() => handleClickEditar(vehiculo)}>
-                          <EditIcon
-                            sx={{ fontSize: 18, mr: 1, color: azulBase }}
-                          />
-                          Editar
-                        </MenuItem>
-                        <MenuItem onClick={() => handleClickEliminar(vehiculo)}>
-                          <DeleteIcon
-                            sx={{ fontSize: 18, mr: 1, color: 'error.main' }}
-                          />
-                          <Typography variant="body2" color="error.main">
-                            Eliminar
-                          </Typography>
-                        </MenuItem>
+                        {esAdministrativo && (
+                          <>
+                            <MenuItem
+                              onClick={() => handleClickEditar(vehiculo)}
+                            >
+                              <EditIcon
+                                sx={{ fontSize: 18, mr: 1, color: azulBase }}
+                              />
+                              Editar
+                            </MenuItem>
+                            <MenuItem
+                              onClick={() => handleClickEliminar(vehiculo)}
+                            >
+                              <DeleteIcon
+                                sx={{
+                                  fontSize: 18,
+                                  mr: 1,
+                                  color: 'error.main',
+                                }}
+                              />
+                              <Typography variant="body2" color="error.main">
+                                Eliminar
+                              </Typography>
+                            </MenuItem>
+                          </>
+                        )}
                       </Menu>
                     </Stack>
                   </TableCell>

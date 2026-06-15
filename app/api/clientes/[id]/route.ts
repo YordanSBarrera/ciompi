@@ -1,6 +1,6 @@
 import { connectDB } from '@/db/dbConnection';
 import { RouteParams } from '@/lib/types';
-import { getUserIdFromToken } from '@/lib/server-utils';
+import { requireAdminAuth } from '@/lib/server-utils';
 import Cliente from '@/models/cliente';
 import Financiamiento from '@/models/financiamiento';
 import { NextRequest, NextResponse } from 'next/server';
@@ -37,6 +37,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = requireAdminAuth(request);
+    if (!auth.authorized) {
+      return auth.response;
+    }
+
     await connectDB();
     const { id } = await params;
 
@@ -77,7 +82,7 @@ export async function DELETE(
     }
 
     // Obtener ID del usuario para auditoría
-    const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb';
+    const userId = auth.user.id;
 
     // Soft delete: marcar como eliminado en lugar de borrar
     const clienteEliminado = await Cliente.findByIdAndUpdate(
@@ -118,12 +123,16 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = requireAdminAuth(request);
+    if (!auth.authorized) {
+      return auth.response;
+    }
+
     await connectDB();
     const data = await request.json();
     const { id } = await params;
 
-    // Obtener ID del usuario desde el token con fallback
-    const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb'; // Fallback al admin
+    const userId = auth.user.id;
 
     // Agregar usuario de modificación
     const updateData = {

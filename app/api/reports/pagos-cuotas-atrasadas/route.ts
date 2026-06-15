@@ -1,7 +1,9 @@
 import { connectDB } from '@/db/dbConnection';
 import Financiamiento from '@/models/financiamiento';
 import PagoCuota from '@/models/pagoCuota';
+import { formatMoney, normalizarMoneda } from '@/lib/moneda';
 import { NextResponse } from 'next/server';
+import { MonedaTipo } from '@/lib/const';
 
 export async function GET() {
   try {
@@ -25,6 +27,7 @@ export async function GET() {
       fechaVencimiento: Date;
       valorCuota: number;
       financiamientoId: string;
+      moneda?: string;
       cliente: any;
       vehiculo: any;
       empresa: any;
@@ -49,27 +52,27 @@ export async function GET() {
           pagosPorCuota[numCuota] += pago.montoPago;
         });
 
-      const numerosCuotasPagadas = new Set(
-        Object.keys(pagosPorCuota).map(Number)
-      );
-
       // Verificar si tiene cuotasFuturas
-      if (financiamiento.cuotasFuturas && financiamiento.cuotasFuturas.length > 0) {
+      if (
+        financiamiento.cuotasFuturas &&
+        financiamiento.cuotasFuturas.length > 0
+      ) {
         // Verificar cuotas vencidas
         financiamiento.cuotasFuturas.forEach((cuota: any) => {
           const fechaVencimiento = new Date(cuota.fechaVencimiento);
           fechaVencimiento.setHours(0, 0, 0, 0);
-          
+
           // Calcular el monto pagado para esta cuota
           const montoPagado = pagosPorCuota[cuota.numeroCuota] || 0;
           const estaPagada = montoPagado >= cuota.valorCuota;
-          
+
           // La cuota está atrasada si:
           // 1. La fecha de vencimiento es anterior a hoy
           // 2. No está completamente pagada
           if (fechaVencimiento < hoy && !estaPagada) {
             const diasAtraso = Math.floor(
-              (hoy.getTime() - fechaVencimiento.getTime()) / (1000 * 60 * 60 * 24)
+              (hoy.getTime() - fechaVencimiento.getTime()) /
+                (1000 * 60 * 60 * 24)
             );
 
             cuotasAtrasadas.push({
@@ -77,6 +80,7 @@ export async function GET() {
               fechaVencimiento,
               valorCuota: cuota.valorCuota,
               financiamientoId: financiamiento._id?.toString() || '',
+              moneda: financiamiento.moneda,
               cliente: financiamiento.cliente,
               vehiculo: financiamiento.vehiculo,
               empresa: financiamiento.empresa,
@@ -101,7 +105,8 @@ export async function GET() {
           // Si la cuota está vencida y no está pagada
           if (fechaVencimiento < hoy && !estaPagada) {
             const diasAtraso = Math.floor(
-              (hoy.getTime() - fechaVencimiento.getTime()) / (1000 * 60 * 60 * 24)
+              (hoy.getTime() - fechaVencimiento.getTime()) /
+                (1000 * 60 * 60 * 24)
             );
 
             cuotasAtrasadas.push({
@@ -109,6 +114,7 @@ export async function GET() {
               fechaVencimiento,
               valorCuota: financiamiento.valorCuota,
               financiamientoId: financiamiento._id?.toString() || '',
+              moneda: financiamiento.moneda,
               cliente: financiamiento.cliente,
               vehiculo: financiamiento.vehiculo,
               empresa: financiamiento.empresa,
@@ -121,12 +127,14 @@ export async function GET() {
 
     // Ordenar por fecha de vencimiento (más antiguas primero)
     cuotasAtrasadas.sort((a, b) => {
-      const fechaA = a.fechaVencimiento instanceof Date 
-        ? a.fechaVencimiento 
-        : new Date(a.fechaVencimiento);
-      const fechaB = b.fechaVencimiento instanceof Date 
-        ? b.fechaVencimiento 
-        : new Date(b.fechaVencimiento);
+      const fechaA =
+        a.fechaVencimiento instanceof Date
+          ? a.fechaVencimiento
+          : new Date(a.fechaVencimiento);
+      const fechaB =
+        b.fechaVencimiento instanceof Date
+          ? b.fechaVencimiento
+          : new Date(b.fechaVencimiento);
       return fechaA.getTime() - fechaB.getTime();
     });
 
@@ -140,7 +148,8 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Error generando reporte de cuotas atrasadas:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+    const errorMessage =
+      error instanceof Error ? error.message : 'Error desconocido';
     return NextResponse.json(
       { error: `Error generando reporte: ${errorMessage}` },
       { status: 500 }
@@ -154,6 +163,7 @@ function generateCuotasAtrasadasReportHTML(
     fechaVencimiento: Date;
     valorCuota: number;
     financiamientoId: string;
+    moneda?: string;
     cliente: any;
     vehiculo: any;
     empresa: any;
@@ -177,14 +187,6 @@ function generateCuotasAtrasadasReportHTML(
       .replace(/'/g, '&#039;');
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-UY', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    }).format(amount);
-  };
-
   const formatDate = (date: Date | string) => {
     if (!date) return '-';
     try {
@@ -197,10 +199,16 @@ function generateCuotasAtrasadasReportHTML(
 
   // Calcular totales
   const totalCuotas = cuotasAtrasadas.length;
-  const totalMontoAtrasado = cuotasAtrasadas.reduce(
-    (sum: number, cuota: any) => sum + cuota.valorCuota,
-    0
-  );
+  const totalMontoUsd = cuotasAtrasadas.reduce((sum, cuota) => {
+    return normalizarMoneda(cuota.moneda) === MonedaTipo.USD
+      ? sum + cuota.valorCuota
+      : sum;
+  }, 0);
+  const totalMontoUyu = cuotasAtrasadas.reduce((sum, cuota) => {
+    return normalizarMoneda(cuota.moneda) === MonedaTipo.UYU
+      ? sum + cuota.valorCuota
+      : sum;
+  }, 0);
 
   const html = `
 <!DOCTYPE html>
@@ -356,7 +364,9 @@ function generateCuotasAtrasadasReportHTML(
     <p class="fecha">Generado el ${fechaActual}</p>
   </div>
   
-  ${totalCuotas > 0 ? `
+  ${
+    totalCuotas > 0
+      ? `
   <div class="summary">
     <div class="summary-box">
       <h3>Total Cuotas Atrasadas</h3>
@@ -364,7 +374,10 @@ function generateCuotasAtrasadasReportHTML(
     </div>
     <div class="summary-box">
       <h3>Monto Total Atrasado</h3>
-      <div class="value">${formatCurrency(totalMontoAtrasado)}</div>
+      <div class="value" style="font-size:11px;line-height:1.35;">
+        <div>USD: ${formatMoney(totalMontoUsd, 'USD')}</div>
+        <div>UYU: ${formatMoney(totalMontoUyu, 'UYU')}</div>
+      </div>
     </div>
   </div>
   
@@ -383,24 +396,24 @@ function generateCuotasAtrasadasReportHTML(
     </thead>
     <tbody>
       ${cuotasAtrasadas
-        .map(
-          (cuota, index) => {
-            const clienteNombre =
-              typeof cuota.cliente === 'object' && cuota.cliente
-                ? escapeHtml(cuota.cliente.NOMBRE || 'N/A')
-                : 'N/A';
-            const vehiculoInfo =
-              typeof cuota.vehiculo === 'object' && cuota.vehiculo
-                ? escapeHtml(
-                    `${cuota.vehiculo.Marca || ''} ${cuota.vehiculo.Modelo || ''}`.trim() || 'N/A'
-                  )
-                : 'N/A';
-            const empresaNombre =
-              typeof cuota.empresa === 'object' && cuota.empresa
-                ? escapeHtml(cuota.empresa.nombre || 'N/A')
-                : 'N/A';
-            
-            return `
+        .map((cuota, index) => {
+          const clienteNombre =
+            typeof cuota.cliente === 'object' && cuota.cliente
+              ? escapeHtml(cuota.cliente.NOMBRE || 'N/A')
+              : 'N/A';
+          const vehiculoInfo =
+            typeof cuota.vehiculo === 'object' && cuota.vehiculo
+              ? escapeHtml(
+                  `${cuota.vehiculo.Marca || ''} ${cuota.vehiculo.Modelo || ''}`.trim() ||
+                    'N/A'
+                )
+              : 'N/A';
+          const empresaNombre =
+            typeof cuota.empresa === 'object' && cuota.empresa
+              ? escapeHtml(cuota.empresa.nombre || 'N/A')
+              : 'N/A';
+
+          return `
         <tr>
           <td class="text-center">${index + 1}</td>
           <td>${clienteNombre}</td>
@@ -408,18 +421,19 @@ function generateCuotasAtrasadasReportHTML(
           <td class="text-center"><strong>#${cuota.numeroCuota}</strong></td>
           <td class="text-center">${formatDate(cuota.fechaVencimiento)}</td>
           <td class="text-center dias-atraso">${cuota.diasAtraso} días</td>
-          <td class="text-right monto-cuota">${formatCurrency(cuota.valorCuota)}</td>
+          <td class="text-right monto-cuota">${formatMoney(cuota.valorCuota, normalizarMoneda(cuota.moneda))}</td>
           <td>${empresaNombre}</td>
         </tr>
       `;
-          }
-        )
+        })
         .join('')}
     </tbody>
   </table>
-  ` : `
+  `
+      : `
   <div class="no-data">No hay cuotas atrasadas</div>
-  `}
+  `
+  }
   
   <div class="footer">
     <p>CIOMPI - Sistema de Gestión de Financiamientos</p>
@@ -437,4 +451,3 @@ function generateCuotasAtrasadasReportHTML(
 
   return html;
 }
-

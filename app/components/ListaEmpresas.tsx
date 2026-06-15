@@ -54,6 +54,7 @@ import {
 } from '@/lib/color';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { useRouter } from 'next/navigation';
+import { isAdmin } from '@/lib/utils';
 
 interface ListaEmpresasProps {
   empresas: EmpresaType[];
@@ -91,6 +92,7 @@ export default function ListaEmpresas({
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const esAdministrativo = isAdmin();
   const emptyData = '-';
 
   // Helper function to truncate text
@@ -563,27 +565,33 @@ export default function ListaEmpresas({
                         />
                         Ver Detalles
                       </MenuItem>
-                      <MenuItem onClick={() => handleClickEditar(empresa._id!)}>
-                        <EditIcon
-                          sx={{ fontSize: 18, mr: 1, color: azulBase }}
-                        />
-                        Editar
-                      </MenuItem>
-                      <MenuItem
-                        onClick={() =>
-                          handleClickEliminarWrapper(
-                            empresa._id!,
-                            empresa.nombre
-                          )
-                        }
-                      >
-                        <DeleteIcon
-                          sx={{ fontSize: 18, mr: 1, color: 'error.main' }}
-                        />
-                        <Typography variant="body2" color="error.main">
-                          Eliminar
-                        </Typography>
-                      </MenuItem>
+                      {esAdministrativo && (
+                        <>
+                          <MenuItem
+                            onClick={() => handleClickEditar(empresa._id!)}
+                          >
+                            <EditIcon
+                              sx={{ fontSize: 18, mr: 1, color: azulBase }}
+                            />
+                            Editar
+                          </MenuItem>
+                          <MenuItem
+                            onClick={() =>
+                              handleClickEliminarWrapper(
+                                empresa._id!,
+                                empresa.nombre
+                              )
+                            }
+                          >
+                            <DeleteIcon
+                              sx={{ fontSize: 18, mr: 1, color: 'error.main' }}
+                            />
+                            <Typography variant="body2" color="error.main">
+                              Eliminar
+                            </Typography>
+                          </MenuItem>
+                        </>
+                      )}
                     </Menu>
                   </Stack>
                 </TableCell>

@@ -2,6 +2,11 @@
 import { PagoCuotaFormType } from '@/lib/types';
 import { getAuthHeaders } from '@/lib/utils';
 import {
+  formatMoney,
+  normalizarMoneda,
+  type MonedaFinanciamiento,
+} from '@/lib/moneda';
+import {
   Alert,
   Box,
   Button,
@@ -40,6 +45,8 @@ interface PagoCuotaModalProps {
     valorCuota: number;
   }>;
   onPagoRegistrado: () => void;
+  /** Moneda del financiamiento (histórico sin campo → USD). */
+  moneda?: MonedaFinanciamiento;
 }
 
 export default function PagoCuotaModal({
@@ -53,6 +60,7 @@ export default function PagoCuotaModal({
   pagos = [],
   cuotasFuturas = [],
   onPagoRegistrado,
+  moneda = 'USD',
 }: PagoCuotaModalProps) {
   const [formData, setFormData] = useState<PagoCuotaFormType>({
     financiamiento: financiamientoId,
@@ -242,12 +250,8 @@ export default function PagoCuotaModal({
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
+  const formatCurrency = (amount: number) =>
+    formatMoney(amount, normalizarMoneda(moneda));
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>

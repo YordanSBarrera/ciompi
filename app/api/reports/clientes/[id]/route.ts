@@ -1,6 +1,7 @@
 import { connectDB } from '@/db/dbConnection';
 import Cliente from '@/models/cliente';
 import Financiamiento from '@/models/financiamiento';
+import { formatMoney, normalizarMoneda } from '@/lib/moneda';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
@@ -53,13 +54,27 @@ function generateClienteDetailReportHTML(cliente: any, financiamientos: any[]): 
     day: 'numeric',
   });
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-UY', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    }).format(amount);
-  };
+  const fmt = (amount: number, fin: any) =>
+    formatMoney(amount, normalizarMoneda(fin?.moneda));
+
+  const montosResumenPorMoneda = financiamientos.reduce(
+    (
+      acc,
+      fin
+    ): {
+      USD: { financiado: number; saldo: number };
+      UYU: { financiado: number; saldo: number };
+    } => {
+      const m = normalizarMoneda(fin.moneda);
+      acc[m].financiado += fin.montoTotal || 0;
+      acc[m].saldo += fin.saldoPendiente || 0;
+      return acc;
+    },
+    {
+      USD: { financiado: 0, saldo: 0 },
+      UYU: { financiado: 0, saldo: 0 },
+    }
+  );
 
   const formatDate = (date: Date | string) => {
     if (!date) return '-';
@@ -383,11 +398,17 @@ function generateClienteDetailReportHTML(cliente: any, financiamientos: any[]): 
       </div>
       <div class="summary-box">
         <h3>Monto Total Financiado</h3>
-        <div class="value">${formatCurrency(montoTotalFinanciado)}</div>
+        <div class="value" style="font-size:12px;line-height:1.35;">
+          <div>USD: ${formatMoney(montosResumenPorMoneda.USD.financiado, 'USD')}</div>
+          <div>UYU: ${formatMoney(montosResumenPorMoneda.UYU.financiado, 'UYU')}</div>
+        </div>
       </div>
       <div class="summary-box">
         <h3>Saldo Pendiente</h3>
-        <div class="value">${formatCurrency(saldoPendienteTotal)}</div>
+        <div class="value" style="font-size:12px;line-height:1.35;">
+          <div>USD: ${formatMoney(montosResumenPorMoneda.USD.saldo, 'USD')}</div>
+          <div>UYU: ${formatMoney(montosResumenPorMoneda.UYU.saldo, 'UYU')}</div>
+        </div>
       </div>
     </div>
   </div>
@@ -432,12 +453,12 @@ function generateClienteDetailReportHTML(cliente: any, financiamientos: any[]): 
           <td class="text-center">${index + 1}</td>
           <td><strong>${vehiculoInfo}</strong></td>
           <td>${matricula}</td>
-          <td class="text-right">${formatCurrency(fin.costoVehiculo || 0)}</td>
+          <td class="text-right">${fmt(fin.costoVehiculo || 0, fin)}</td>
           <td class="text-center">${fin.cuotas || 0}</td>
           <td class="text-center">${fin.cuotasPagadas || 0}</td>
-          <td class="text-right">${formatCurrency(fin.valorCuota || 0)}</td>
-          <td class="text-right"><strong>${formatCurrency(fin.montoTotal || 0)}</strong></td>
-          <td class="text-right">${formatCurrency(fin.saldoPendiente || 0)}</td>
+          <td class="text-right">${fmt(fin.valorCuota || 0, fin)}</td>
+          <td class="text-right"><strong>${fmt(fin.montoTotal || 0, fin)}</strong></td>
+          <td class="text-right">${fmt(fin.saldoPendiente || 0, fin)}</td>
           <td class="text-center">
             <span class="estado-badge" style="background: ${estadoColor}20; color: ${estadoColor};">
               ${getEstadoLabel(fin.estadoFinanciamiento || 'activo')}

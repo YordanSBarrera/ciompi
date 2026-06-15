@@ -42,7 +42,7 @@ import {
   turquesa,
 } from '@/lib/color';
 import { Usuario } from '@/lib/types';
-import { Roles } from '@/lib/utils';
+import { UsuarioRoles, UsuarioEstado } from '@/lib/const';
 
 interface FormularioUsuarioProps {
   usuarioExistente?: Usuario;
@@ -62,15 +62,15 @@ export default function FormularioUsuario({
     password: '',
     email: '',
     nombre: '',
-    rol: Roles.Usuario,
-    estado: 'activo',
+    rol: UsuarioRoles.Usuario,
+    estado: UsuarioEstado.Activo,
     cargo: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
-  const roleValues = Object.values(Roles);
+  const roleValues = Object.values(UsuarioRoles);
 
   // Si es edición, cargar datos existentes
   useEffect(() => {
@@ -80,8 +80,8 @@ export default function FormularioUsuario({
         password: '', // No mostrar password existente por seguridad
         email: usuarioExistente.email || '',
         nombre: usuarioExistente.nombre || '',
-        rol: usuarioExistente.rol || 'Usuario',
-        estado: usuarioExistente.estado || 'activo',
+        rol: usuarioExistente.rol || UsuarioRoles.Usuario,
+        estado: usuarioExistente.estado || UsuarioEstado.Activo,
         cargo: usuarioExistente.cargo || '',
       });
     }
@@ -181,8 +181,8 @@ export default function FormularioUsuario({
           password: '',
           email: '',
           nombre: '',
-          rol: Roles.Usuario,
-          estado: 'activo',
+          rol: UsuarioRoles.Usuario,
+          estado: UsuarioEstado.Activo,
           cargo: '',
         });
       }
@@ -197,8 +197,8 @@ export default function FormularioUsuario({
       password: '',
       email: '',
       nombre: '',
-      rol: Roles.Usuario,
-      estado: 'activo',
+      rol: UsuarioRoles.Usuario,
+      estado: UsuarioEstado.Activo,
       cargo: '',
     });
     setErrors({});
@@ -422,7 +422,7 @@ export default function FormularioUsuario({
                       <FormControl fullWidth error={!!errors.rol}>
                         <InputLabel>Rol *</InputLabel>
                         <Select
-                          value={formData.rol || 'usuario'}
+                          value={formData.rol || UsuarioRoles.Usuario}
                           onChange={handleChange('rol')}
                           label="Rol *"
                           disabled={loading}
@@ -443,14 +443,18 @@ export default function FormularioUsuario({
                       <FormControl fullWidth>
                         <InputLabel>Estado</InputLabel>
                         <Select
-                          value={formData.estado || 'activo'}
+                          value={formData.estado || UsuarioEstado.Activo}
                           onChange={handleChange('estado')}
                           label="Estado"
                           disabled={loading}
                           sx={{ borderRadius: 2 }}
                         >
-                          <MenuItem value="activo">Activo</MenuItem>
-                          <MenuItem value="inactivo">Inactivo</MenuItem>
+                          <MenuItem value={UsuarioEstado.Activo}>
+                            Activo
+                          </MenuItem>
+                          <MenuItem value={UsuarioEstado.Inactivo}>
+                            Inactivo
+                          </MenuItem>
                         </Select>
                       </FormControl>
                     </Grid>

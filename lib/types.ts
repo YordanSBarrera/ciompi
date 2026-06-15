@@ -1,4 +1,4 @@
-import { Roles } from './utils';
+import { UsuarioRoles, UsuarioEstado } from './const';
 
 export interface ClienteType {
   NOMBRE: string;
@@ -94,8 +94,8 @@ export interface Usuario {
   email: string;
   nombre: string;
   avatar?: Avatar | string; // Puede ser objeto o string simple
-  rol: Roles;
-  estado: 'activo' | 'inactivo';
+  rol: UsuarioRoles;
+  estado: UsuarioEstado;
   // Campos de Soft Delete
   eliminado?: boolean;
   fechaEliminacion?: Date;
@@ -156,6 +156,16 @@ export interface VehiculoFormType {
   disponible?: boolean;
 }
 
+export interface FinanciamientoActivoResumen {
+  _id: string;
+  estadoFinanciamiento: string;
+  clienteNombre?: string;
+}
+
+export interface VehiculoDetalleType extends VehiculoType {
+  financiamientoActivo?: FinanciamientoActivoResumen | null;
+}
+
 // Tipos para Financiamiento
 export interface CuotaFuturaType {
   numeroCuota: number;
@@ -174,6 +184,8 @@ export interface FinanciamientoType {
   empresa: string | EmpresaType;
 
   // Información financiera básica
+  /** Moneda del contrato; si falta en documentos viejos, se asume USD. */
+  moneda?: 'USD' | 'UYU';
   costoVehiculo: number; // Costo final total
   valorBase?: number; // Valor base del vehículo (sin costos adicionales)
   costosDocumentacion?: number; // Costos de documentación
@@ -230,6 +242,7 @@ export interface FinanciamientoFormType {
   clientes: Array<string | ClienteFormType>; // Array de 1 o 2 clientes (ID o objeto nuevo)
   vehiculo?: string; // ID del vehículo (opcional)
   empresa: string; // ID de la empresa
+  moneda?: 'USD' | 'UYU';
 
   // Información financiera
   valorBase: number; // Valor base del vehículo

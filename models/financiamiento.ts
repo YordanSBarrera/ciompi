@@ -87,6 +87,12 @@ const financiamientoSchema = new Schema(
       required: true,
       min: 0,
     },
+    moneda: {
+      type: String,
+      enum: ['USD', 'UYU'],
+      default: 'USD',
+      required: false,
+    },
 
     // Información de la venta
     fechaVenta: {

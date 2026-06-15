@@ -40,8 +40,8 @@ import {
   grisClaro,
   grisMedio,
   grisTexto,
-  turquesa,
 } from '@/lib/color';
+import { formatMoney, normalizarMoneda } from '@/lib/moneda';
 
 interface CuotaPorVencer {
   numeroCuota: number;
@@ -160,14 +160,6 @@ export default function Vencimientos() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-UY', {
-      style: 'currency',
-      currency: 'UYU',
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
   const formatDate = (date: Date | string) => {
     return new Date(date).toLocaleDateString('es-UY', {
       year: 'numeric',
@@ -180,9 +172,13 @@ export default function Vencimientos() {
     router.push(`/ciompi/financiamiento/${id}`);
   };
 
-  const totalMontoPorVencer = vencimientos.reduce(
-    (sum, fin) => sum + (fin.montoTotalPorVencer || 0),
-    0
+  const totalPorMoneda = vencimientos.reduce(
+    (acc, fin) => {
+      const m = normalizarMoneda(fin.moneda);
+      acc[m] += fin.montoTotalPorVencer || 0;
+      return acc;
+    },
+    { USD: 0, UYU: 0 }
   );
   const totalCuotasPorVencer = vencimientos.reduce(
     (sum, fin) => sum + (fin.totalCuotasPorVencer || 0),
@@ -325,8 +321,22 @@ export default function Vencimientos() {
             <Typography variant="body1" fontWeight={600}>
               Total Cuotas: <Chip label={totalCuotasPorVencer} color="primary" size="small" />
             </Typography>
-            <Typography variant="body1" fontWeight={600}>
-              Total Monto: <Chip label={formatCurrency(totalMontoPorVencer)} color="primary" size="small" />
+            <Typography variant="body1" fontWeight={600} component="div">
+              Total por moneda:
+              <Stack direction="row" spacing={1} sx={{ mt: 0.5, flexWrap: 'wrap' }}>
+                <Chip
+                  label={formatMoney(totalPorMoneda.USD, 'USD')}
+                  color="primary"
+                  size="small"
+                  variant="outlined"
+                />
+                <Chip
+                  label={formatMoney(totalPorMoneda.UYU, 'UYU')}
+                  color="primary"
+                  size="small"
+                  variant="outlined"
+                />
+              </Stack>
             </Typography>
           </Box>
         )}
@@ -362,6 +372,7 @@ export default function Vencimientos() {
                     new Date(b.fechaVencimiento).getTime()
                 );
                 const proximaCuota = cuotasOrdenadas[0];
+                const monedaFin = normalizarMoneda(fin.moneda);
 
                 return (
                   <TableRow
@@ -390,7 +401,7 @@ export default function Vencimientos() {
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2" fontWeight={600}>
-                        {formatCurrency(fin.montoTotalPorVencer)}
+                        {formatMoney(fin.montoTotalPorVencer, monedaFin)}
                       </Typography>
                     </TableCell>
                     <TableCell>
@@ -401,7 +412,7 @@ export default function Vencimientos() {
                           </Typography>
                           <Typography variant="caption" color={grisTexto}>
                             {formatDate(proximaCuota.fechaVencimiento)} -{' '}
-                            {formatCurrency(proximaCuota.valorCuota)}
+                            {formatMoney(proximaCuota.valorCuota, monedaFin)}
                           </Typography>
                         </Box>
                       )}

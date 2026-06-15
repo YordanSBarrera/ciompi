@@ -28,6 +28,11 @@ import {
   Visibility as VisibilityIcon,
 } from '@mui/icons-material';
 import Link from 'next/link';
+import {
+  formatMoney,
+  normalizarMoneda,
+  type MonedaFinanciamiento,
+} from '@/lib/moneda';
 
 interface EstadoCuenta {
   cliente: any;
@@ -46,6 +51,7 @@ interface EstadoCuenta {
     cuotasPendientes: number;
     cuotasVencidas: number;
     progreso: number;
+    moneda: MonedaFinanciamiento;
   }>;
   cuotas: Array<{
     numeroCuota: number;
@@ -61,6 +67,7 @@ interface EstadoCuenta {
     empresa: any;
     estado: 'pagada' | 'parcial' | 'vencida' | 'pendiente';
     diasAtraso?: number;
+    moneda: MonedaFinanciamiento;
   }>;
   resumen: {
     totalFinanciamientos: number;
@@ -72,6 +79,15 @@ interface EstadoCuenta {
     totalCuotasPendientes: number;
     totalCuotasVencidas: number;
     montoVencido: number;
+    montosPorMoneda: Record<
+      MonedaFinanciamiento,
+      {
+        totalMontoFinanciado: number;
+        totalMontoPagado: number;
+        totalSaldoPendiente: number;
+        montoVencido: number;
+      }
+    >;
   };
 }
 
@@ -253,21 +269,25 @@ const EstadoDeCuentaPage = () => {
               <Typography variant="h6" gutterBottom>
                 Resumen General
               </Typography>
+              <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                Montos agrupados por moneda del contrato; registros sin moneda se
+                consideran USD.
+              </Typography>
               <Box
                 sx={{
                   display: 'grid',
                   gridTemplateColumns: {
                     xs: '1fr',
                     sm: 'repeat(2, 1fr)',
-                    md: 'repeat(4, 1fr)',
+                    md: 'repeat(5, 1fr)',
                   },
                   gap: 2,
-                  mt: 2,
+                  mb: 3,
                 }}
               >
                 <Box>
                   <Typography variant="caption" color="textSecondary">
-                    Total Financiamientos
+                    Total financiamientos
                   </Typography>
                   <Typography variant="h6">
                     {estadoCuenta.resumen.totalFinanciamientos}
@@ -275,40 +295,7 @@ const EstadoDeCuentaPage = () => {
                 </Box>
                 <Box>
                   <Typography variant="caption" color="textSecondary">
-                    Monto Total Financiado
-                  </Typography>
-                  <Typography variant="h6" color="primary">
-                    {new Intl.NumberFormat('en-US', {
-                      style: 'currency',
-                      currency: 'USD',
-                    }).format(estadoCuenta.resumen.totalMontoFinanciado)}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="caption" color="textSecondary">
-                    Monto Pagado
-                  </Typography>
-                  <Typography variant="h6" color="success.main">
-                    {new Intl.NumberFormat('en-US', {
-                      style: 'currency',
-                      currency: 'USD',
-                    }).format(estadoCuenta.resumen.totalMontoPagado)}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="caption" color="textSecondary">
-                    Saldo Pendiente
-                  </Typography>
-                  <Typography variant="h6" color="warning.main">
-                    {new Intl.NumberFormat('en-US', {
-                      style: 'currency',
-                      currency: 'USD',
-                    }).format(estadoCuenta.resumen.totalSaldoPendiente)}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="caption" color="textSecondary">
-                    Total Cuotas
+                    Total cuotas
                   </Typography>
                   <Typography variant="h6">
                     {estadoCuenta.resumen.totalCuotas}
@@ -316,7 +303,7 @@ const EstadoDeCuentaPage = () => {
                 </Box>
                 <Box>
                   <Typography variant="caption" color="textSecondary">
-                    Cuotas Pagadas
+                    Cuotas pagadas
                   </Typography>
                   <Typography variant="h6" color="success.main">
                     {estadoCuenta.resumen.totalCuotasPagadas}
@@ -324,7 +311,7 @@ const EstadoDeCuentaPage = () => {
                 </Box>
                 <Box>
                   <Typography variant="caption" color="textSecondary">
-                    Cuotas Pendientes
+                    Cuotas pendientes
                   </Typography>
                   <Typography variant="h6" color="warning.main">
                     {estadoCuenta.resumen.totalCuotasPendientes}
@@ -332,22 +319,85 @@ const EstadoDeCuentaPage = () => {
                 </Box>
                 <Box>
                   <Typography variant="caption" color="textSecondary">
-                    Cuotas Vencidas
+                    Cuotas vencidas
                   </Typography>
                   <Typography variant="h6" color="error.main">
                     {estadoCuenta.resumen.totalCuotasVencidas}
                   </Typography>
-                  {estadoCuenta.resumen.montoVencido > 0 && (
-                    <Typography variant="body2" color="error.main">
-                      Monto:{' '}
-                      {new Intl.NumberFormat('en-US', {
-                        style: 'currency',
-                        currency: 'USD',
-                      }).format(estadoCuenta.resumen.montoVencido)}
-                    </Typography>
-                  )}
                 </Box>
               </Box>
+
+              {(['USD', 'UYU'] as const).map(moneda => {
+                const d =
+                  estadoCuenta.resumen.montosPorMoneda?.[moneda] ?? {
+                    totalMontoFinanciado: 0,
+                    totalMontoPagado: 0,
+                    totalSaldoPendiente: 0,
+                    montoVencido: 0,
+                  };
+                return (
+                  <Box
+                    key={moneda}
+                    sx={{
+                      mb: 2,
+                      p: 2,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Typography variant="subtitle1" fontWeight={600} gutterBottom>
+                      {moneda === 'USD'
+                        ? 'Dólares (USD)'
+                        : 'Pesos uruguayos (UYU)'}
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: {
+                          xs: '1fr',
+                          sm: 'repeat(2, 1fr)',
+                          md: 'repeat(4, 1fr)',
+                        },
+                        gap: 2,
+                      }}
+                    >
+                      <Box>
+                        <Typography variant="caption" color="textSecondary">
+                          Monto total financiado
+                        </Typography>
+                        <Typography variant="h6" color="primary">
+                          {formatMoney(d.totalMontoFinanciado, moneda)}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="caption" color="textSecondary">
+                          Monto pagado
+                        </Typography>
+                        <Typography variant="h6" color="success.main">
+                          {formatMoney(d.totalMontoPagado, moneda)}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="caption" color="textSecondary">
+                          Saldo pendiente
+                        </Typography>
+                        <Typography variant="h6" color="warning.main">
+                          {formatMoney(d.totalSaldoPendiente, moneda)}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="caption" color="textSecondary">
+                          Monto cuotas vencidas
+                        </Typography>
+                        <Typography variant="h6" color="error.main">
+                          {formatMoney(d.montoVencido, moneda)}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+                );
+              })}
             </Paper>
 
             {/* Resumen por Financiamiento */}
@@ -360,6 +410,7 @@ const EstadoDeCuentaPage = () => {
                   <TableHead>
                     <TableRow>
                       <TableCell sx={{ fontWeight: 600 }}>#</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>Mon.</TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>Vehículo</TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>Empresa</TableCell>
                       <TableCell sx={{ fontWeight: 600 }}>Estado</TableCell>
@@ -405,6 +456,13 @@ const EstadoDeCuentaPage = () => {
                       return (
                         <TableRow key={fin.financiamientoId}>
                           <TableCell>{index + 1}</TableCell>
+                          <TableCell>
+                            <Chip
+                              label={normalizarMoneda(fin.moneda)}
+                              size="small"
+                              variant="outlined"
+                            />
+                          </TableCell>
                           <TableCell>{vehiculoInfo}</TableCell>
                           <TableCell>{empresaInfo}</TableCell>
                           <TableCell>
@@ -415,22 +473,22 @@ const EstadoDeCuentaPage = () => {
                             />
                           </TableCell>
                           <TableCell align="right">
-                            {new Intl.NumberFormat('en-US', {
-                              style: 'currency',
-                              currency: 'USD',
-                            }).format(fin.montoTotal)}
+                            {formatMoney(
+                              fin.montoTotal,
+                              normalizarMoneda(fin.moneda)
+                            )}
                           </TableCell>
                           <TableCell align="right" style={{ color: '#4caf50' }}>
-                            {new Intl.NumberFormat('en-US', {
-                              style: 'currency',
-                              currency: 'USD',
-                            }).format(fin.montoPagado)}
+                            {formatMoney(
+                              fin.montoPagado,
+                              normalizarMoneda(fin.moneda)
+                            )}
                           </TableCell>
                           <TableCell align="right" style={{ color: '#ff9800' }}>
-                            {new Intl.NumberFormat('en-US', {
-                              style: 'currency',
-                              currency: 'USD',
-                            }).format(fin.saldoPendiente)}
+                            {formatMoney(
+                              fin.saldoPendiente,
+                              normalizarMoneda(fin.moneda)
+                            )}
                           </TableCell>
                           <TableCell align="center">
                             {fin.cuotasPagadas}/{fin.cuotasTotal}
@@ -499,6 +557,7 @@ const EstadoDeCuentaPage = () => {
                   <TableBody>
                     {estadoCuenta.cuotas.map((cuota, index) => {
                       const fechaVencimiento = new Date(cuota.fechaVencimiento);
+                      const mCuota = normalizarMoneda(cuota.moneda);
                       const formatDate = (date: Date) => {
                         return date.toLocaleDateString('es-UY');
                       };
@@ -549,22 +608,13 @@ const EstadoDeCuentaPage = () => {
                             {formatDate(fechaVencimiento)}
                           </TableCell>
                           <TableCell align="right">
-                            {new Intl.NumberFormat('en-US', {
-                              style: 'currency',
-                              currency: 'USD',
-                            }).format(cuota.valorCuota)}
+                            {formatMoney(cuota.valorCuota, mCuota)}
                           </TableCell>
                           <TableCell align="right" style={{ color: '#4caf50' }}>
-                            {new Intl.NumberFormat('en-US', {
-                              style: 'currency',
-                              currency: 'USD',
-                            }).format(cuota.montoPagado || 0)}
+                            {formatMoney(cuota.montoPagado || 0, mCuota)}
                           </TableCell>
                           <TableCell align="right" style={{ color: '#f44336' }}>
-                            {new Intl.NumberFormat('en-US', {
-                              style: 'currency',
-                              currency: 'USD',
-                            }).format(cuota.montoPendiente || 0)}
+                            {formatMoney(cuota.montoPendiente || 0, mCuota)}
                           </TableCell>
                           <TableCell align="center">
                             <Chip

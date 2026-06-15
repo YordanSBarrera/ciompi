@@ -1,5 +1,5 @@
 import { connectDB } from '@/db/dbConnection';
-import { getUserIdFromToken } from '@/lib/server-utils';
+import { getUserIdFromToken, requireAdminAuth } from '@/lib/server-utils';
 import Cliente from '@/models/cliente';
 import Financiamiento from '@/models/financiamiento';
 import { NextRequest, NextResponse } from 'next/server';
@@ -126,6 +126,11 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const auth = requireAdminAuth(request);
+    if (!auth.authorized) {
+      return auth.response;
+    }
+
     await connectDB();
     const { searchParams } = new URL(request.url);
     const clienteId = searchParams.get('id');
@@ -174,7 +179,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // Obtener ID del usuario para auditoría
-    const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb';
+    const userId = auth.user.id;
 
     // Soft delete: marcar como eliminado en lugar de borrar
     const clienteEliminado = await Cliente.findByIdAndUpdate(

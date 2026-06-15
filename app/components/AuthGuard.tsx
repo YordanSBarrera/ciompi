@@ -20,7 +20,7 @@ export default function AuthGuard({
     if (!loading) {
       if (requireAuth && !isAuthenticated) {
         // Usuario no autenticado, redirigir al login
-        router.push('/login');
+        router.replace('/login');
       } else if (!requireAuth && isAuthenticated) {
         // Usuario autenticado en página de login, redirigir al home
         router.push('/ciompi');

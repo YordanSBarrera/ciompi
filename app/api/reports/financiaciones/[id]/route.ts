@@ -2,6 +2,7 @@ import { connectDB } from '@/db/dbConnection';
 import Financiamiento from '@/models/financiamiento';
 import PagoCuota from '@/models/pagoCuota';
 import { NextRequest, NextResponse } from 'next/server';
+import { formatMoney, normalizarMoneda } from '@/lib/moneda';
 
 export async function GET(
   request: NextRequest,
@@ -76,17 +77,13 @@ function generateFinanciamientoDetailReportHTML(
     day: 'numeric',
   });
 
+  const monedaInforme = normalizarMoneda(financiamiento.moneda);
+
   const formatCurrency = (amount: number | null | undefined) => {
-    if (amount === null || amount === undefined) return '$0.00';
-    try {
-      return new Intl.NumberFormat('es-UY', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 2,
-      }).format(amount);
-    } catch {
-      return '$0.00';
+    if (amount === null || amount === undefined || Number.isNaN(Number(amount))) {
+      return formatMoney(0, monedaInforme);
     }
+    return formatMoney(Number(amount), monedaInforme);
   };
 
   const formatDate = (date: Date | string | null | undefined) => {

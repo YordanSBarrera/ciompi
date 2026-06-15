@@ -35,12 +35,12 @@ import {
   azulClaro,
   naranja,
   turquesa,
-  grisClaro,
   grisMedio,
   verde,
-  rojo,
 } from '@/lib/color';
 import CardDG from './CardDG';
+import { formatMoney, type MonedaFinanciamiento } from '@/lib/moneda';
+import { MonedaTipo } from '@/lib/const';
 
 interface StatsData {
   clientes: {
@@ -58,9 +58,14 @@ interface StatsData {
     cancelados: number;
     enMora: number;
     hoy: number;
-    montoTotal: number;
-    saldoPendiente: number;
-    montoRecaudado: number;
+    montosPorMoneda: Record<
+      MonedaFinanciamiento,
+      {
+        montoTotal: number;
+        saldoPendiente: number;
+        montoRecaudado: number;
+      }
+    >;
   };
   empresas: {
     total: number;
@@ -99,14 +104,6 @@ export default function DatosGeneralesPage() {
   const handleRefresh = () => {
     setRefreshing(true);
     loadStats();
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    }).format(amount);
   };
 
   const handleImprimirClientes = () => {
@@ -177,142 +174,166 @@ export default function DatosGeneralesPage() {
         ) : (
           <>
             <CardDG titulo="Estadísticas Financieras">
-              <Grid container spacing={3}>
-                <Grid size={{ xs: 12, md: 4 }}>
-                  <Card sx={{ height: '100%', boxShadow: 3 }}>
-                    <CardContent>
-                      <Box
-                        sx={{ display: 'flex', alignItems: 'center', mb: 2 }}
-                      >
-                        <AttachMoneyIcon
-                          sx={{ fontSize: 32, color: verde, mr: 2 }}
-                        />
-                        <Typography variant="h6">
-                          Monto Total Financiado
-                        </Typography>
-                      </Box>
-                      <Typography
-                        variant="h4"
-                        sx={{ fontWeight: 600, color: verde }}
-                      >
-                        {formatCurrency(stats?.financiamientos.montoTotal || 0)}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        color="textSecondary"
-                        sx={{ mt: 1 }}
-                      >
-                        Suma total de todos los financiamientos
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 4 }}>
-                  <Card sx={{ height: '100%', boxShadow: 3 }}>
-                    <CardContent>
-                      <Box
-                        sx={{ display: 'flex', alignItems: 'center', mb: 2 }}
-                      >
-                        <TrendingUpIcon
-                          sx={{ fontSize: 32, color: azulBase, mr: 2 }}
-                        />
-                        <Typography variant="h6">Monto Recaudado</Typography>
-                      </Box>
-                      <Typography
-                        variant="h4"
-                        sx={{ fontWeight: 600, color: azulBase }}
-                      >
-                        {formatCurrency(
-                          stats?.financiamientos.montoRecaudado || 0
-                        )}
-                      </Typography>
-                      <LinearProgress
-                        variant="determinate"
-                        value={
-                          stats && stats.financiamientos.montoTotal > 0
-                            ? (stats.financiamientos.montoRecaudado /
-                                stats.financiamientos.montoTotal) *
-                              100
-                            : 0
-                        }
-                        sx={{ mt: 2, height: 8, borderRadius: 1 }}
-                      />
-                      <Typography
-                        variant="body2"
-                        color="textSecondary"
-                        sx={{ mt: 1 }}
-                      >
-                        {stats && stats.financiamientos.montoTotal > 0
-                          ? `${(
-                              (stats.financiamientos.montoRecaudado /
-                                stats.financiamientos.montoTotal) *
-                              100
-                            ).toFixed(1)}% del total recaudado`
-                          : 'Sin datos'}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-
-                <Grid size={{ xs: 12, md: 4 }}>
-                  <Card sx={{ height: '100%', boxShadow: 3 }}>
-                    <CardContent>
-                      <Box
-                        sx={{ display: 'flex', alignItems: 'center', mb: 2 }}
-                      >
-                        <ScheduleIcon
-                          sx={{ fontSize: 32, color: naranja, mr: 2 }}
-                        />
-                        <Typography variant="h6">Saldo Pendiente</Typography>
-                      </Box>
-                      <Typography
-                        variant="h4"
-                        sx={{ fontWeight: 600, color: naranja }}
-                      >
-                        {formatCurrency(
-                          stats?.financiamientos.saldoPendiente || 0
-                        )}
-                      </Typography>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          gap: 1,
-                          mt: 2,
-                          flexWrap: 'wrap',
-                        }}
-                      >
-                        <Chip
-                          icon={<CheckCircleIcon />}
-                          label={`${stats?.financiamientos.finalizados || 0} finalizados`}
-                          size="small"
-                          color="success"
-                        />
-                        <Chip
-                          label={`${stats?.financiamientos.activos || 0} activos`}
-                          size="small"
-                          color="warning"
-                        />
-                        {stats && (stats.financiamientos.enMora || 0) > 0 && (
-                          <Chip
-                            label={`${stats.financiamientos.enMora} en mora`}
-                            size="small"
-                            color="error"
-                          />
-                        )}
-                        {stats &&
-                          (stats.financiamientos.cancelados || 0) > 0 && (
-                            <Chip
-                              label={`${stats.financiamientos.cancelados} cancelados`}
-                              size="small"
-                              color="default"
+              <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                Totales por moneda de cada financiamiento.
+              </Typography>
+              {([MonedaTipo.USD, MonedaTipo.UYU] as const).map(moneda => {
+                const datos = stats?.financiamientos.montosPorMoneda?.[
+                  moneda
+                ] ?? {
+                  montoTotal: 0,
+                  saldoPendiente: 0,
+                  montoRecaudado: 0,
+                };
+                const pctProg =
+                  datos.montoTotal > 0
+                    ? Math.min(
+                        100,
+                        (datos.montoRecaudado / datos.montoTotal) * 100
+                      )
+                    : 0;
+                return (
+                  <Box key={moneda} sx={{ mb: 3 }}>
+                    <Typography
+                      variant="subtitle1"
+                      fontWeight={600}
+                      sx={{ mb: 2 }}
+                    >
+                      {moneda === 'USD'
+                        ? 'Dólares (USD)'
+                        : 'Pesos uruguayos (UYU)'}
+                    </Typography>
+                    <Grid container spacing={3}>
+                      <Grid size={{ xs: 12, md: 4 }}>
+                        <Card sx={{ height: '100%', boxShadow: 3 }}>
+                          <CardContent>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                mb: 2,
+                              }}
+                            >
+                              <AttachMoneyIcon
+                                sx={{ fontSize: 32, color: verde, mr: 2 }}
+                              />
+                              <Typography variant="h6">
+                                Monto total financiado
+                              </Typography>
+                            </Box>
+                            <Typography
+                              variant="h4"
+                              sx={{ fontWeight: 600, color: verde }}
+                            >
+                              {formatMoney(datos.montoTotal, moneda)}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 4 }}>
+                        <Card sx={{ height: '100%', boxShadow: 3 }}>
+                          <CardContent>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                mb: 2,
+                              }}
+                            >
+                              <TrendingUpIcon
+                                sx={{ fontSize: 32, color: azulBase, mr: 2 }}
+                              />
+                              <Typography variant="h6">
+                                Monto recaudado
+                              </Typography>
+                            </Box>
+                            <Typography
+                              variant="h4"
+                              sx={{ fontWeight: 600, color: azulBase }}
+                            >
+                              {formatMoney(datos.montoRecaudado, moneda)}
+                            </Typography>
+                            <LinearProgress
+                              variant="determinate"
+                              value={pctProg}
+                              sx={{ mt: 2, height: 8, borderRadius: 1 }}
                             />
-                          )}
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              </Grid>
+                            <Typography
+                              variant="body2"
+                              color="textSecondary"
+                              sx={{ mt: 1 }}
+                            >
+                              {datos.montoTotal > 0
+                                ? `${pctProg.toFixed(1)}% del total en esta moneda`
+                                : 'Sin datos en esta moneda'}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                      <Grid size={{ xs: 12, md: 4 }}>
+                        <Card sx={{ height: '100%', boxShadow: 3 }}>
+                          <CardContent>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                mb: 2,
+                              }}
+                            >
+                              <ScheduleIcon
+                                sx={{ fontSize: 32, color: naranja, mr: 2 }}
+                              />
+                              <Typography variant="h6">
+                                Saldo pendiente
+                              </Typography>
+                            </Box>
+                            <Typography
+                              variant="h4"
+                              sx={{ fontWeight: 600, color: naranja }}
+                            >
+                              {formatMoney(datos.saldoPendiente, moneda)}
+                            </Typography>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    </Grid>
+                  </Box>
+                );
+              })}
+              <Box
+                sx={{
+                  display: 'flex',
+                  gap: 1,
+                  mt: 1,
+                  flexWrap: 'wrap',
+                }}
+              >
+                <Chip
+                  icon={<CheckCircleIcon />}
+                  label={`${stats?.financiamientos.finalizados || 0} finalizados`}
+                  size="small"
+                  color="success"
+                />
+                <Chip
+                  label={`${stats?.financiamientos.activos || 0} activos`}
+                  size="small"
+                  color="warning"
+                />
+                {stats && (stats.financiamientos.enMora || 0) > 0 && (
+                  <Chip
+                    label={`${stats.financiamientos.enMora} en mora`}
+                    size="small"
+                    color="error"
+                  />
+                )}
+                {stats && (stats.financiamientos.cancelados || 0) > 0 && (
+                  <Chip
+                    label={`${stats.financiamientos.cancelados} cancelados`}
+                    size="small"
+                    color="default"
+                  />
+                )}
+              </Box>
             </CardDG>
 
             <CardDG titulo="Estadísticas de Clientes y Vehículos">

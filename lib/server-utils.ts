@@ -1,4 +1,6 @@
 import jwt from 'jsonwebtoken';
+import { NextResponse } from 'next/server';
+import { UsuarioRoles } from './const';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -21,13 +23,29 @@ export function parseLocalDate(dateString: string): Date {
  * SOLO USAR EN SERVER-SIDE (API routes, Server Components)
  */
 export function getUserIdFromToken(request: Request): string | null {
+  const authUser = getAuthUserFromToken(request);
+  return authUser?.id || null;
+}
+
+export type AuthUserFromToken = {
+  id: string;
+  usuario?: string;
+  rol?: string;
+};
+
+/**
+ * Extrae usuario autenticado (id/rol) desde JWT.
+ * SOLO USAR EN SERVER-SIDE (API routes, Server Components)
+ */
+export function getAuthUserFromToken(
+  request: Request
+): AuthUserFromToken | null {
   if (!JWT_SECRET) {
     console.error('JWT_SECRET no está configurado');
     return null;
   }
 
   const authHeader = request.headers.get('authorization');
-
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return null;
   }
@@ -35,13 +53,45 @@ export function getUserIdFromToken(request: Request): string | null {
   const token = authHeader.substring(7);
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as {
-      id: string;
-      userId: string;
-    };
-    return decoded.id;
+    const decoded = jwt.verify(token, JWT_SECRET) as AuthUserFromToken;
+    return decoded;
   } catch (error) {
     console.error('Error verificando token:', error);
     return null;
   }
+}
+
+/**
+ * Exige usuario autenticado con rol Administrativo para operaciones sensibles.
+ */
+export function requireAdminAuth(
+  request: Request
+):
+  | { authorized: true; user: AuthUserFromToken }
+  | { authorized: false; response: NextResponse } {
+  const authUser = getAuthUserFromToken(request);
+
+  if (!authUser?.id) {
+    return {
+      authorized: false,
+      response: NextResponse.json(
+        { error: 'No autenticado. Token requerido.' },
+        { status: 401 }
+      ),
+    };
+  }
+
+  if (authUser.rol !== UsuarioRoles.Administrativo) {
+    return {
+      authorized: false,
+      response: NextResponse.json(
+        {
+          error: 'Sin permisos para esta operación. Solo rol Administrativo.',
+        },
+        { status: 403 }
+      ),
+    };
+  }
+
+  return { authorized: true, user: authUser };
 }

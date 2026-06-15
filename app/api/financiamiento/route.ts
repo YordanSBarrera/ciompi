@@ -5,6 +5,7 @@ import Vehiculo from '@/models/vehiculo';
 import Empresa from '@/models/empresa';
 import { NextResponse, NextRequest } from 'next/server';
 import { getUserIdFromToken, parseLocalDate } from '@/lib/server-utils';
+import { normalizarMoneda } from '@/lib/moneda';
 
 // Forzar registro de modelos para populate (evita MissingSchemaError)
 void Cliente;
@@ -174,6 +175,7 @@ export async function POST(request: NextRequest) {
       cliente2: cliente2Id || undefined, // Segundo cliente opcional
       vehiculo: body.vehiculo || undefined, // Opcional
       empresa: body.empresa,
+      moneda: normalizarMoneda(body.moneda),
       costoVehiculo: costoVehiculo, // Mantener para compatibilidad
       valorBase: valorBase, // Nuevo campo
       costosDocumentacion: body.costosDocumentacion || 0,
