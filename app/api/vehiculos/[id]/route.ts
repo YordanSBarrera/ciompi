@@ -7,6 +7,44 @@ import { NextRequest, NextResponse } from 'next/server';
 // Forzar registro de modelos para populate
 void Financiamiento;
 
+interface FinanciamientoActivoResumen {
+  _id: string;
+  estadoFinanciamiento: string;
+  clienteNombre?: string;
+}
+
+// Resultado tipado de .lean() para evitar la inferencia incorrecta de mongoose
+type FinanciamientoActivoLean = {
+  _id: unknown;
+  estadoFinanciamiento: string;
+  cliente: unknown;
+};
+
+async function obtenerFinanciamientoActivo(
+  vehiculoId: string
+): Promise<FinanciamientoActivoResumen | null> {
+  const financiamiento = (await Financiamiento.findOne({
+    vehiculo: vehiculoId,
+    estadoFinanciamiento: { $in: ['activo', 'en_mora'] },
+  })
+    .select('_id estadoFinanciamiento cliente')
+    .populate('cliente', 'NOMBRE')
+    .lean()) as unknown as FinanciamientoActivoLean | null;
+
+  if (!financiamiento) return null;
+
+  return {
+    _id: String(financiamiento._id),
+    estadoFinanciamiento: String(financiamiento.estadoFinanciamiento),
+    clienteNombre:
+      typeof financiamiento.cliente === 'object' &&
+      financiamiento.cliente !== null &&
+      'NOMBRE' in financiamiento.cliente
+        ? (financiamiento.cliente as { NOMBRE?: string }).NOMBRE
+        : undefined,
+  };
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -25,29 +63,12 @@ export async function GET(
       );
     }
 
-    const financiamientoActivo = await Financiamiento.findOne({
-      vehiculo: id,
-      estadoFinanciamiento: { $in: ['activo', 'en_mora'] },
-    })
-      .select('_id estadoFinanciamiento cliente')
-      .populate('cliente', 'NOMBRE')
-      .lean();
+    const financiamientoActivo = await obtenerFinanciamientoActivo(id);
 
     const vehiculoData = vehiculoEncontrado.toObject();
     return NextResponse.json({
       ...vehiculoData,
-      financiamientoActivo: financiamientoActivo
-        ? {
-            _id: financiamientoActivo._id,
-            estadoFinanciamiento: financiamientoActivo.estadoFinanciamiento,
-            clienteNombre:
-              typeof financiamientoActivo.cliente === 'object' &&
-              financiamientoActivo.cliente !== null &&
-              'NOMBRE' in financiamientoActivo.cliente
-                ? (financiamientoActivo.cliente as { NOMBRE?: string }).NOMBRE
-                : undefined,
-          }
-        : null,
+      financiamientoActivo,
     });
   } catch (error: any) {
     return NextResponse.json({ message: error.message }, { status: 404 });
@@ -72,13 +93,7 @@ export async function PUT(
 
     const { id } = await params;
 
-    const financiamientoActivo = await Financiamiento.findOne({
-      vehiculo: id,
-      estadoFinanciamiento: { $in: ['activo', 'en_mora'] },
-    })
-      .select('_id estadoFinanciamiento cliente')
-      .populate('cliente', 'NOMBRE')
-      .lean();
+    const financiamientoActivo = await obtenerFinanciamientoActivo(id);
 
     if (financiamientoActivo) {
       if (data.disponible === true) {
@@ -118,18 +133,7 @@ export async function PUT(
 
     return NextResponse.json({
       ...vehiculoUpdated.toObject(),
-      financiamientoActivo: financiamientoActivo
-        ? {
-            _id: financiamientoActivo._id,
-            estadoFinanciamiento: financiamientoActivo.estadoFinanciamiento,
-            clienteNombre:
-              typeof financiamientoActivo.cliente === 'object' &&
-              financiamientoActivo.cliente !== null &&
-              'NOMBRE' in financiamientoActivo.cliente
-                ? (financiamientoActivo.cliente as { NOMBRE?: string }).NOMBRE
-                : undefined,
-          }
-        : null,
+      financiamientoActivo,
     });
   } catch (error: any) {
     return NextResponse.json({ message: error.message }, { status: 400 });
