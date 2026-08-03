@@ -4,7 +4,11 @@ import Cliente from '@/models/cliente';
 import Vehiculo from '@/models/vehiculo';
 import Empresa from '@/models/empresa';
 import { NextResponse, NextRequest } from 'next/server';
-import { getUserIdFromToken, parseLocalDate } from '@/lib/server-utils';
+import {
+  getUserIdFromToken,
+  parseLocalDate,
+  sincronizarDisponibilidadVehiculo,
+} from '@/lib/server-utils';
 import { normalizarMoneda } from '@/lib/moneda';
 
 // Forzar registro de modelos para populate (evita MissingSchemaError)
@@ -103,6 +107,24 @@ export async function POST(request: NextRequest) {
         { error: 'Debe proporcionar costoVehiculo o valorBase' },
         { status: 400 }
       );
+    }
+
+    // Verificar que el vehículo no esté sujeto a otro financiamiento activo
+    if (body.vehiculo && typeof body.vehiculo === 'string') {
+      const financiamientoActivo = await Financiamiento.findOne({
+        vehiculo: body.vehiculo,
+        estadoFinanciamiento: { $in: ['activo', 'en_mora'] },
+      });
+      if (financiamientoActivo) {
+        return NextResponse.json(
+          {
+            error:
+              'El vehículo seleccionado ya está asociado a un financiamiento activo y no puede financiarse nuevamente',
+            financiamientoId: financiamientoActivo._id,
+          },
+          { status: 409 }
+        );
+      }
     }
 
     // Manejar cliente nuevo (si viene como objeto, crearlo)
@@ -208,12 +230,10 @@ export async function POST(request: NextRequest) {
 
     const financiamientoGuardado = await nuevoFinanciamiento.save();
 
-    // Si se asignó un vehículo, marcarlo como no disponible
-    if (body.vehiculo) {
-      await Vehiculo.findByIdAndUpdate(body.vehiculo, {
-        disponible: false,
-        usuarioModificacion: userId,
-      });
+    // Si se asignó un vehículo, sincronizar su disponibilidad
+    // (queda no disponible por tener un financiamiento activo)
+    if (body.vehiculo && typeof body.vehiculo === 'string') {
+      await sincronizarDisponibilidadVehiculo(body.vehiculo, userId);
     }
 
     // Devolver el financiamiento con información poblada
@@ -271,13 +291,11 @@ export async function DELETE(request: Request) {
     // Eliminar el financiamiento
     await Financiamiento.findByIdAndDelete(id);
 
-    // Si tenía un vehículo asignado, marcarlo como disponible nuevamente
+    // Si tenía un vehículo asignado, sincronizar su disponibilidad
+    // (vuelve a estar disponible si no hay otro financiamiento activo)
     if (financiamiento.vehiculo) {
       const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb';
-      await Vehiculo.findByIdAndUpdate(financiamiento.vehiculo, {
-        disponible: true,
-        usuarioModificacion: userId,
-      });
+      await sincronizarDisponibilidadVehiculo(financiamiento.vehiculo, userId);
     }
 
     return NextResponse.json({

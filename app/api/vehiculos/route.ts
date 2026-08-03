@@ -21,7 +21,48 @@ export async function GET(request: NextRequest) {
       .populate('usuarioCreacion', 'nombre usuario email')
       .populate('usuarioModificacion', 'nombre usuario email')
       .sort({ createdAt: -1 });
-    return NextResponse.json(vehiculos);
+
+    // Calcular financiamientos activos por vehículo (disponibilidad derivada)
+    const vehiculoIds = vehiculos.map(v => v._id);
+    const financiamientosActivos = vehiculoIds.length
+      ? await Financiamiento.find({
+          vehiculo: { $in: vehiculoIds },
+          estadoFinanciamiento: { $in: ['activo', 'en_mora'] },
+        })
+          .select('_id estadoFinanciamiento cliente vehiculo')
+          .populate('cliente', 'NOMBRE')
+          .lean()
+      : [];
+
+    const activosPorVehiculo = new Map<string, any>();
+    for (const f of financiamientosActivos) {
+      const vehiculoKey = (f.vehiculo as any)?.toString();
+      if (vehiculoKey && !activosPorVehiculo.has(vehiculoKey)) {
+        activosPorVehiculo.set(vehiculoKey, f);
+      }
+    }
+
+    const resultado = vehiculos.map(v => {
+      const doc = v.toObject();
+      const fa = activosPorVehiculo.get(v._id.toString());
+      return {
+        ...doc,
+        financiamientoActivo: fa
+          ? {
+              _id: fa._id,
+              estadoFinanciamiento: fa.estadoFinanciamiento,
+              clienteNombre:
+                typeof fa.cliente === 'object' &&
+                fa.cliente !== null &&
+                'NOMBRE' in fa.cliente
+                  ? (fa.cliente as { NOMBRE?: string }).NOMBRE
+                  : undefined,
+            }
+          : null,
+      };
+    });
+
+    return NextResponse.json(resultado);
   } catch (error: unknown) {
     console.error('Error obteniendo vehículos:', error);
     if (error instanceof Error) {

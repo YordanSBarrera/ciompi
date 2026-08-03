@@ -1,8 +1,11 @@
 import { connectDB } from '@/db/dbConnection';
 import Financiamiento from '@/models/financiamiento';
-import Vehiculo from '@/models/vehiculo';
 import { NextRequest, NextResponse } from 'next/server';
-import { parseLocalDate, requireAdminAuth } from '@/lib/server-utils';
+import {
+  parseLocalDate,
+  requireAdminAuth,
+  sincronizarDisponibilidadVehiculo,
+} from '@/lib/server-utils';
 import { normalizarMoneda } from '@/lib/moneda';
 
 export async function GET(
@@ -146,6 +149,20 @@ export async function PUT(
         .populate('usuarioCreacion', 'nombre usuario email')
         .populate('usuarioModificacion', 'nombre usuario email');
 
+      // Si el financiamiento finaliza o se cancela, el vehículo vuelve a estar
+      // disponible (salvo que tenga otro financiamiento activo)
+      const estadoResultante = financiamientoActualizado?.estadoFinanciamiento;
+      if (
+        (estadoResultante === 'finalizado' ||
+          estadoResultante === 'cancelado') &&
+        financiamientoExistente.vehiculo
+      ) {
+        await sincronizarDisponibilidadVehiculo(
+          financiamientoExistente.vehiculo,
+          userId
+        );
+      }
+
       return NextResponse.json(financiamientoActualizado);
     }
 
@@ -232,25 +249,10 @@ export async function PUT(
 
     // Manejar vehículo
     const vehiculoAnterior = financiamientoExistente.vehiculo?.toString();
-    const vehiculoNuevo = body.vehiculo || undefined;
-
-    // Si cambió el vehículo, actualizar disponibilidad
-    if (vehiculoAnterior !== vehiculoNuevo) {
-      // Marcar el vehículo anterior como disponible
-      if (vehiculoAnterior) {
-        await Vehiculo.findByIdAndUpdate(vehiculoAnterior, {
-          disponible: true,
-          usuarioModificacion: userId,
-        });
-      }
-      // Marcar el nuevo vehículo como no disponible
-      if (vehiculoNuevo) {
-        await Vehiculo.findByIdAndUpdate(vehiculoNuevo, {
-          disponible: false,
-          usuarioModificacion: userId,
-        });
-      }
-    }
+    const vehiculoNuevo =
+      body.vehiculo && typeof body.vehiculo === 'string'
+        ? body.vehiculo
+        : undefined;
 
     // Manejar costoVehiculo y valorBase
     const costoVehiculo =
@@ -416,6 +418,21 @@ export async function PUT(
       .populate('usuarioCreacion', 'nombre usuario email')
       .populate('usuarioModificacion', 'nombre usuario email');
 
+    // Sincronizar la disponibilidad de los vehículos según los
+    // financiamientos activos (se deriva del estado en base de datos)
+    const estadoFinal = financiamientoActualizado?.estadoFinanciamiento;
+    if (vehiculoAnterior !== vehiculoNuevo && vehiculoAnterior) {
+      await sincronizarDisponibilidadVehiculo(vehiculoAnterior, userId);
+    }
+    if (vehiculoNuevo) {
+      await sincronizarDisponibilidadVehiculo(vehiculoNuevo, userId);
+    } else if (
+      vehiculoAnterior &&
+      (estadoFinal === 'finalizado' || estadoFinal === 'cancelado')
+    ) {
+      await sincronizarDisponibilidadVehiculo(vehiculoAnterior, userId);
+    }
+
     return NextResponse.json(financiamientoActualizado);
   } catch (error: any) {
     console.error('Error actualizando financiamiento:', error);
@@ -452,13 +469,11 @@ export async function DELETE(
     // Eliminar el financiamiento
     await Financiamiento.findByIdAndDelete(id);
 
-    // Si tenía un vehículo asignado, marcarlo como disponible nuevamente
+    // Si tenía un vehículo asignado, sincronizar su disponibilidad
+    // (vuelve a estar disponible si no hay otro financiamiento activo)
     if (financiamiento.vehiculo) {
       const userId = auth.user.id;
-      await Vehiculo.findByIdAndUpdate(financiamiento.vehiculo, {
-        disponible: true,
-        usuarioModificacion: userId,
-      });
+      await sincronizarDisponibilidadVehiculo(financiamiento.vehiculo, userId);
     }
 
     return NextResponse.json({

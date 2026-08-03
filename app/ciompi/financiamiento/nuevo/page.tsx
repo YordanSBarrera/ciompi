@@ -802,7 +802,11 @@ export default function NuevoFinanciamientoPage() {
                       </Typography>
                     </MenuItem>
                     {vehiculos
-                      .filter(vehiculo => vehiculo.disponible !== false)
+                      .filter(
+                        vehiculo =>
+                          vehiculo.disponible !== false &&
+                          !vehiculo.financiamientoActivo
+                      )
                       .map(vehiculo => (
                         <MenuItem key={vehiculo._id} value={vehiculo._id}>
                           <Box>
