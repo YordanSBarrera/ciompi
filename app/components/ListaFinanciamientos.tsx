@@ -187,9 +187,9 @@ export default function ListaFinanciamientos({
   // Función para obtener el nombre del financiamiento para mostrar en el diálogo
   const getFinanciamientoNombre = (fin: FinanciamientoType): string => {
     const clienteNombre =
-      typeof fin.cliente === 'object' ? fin.cliente.NOMBRE : 's/n';
+      typeof fin.cliente === 'object' && fin.cliente ? fin.cliente.NOMBRE : 's/n';
     const vehiculoInfo =
-      typeof fin.vehiculo === 'object'
+      typeof fin.vehiculo === 'object' && fin.vehiculo
         ? `${fin.vehiculo.Marca} ${fin.vehiculo.Modelo}`
         : 's/v';
     return `${clienteNombre} - ${vehiculoInfo}`;
@@ -517,7 +517,7 @@ export default function ListaFinanciamientos({
                 <TableCell>
                   <Box>
                     <Typography variant="body2" fontWeight={600}>
-                      {typeof fin.cliente === 'object'
+                      {typeof fin.cliente === 'object' && fin.cliente
                         ? (fin.cliente.NOMBRE ?? 's/n')
                         : '-'}
                     </Typography>
@@ -536,12 +536,12 @@ export default function ListaFinanciamientos({
                 </TableCell>
                 <TableCell>
                   <Typography variant="body2" fontWeight={600}>
-                    {typeof fin.vehiculo === 'object'
-                      ? `${fin.vehiculo.Marca?? 'no encontrado'} ${fin.vehiculo.Modelo?? 'no encontrado '}`
+                    {typeof fin.vehiculo === 'object' && fin.vehiculo
+                      ? `${fin.vehiculo.Marca ?? 'no encontrado'} ${fin.vehiculo.Modelo ?? 'no encontrado'}`
                       : '-'}
                   </Typography>
                   <Typography variant="caption" color={grisTexto}>
-                    {typeof fin.vehiculo === 'object'
+                    {typeof fin.vehiculo === 'object' && fin.vehiculo
                       ? fin.vehiculo.Matricula
                       : ''}
                   </Typography>

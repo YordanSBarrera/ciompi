@@ -359,10 +359,10 @@ export default function Vencimientos() {
             <TableBody>
               {vencimientos.map((fin, index) => {
                 const clienteNombre =
-                  typeof fin.cliente === 'object' ? fin.cliente.NOMBRE : 's/n';
+                  typeof fin.cliente === 'object' && fin.cliente ? fin.cliente.NOMBRE : 's/n';
                 const vehiculoInfo =
-                  typeof fin.vehiculo === 'object'
-                    ? `${fin.vehiculo.Marca} ${fin.vehiculo.Modelo}`
+                  typeof fin.vehiculo === 'object' && fin.vehiculo
+                    ? `${fin.vehiculo.Marca ?? ''} ${fin.vehiculo.Modelo ?? ''}`.trim()
                     : 's/v';
                 
                 // Ordenar cuotas por fecha y obtener la próxima

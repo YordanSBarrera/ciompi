@@ -626,7 +626,8 @@ export default function FinanciamientoDetailPage() {
 
               <Card sx={{ bgcolor: 'background.paper' }}>
                 <CardContent>
-                  {typeof financiamiento.vehiculo === 'object' ? (
+                  {typeof financiamiento.vehiculo === 'object' &&
+                  financiamiento.vehiculo ? (
                     <>
                       <FieldData
                         fieldName="Marca"
