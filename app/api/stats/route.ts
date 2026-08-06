@@ -35,27 +35,67 @@ export async function GET() {
 
     // Estadísticas de financiamientos (por moneda; histórico sin campo → USD)
     const financiamientosData = await Financiamiento.find().select(
-      'montoTotal saldoPendiente montoPagado moneda'
+      'montoTotal saldoPendiente montoPagado moneda estadoFinanciamiento'
     );
-    type Acum = { montoTotal: number; saldoPendiente: number; montoRecaudado: number };
-    const vacío: Acum = {
+    type Acum = {
+      montoTotal: number;
+      saldoPendiente: number;
+      montoRecaudado: number;
+      cantidad: number;
+    };
+    type MontosPorMoneda = Record<'USD' | 'UYU', Acum>;
+
+    const crearAcumVacio = (): Acum => ({
       montoTotal: 0,
       saldoPendiente: 0,
       montoRecaudado: 0,
+      cantidad: 0,
+    });
+    const crearMontosPorMoneda = (): MontosPorMoneda => ({
+      USD: crearAcumVacio(),
+      UYU: crearAcumVacio(),
+    });
+
+    // Todos los financiamientos
+    const montosPorMoneda = crearMontosPorMoneda();
+    // Vigentes: activos + en mora (aún se cobran)
+    const montosVigentesPorMoneda = crearMontosPorMoneda();
+    // Solo activos
+    const montosActivosPorMoneda = crearMontosPorMoneda();
+    // Solo en mora
+    const montosEnMoraPorMoneda = crearMontosPorMoneda();
+
+    const acumular = (
+      acc: MontosPorMoneda,
+      moneda: 'USD' | 'UYU',
+      montoTotal: number,
+      saldoPendiente: number,
+      montoPagado: number
+    ) => {
+      acc[moneda].montoTotal += montoTotal;
+      acc[moneda].saldoPendiente += saldoPendiente;
+      acc[moneda].montoRecaudado += montoPagado;
+      acc[moneda].cantidad += 1;
     };
-    const montosPorMoneda: Record<'USD' | 'UYU', Acum> = {
-      USD: { ...vacío },
-      UYU: { ...vacío },
-    };
+
     for (const f of financiamientosData) {
       const m =
         f.moneda === 'UYU' ? 'UYU' : 'USD';
       const mt = f.montoTotal || 0;
       const sp = f.saldoPendiente || 0;
       const pag = f.montoPagado || 0;
-      montosPorMoneda[m].montoTotal += mt;
-      montosPorMoneda[m].saldoPendiente += sp;
-      montosPorMoneda[m].montoRecaudado += pag;
+      acumular(montosPorMoneda, m, mt, sp, pag);
+
+      const estado = f.estadoFinanciamiento;
+      if (estado === 'activo' || estado === 'en_mora') {
+        acumular(montosVigentesPorMoneda, m, mt, sp, pag);
+      }
+      if (estado === 'activo') {
+        acumular(montosActivosPorMoneda, m, mt, sp, pag);
+      }
+      if (estado === 'en_mora') {
+        acumular(montosEnMoraPorMoneda, m, mt, sp, pag);
+      }
     }
 
     // Clientes y vehículos creados hoy
@@ -92,6 +132,9 @@ export async function GET() {
           enMora: financiamientosEnMora,
           hoy: financiamientosHoy,
           montosPorMoneda,
+          montosVigentesPorMoneda,
+          montosActivosPorMoneda,
+          montosEnMoraPorMoneda,
         },
         empresas: {
           total: totalEmpresas,
