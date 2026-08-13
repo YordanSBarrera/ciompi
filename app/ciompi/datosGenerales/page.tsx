@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AuthGuard from '@/app/components/AuthGuard';
 import {
   Box,
@@ -15,7 +15,13 @@ import {
   Chip,
   Button,
   Stack,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
 } from '@mui/material';
+import { SelectChangeEvent } from '@mui/material/Select';
+import { EmpresaType } from '@/lib/types';
 import {
   People as PeopleIcon,
   Business as BusinessIcon,
@@ -237,10 +243,26 @@ export default function DatosGeneralesPage() {
   const [stats, setStats] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [empresas, setEmpresas] = useState<EmpresaType[]>([]);
+  const [empresaId, setEmpresaId] = useState<string>('');
 
-  const loadStats = async () => {
+  const loadEmpresas = useCallback(async () => {
     try {
-      const response = await fetch('/api/stats');
+      const response = await fetch('/api/empresas');
+      if (response.ok) {
+        const result = await response.json();
+        setEmpresas(result.success ? result.data : []);
+      }
+    } catch (error) {
+      console.error('Error cargando empresas:', error);
+    }
+  }, []);
+
+  const loadStats = useCallback(async (empresa: string) => {
+    try {
+      setLoading(true);
+      const query = empresa ? `?empresa=${encodeURIComponent(empresa)}` : '';
+      const response = await fetch(`/api/stats${query}`);
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
@@ -253,15 +275,23 @@ export default function DatosGeneralesPage() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    loadStats();
-  }, []);
+    loadEmpresas();
+  }, [loadEmpresas]);
+
+  useEffect(() => {
+    loadStats(empresaId);
+  }, [empresaId, loadStats]);
 
   const handleRefresh = () => {
     setRefreshing(true);
-    loadStats();
+    loadStats(empresaId);
+  };
+
+  const handleEmpresaChange = (event: SelectChangeEvent) => {
+    setEmpresaId(event.target.value);
   };
 
   const handleImprimirClientes = () => {
@@ -341,13 +371,43 @@ export default function DatosGeneralesPage() {
                 Estadísticas e información general de CIOMPI
               </Typography>
             </Box>
-            <IconButton
-              onClick={handleRefresh}
-              disabled={refreshing}
-              sx={{ color: 'white' }}
-            >
-              <RefreshIcon />
-            </IconButton>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <FormControl size="small" sx={{ minWidth: 240 }}>
+                <InputLabel id="empresa-select-label" sx={{ color: 'white' }}>
+                  Empresa
+                </InputLabel>
+                <Select
+                  labelId="empresa-select-label"
+                  label="Empresa"
+                  value={empresaId}
+                  onChange={handleEmpresaChange}
+                  sx={{
+                    color: 'white',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(255,255,255,0.5)',
+                    },
+                    '& .MuiSvgIcon-root': { color: 'white' },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'white',
+                    },
+                  }}
+                >
+                  <MenuItem value="">Todas las empresas</MenuItem>
+                  {empresas.map(empresa => (
+                    <MenuItem key={empresa._id} value={empresa._id}>
+                      {empresa.nombre}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <IconButton
+                onClick={handleRefresh}
+                disabled={refreshing}
+                sx={{ color: 'white' }}
+              >
+                <RefreshIcon />
+              </IconButton>
+            </Stack>
           </Box>
         </Paper>
 
