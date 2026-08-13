@@ -59,20 +59,12 @@ export default function HeaderAppBar() {
     submenuCloseTimerRef.current = setTimeout(() => {
       setOperacionesAnchorEl(null);
       submenuCloseTimerRef.current = null;
-    }, 180);
+    }, 350);
   };
 
   const closeSubmenu = () => {
     clearSubmenuTimer();
     setOperacionesAnchorEl(null);
-  };
-
-  const toggleSubmenu = (event: MouseEvent<HTMLElement>) => {
-    if (operacionesAnchorEl === event.currentTarget) {
-      closeSubmenu();
-    } else {
-      openSubmenu(event);
-    }
   };
 
   const handleClick = (event: MouseEvent<HTMLElement>) => {
@@ -139,6 +131,7 @@ export default function HeaderAppBar() {
                     mt: 1,
                     minWidth: 200,
                   },
+                  onMouseEnter: clearSubmenuTimer,
                   onMouseLeave: scheduleCloseSubmenu,
                 }}
                 MenuListProps={{
@@ -165,7 +158,6 @@ export default function HeaderAppBar() {
                       key={module.id}
                       onMouseEnter={openSubmenu}
                       onMouseLeave={scheduleCloseSubmenu}
-                      onClick={toggleSubmenu}
                       sx={{
                         color: '#ffffff',
                         backgroundColor: operacionesMenuOpen
@@ -214,6 +206,11 @@ export default function HeaderAppBar() {
                 anchorEl={operacionesAnchorEl}
                 open={operacionesMenuOpen}
                 onClose={() => setOperacionesAnchorEl(null)}
+                hideBackdrop
+                disableScrollLock
+                slotProps={{
+                  root: { sx: { pointerEvents: 'none' } },
+                }}
                 MenuListProps={{
                   sx: {
                     py: 1,
