@@ -660,31 +660,25 @@ export default function ListaVehiculos({
                           />
                           Ver Detalles
                         </MenuItem>
+                        <MenuItem onClick={() => handleClickEditar(vehiculo)}>
+                          <EditIcon
+                            sx={{ fontSize: 18, mr: 1, color: azulBase }}
+                          />
+                          Editar
+                        </MenuItem>
                         {esAdministrativo && (
-                          <>
-                            <MenuItem
-                              onClick={() => handleClickEditar(vehiculo)}
-                            >
-                              <EditIcon
-                                sx={{ fontSize: 18, mr: 1, color: azulBase }}
-                              />
-                              Editar
-                            </MenuItem>
-                            <MenuItem
-                              onClick={() => handleClickEliminar(vehiculo)}
-                            >
-                              <DeleteIcon
-                                sx={{
-                                  fontSize: 18,
-                                  mr: 1,
-                                  color: 'error.main',
-                                }}
-                              />
-                              <Typography variant="body2" color="error.main">
-                                Eliminar
-                              </Typography>
-                            </MenuItem>
-                          </>
+                          <MenuItem onClick={() => handleClickEliminar(vehiculo)}>
+                            <DeleteIcon
+                              sx={{
+                                fontSize: 18,
+                                mr: 1,
+                                color: 'error.main',
+                              }}
+                            />
+                            <Typography variant="body2" color="error.main">
+                              Eliminar
+                            </Typography>
+                          </MenuItem>
                         )}
                       </Menu>
                     </Stack>

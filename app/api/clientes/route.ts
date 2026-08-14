@@ -159,20 +159,18 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Verificar si está en algún financiamiento ACTIVO (como cliente o cliente2)
-    const financiamientoActivo = await Financiamiento.findOne({
-      $or: [
-        { cliente: clienteId },
-        { cliente2: clienteId }
-      ],
-      estadoFinanciamiento: { $in: ['activo', 'en_mora'] }
+    // Regla de negocio: un cliente asociado a cualquier financiamiento
+    // (sin importar su estado) no se puede eliminar de la BD
+    const financiamientoAsociado = await Financiamiento.findOne({
+      $or: [{ cliente: clienteId }, { cliente2: clienteId }],
     });
 
-    if (financiamientoActivo) {
+    if (financiamientoAsociado) {
       return NextResponse.json(
-        { 
-          error: 'No se puede eliminar el cliente porque está asociado a un financiamiento activo',
-          financiamientoId: financiamientoActivo._id 
+        {
+          error:
+            'No se puede eliminar el cliente porque está asociado a un financiamiento',
+          financiamientoId: financiamientoAsociado._id,
         },
         { status: 409 } // Conflict
       );

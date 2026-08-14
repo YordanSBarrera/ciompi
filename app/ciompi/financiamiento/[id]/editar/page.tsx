@@ -20,6 +20,7 @@ import {
   CircularProgress,
   Container,
   FormControl,
+  FormHelperText,
   InputLabel,
   MenuItem,
   Select,
@@ -117,6 +118,7 @@ export default function EditarFinanciamientoPage() {
   const [incluirGastosExtras, setIncluirGastosExtras] = useState(false);
   const [mostrarCuotasExtras, setMostrarCuotasExtras] = useState(false);
   const [cuotasExtras, setCuotasExtras] = useState<CuotaFutura[]>([]);
+  const [estadoFinanciamiento, setEstadoFinanciamiento] = useState<string>('');
   const [nuevaCuotaExtra, setNuevaCuotaExtra] = useState({
     valorCuota: 0,
     fechaCuota: new Date().toISOString().split('T')[0],
@@ -240,6 +242,8 @@ export default function EditarFinanciamientoPage() {
             observaciones: fin.observaciones || '',
             moneda: normalizarMoneda(fin.moneda),
           });
+
+          setEstadoFinanciamiento(fin.estadoFinanciamiento || '');
 
           setIncluirCostosDocumentacion((fin.costosDocumentacion || 0) > 0);
           setIncluirGastosExtras((fin.gastosExtras || 0) > 0);
@@ -592,7 +596,7 @@ export default function EditarFinanciamientoPage() {
   }
 
   return (
-    <AuthGuard>
+    <AuthGuard requireAdmin>
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Box sx={{ mb: 3 }}>
           <Button
@@ -840,6 +844,7 @@ export default function EditarFinanciamientoPage() {
                     value={formData.empresa}
                     onChange={handleSelectChange}
                     label="Empresa"
+                    disabled={estadoFinanciamiento === 'finalizado'}
                   >
                     {empresas
                       .filter(empresa => empresa.estado === 'activa')
@@ -851,6 +856,12 @@ export default function EditarFinanciamientoPage() {
                         </MenuItem>
                       ))}
                   </Select>
+                  {estadoFinanciamiento === 'finalizado' && (
+                    <FormHelperText>
+                      La empresa no se puede modificar en un financiamiento
+                      finalizado
+                    </FormHelperText>
+                  )}
                 </FormControl>
               </Grid>
 

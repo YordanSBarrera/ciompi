@@ -1,5 +1,5 @@
 import { connectDB } from '@/db/dbConnection';
-import { requireAdminAuth } from '@/lib/server-utils';
+import { requireAdminAuth, requireAuth } from '@/lib/server-utils';
 import Vehiculo from '@/models/vehiculo';
 import Financiamiento from '@/models/financiamiento';
 import { NextRequest, NextResponse } from 'next/server';
@@ -80,7 +80,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const auth = requireAdminAuth(request);
+    const auth = requireAuth(request);
     if (!auth.authorized) {
       return auth.response;
     }
@@ -170,17 +170,18 @@ export async function DELETE(
       );
     }
 
-    // Verificar si está en algún financiamiento ACTIVO
-    const financiamientoActivo = await Financiamiento.findOne({
+    // Regla de negocio: un vehículo asociado a cualquier financiamiento
+    // (sin importar su estado) no se puede eliminar de la BD
+    const financiamientoAsociado = await Financiamiento.findOne({
       vehiculo: id,
-      estadoFinanciamiento: { $in: ['activo', 'en_mora'] }
     });
 
-    if (financiamientoActivo) {
+    if (financiamientoAsociado) {
       return NextResponse.json(
-        { 
-          error: 'No se puede eliminar el vehículo porque está asociado a un financiamiento activo',
-          financiamientoId: financiamientoActivo._id 
+        {
+          error:
+            'No se puede eliminar el vehículo porque está asociado a un financiamiento',
+          financiamientoId: financiamientoAsociado._id,
         },
         { status: 409 } // Conflict
       );

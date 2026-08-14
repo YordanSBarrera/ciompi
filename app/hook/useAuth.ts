@@ -6,7 +6,7 @@ interface User {
   nombre: string;
   email: string;
   avatar: string;
-  rol: 'user' | 'admin';
+  rol: string;
   estado: string;
   fechaCreacion: string;
   fechaActualizacion: string;

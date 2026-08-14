@@ -7,6 +7,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import {
   getUserIdFromToken,
   parseLocalDate,
+  requireAdminAuth,
   sincronizarDisponibilidadVehiculo,
 } from '@/lib/server-utils';
 import { normalizarMoneda } from '@/lib/moneda';
@@ -267,6 +268,11 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: Request) {
   try {
+    const auth = requireAdminAuth(request);
+    if (!auth.authorized) {
+      return auth.response;
+    }
+
     await connectDB();
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
@@ -294,7 +300,7 @@ export async function DELETE(request: Request) {
     // Si tenía un vehículo asignado, sincronizar su disponibilidad
     // (vuelve a estar disponible si no hay otro financiamiento activo)
     if (financiamiento.vehiculo) {
-      const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb';
+      const userId = auth.user.id;
       await sincronizarDisponibilidadVehiculo(financiamiento.vehiculo, userId);
     }
 

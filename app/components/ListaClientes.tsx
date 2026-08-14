@@ -663,36 +663,32 @@ export default function ListaClientes({
                         />
                         Ver Detalles
                       </MenuItem>
+                      <MenuItem onClick={() => handleClickEditar(cliente._id)}>
+                        <EditIcon
+                          sx={{ fontSize: 18, mr: 1, color: azulBase }}
+                        />
+                        Editar
+                      </MenuItem>
                       {esAdministrativo && (
-                        <>
-                          <MenuItem
-                            onClick={() => handleClickEditar(cliente._id)}
-                          >
-                            <EditIcon
-                              sx={{ fontSize: 18, mr: 1, color: azulBase }}
-                            />
-                            Editar
-                          </MenuItem>
-                          <MenuItem
-                            onClick={() =>
-                              handleClickEliminarWrapper(
-                                cliente._id,
-                                cliente.NOMBRE
-                              )
-                            }
-                          >
-                            <DeleteIcon
-                              sx={{
-                                fontSize: 18,
-                                mr: 1,
-                                color: 'error.main',
-                              }}
-                            />
-                            <Typography variant="body2" color="error.main">
-                              Eliminar
-                            </Typography>
-                          </MenuItem>
-                        </>
+                        <MenuItem
+                          onClick={() =>
+                            handleClickEliminarWrapper(
+                              cliente._id,
+                              cliente.NOMBRE
+                            )
+                          }
+                        >
+                          <DeleteIcon
+                            sx={{
+                              fontSize: 18,
+                              mr: 1,
+                              color: 'error.main',
+                            }}
+                          />
+                          <Typography variant="body2" color="error.main">
+                            Eliminar
+                          </Typography>
+                        </MenuItem>
                       )}
                     </Menu>
                   </Stack>

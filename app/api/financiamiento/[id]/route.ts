@@ -166,6 +166,21 @@ export async function PUT(
       return NextResponse.json(financiamientoActualizado);
     }
 
+    // Regla de negocio: un financiamiento FINALIZADO no puede cambiar de Empresa
+    if (
+      financiamientoExistente.estadoFinanciamiento === 'finalizado' &&
+      body.empresa &&
+      body.empresa !== financiamientoExistente.empresa.toString()
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            'No se puede cambiar la empresa de un financiamiento finalizado',
+        },
+        { status: 409 }
+      );
+    }
+
     // Modo completo: actualizar todos los campos del financiamiento
     // Manejar cliente (si viene como objeto, actualizarlo o crearlo)
     let clienteId = body.cliente;

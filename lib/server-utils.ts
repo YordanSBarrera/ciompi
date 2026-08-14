@@ -64,6 +64,29 @@ export function getAuthUserFromToken(
 }
 
 /**
+ * Exige usuario autenticado (cualquier rol) para operaciones sensibles.
+ */
+export function requireAuth(
+  request: Request
+):
+  | { authorized: true; user: AuthUserFromToken }
+  | { authorized: false; response: NextResponse } {
+  const authUser = getAuthUserFromToken(request);
+
+  if (!authUser?.id) {
+    return {
+      authorized: false,
+      response: NextResponse.json(
+        { error: 'No autenticado. Token requerido.' },
+        { status: 401 }
+      ),
+    };
+  }
+
+  return { authorized: true, user: authUser };
+}
+
+/**
  * Exige usuario autenticado con rol Administrativo para operaciones sensibles.
  */
 export function requireAdminAuth(

@@ -2,7 +2,7 @@ import { connectDB } from '@/db/dbConnection';
 import PagoCuota from '@/models/pagoCuota';
 import Financiamiento from '@/models/financiamiento';
 import { NextResponse, NextRequest } from 'next/server';
-import { getUserIdFromToken, parseLocalDate } from '@/lib/server-utils';
+import { getUserIdFromToken, parseLocalDate, requireAdminAuth } from '@/lib/server-utils';
 
 export async function GET() {
   try {
@@ -174,18 +174,16 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const auth = requireAdminAuth(request);
+    if (!auth.authorized) {
+      return auth.response;
+    }
+
     await connectDB();
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-    
-    // Obtener el usuario logueado
-    const userId = getUserIdFromToken(request);
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Usuario no autenticado' },
-        { status: 401 }
-      );
-    }
+
+    const userId = auth.user.id;
 
     if (!id) {
       return NextResponse.json(

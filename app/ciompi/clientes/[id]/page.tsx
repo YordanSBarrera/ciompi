@@ -420,17 +420,15 @@ export default function ClienteDetailPage() {
                 Imprimir Detalles
               </Button>
 
-              {isAdmin() && (
-                <Button
-                  component={Link}
-                  href={`/ciompi/clientes/${id}/editar`}
-                  variant="contained"
-                  color="primary"
-                  size="large"
-                >
-                  Editar Cliente
-                </Button>
-              )}
+              <Button
+                component={Link}
+                href={`/ciompi/clientes/${id}/editar`}
+                variant="contained"
+                color="primary"
+                size="large"
+              >
+                Editar Cliente
+              </Button>
               <Button
                 component={Link}
                 href="/ciompi/clientes"
