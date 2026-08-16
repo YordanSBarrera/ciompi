@@ -394,6 +394,10 @@ export default function NuevoFinanciamientoPage() {
       setError('El número de cuotas debe ser mayor a 0');
       return false;
     }
+    if (formData.cuotas > 100) {
+      setError('El número de cuotas no puede superar 100');
+      return false;
+    }
     if (formData.valorCuota <= 0) {
       setError('El valor de la cuota debe ser mayor a 0');
       return false;
@@ -978,6 +982,9 @@ export default function NuevoFinanciamientoPage() {
                   value={formData.cuotas}
                   onChange={handleChange}
                   required
+                  type="number"
+                  inputProps={{ min: 1, max: 100 }}
+                  helperText="Máximo 100 cuotas"
                 />
               </Grid>
 

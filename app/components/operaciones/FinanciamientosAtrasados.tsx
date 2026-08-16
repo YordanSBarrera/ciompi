@@ -57,6 +57,24 @@ export default function FinanciamientosAtrasados({
   >([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
+
+  const pagination = {
+    page,
+    limit: pageSize,
+    total: financiamientosAtrasados.length,
+    pages: Math.ceil(financiamientosAtrasados.length / pageSize),
+  };
+
+  const financiamientosPaginados = financiamientosAtrasados.slice(
+    (page - 1) * pageSize,
+    page * pageSize
+  );
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
 
   const handleCargarAtrasados = async () => {
     try {
@@ -64,6 +82,7 @@ export default function FinanciamientosAtrasados({
       setError(null);
       const resultados = await obtenerFinanciamientosAtrasados(empresaId);
       setFinanciamientosAtrasados(resultados);
+      setPage(1);
     } catch (err) {
       setError('Error al cargar financiamientos atrasados');
       console.error('Error:', err);
@@ -163,7 +182,9 @@ export default function FinanciamientosAtrasados({
             financiamiento(s) con cuotas atrasadas
           </Alert>
           <ListaFinanciamientos
-            financiamientos={financiamientosAtrasados}
+            financiamientos={financiamientosPaginados}
+            pagination={pagination}
+            onPageChange={handlePageChange}
             onFinanciamientoEliminado={handleCargarAtrasados}
             mostrarAtrasos={true}
             onImprimir={handleImprimirFinanciamientoAtrasado}

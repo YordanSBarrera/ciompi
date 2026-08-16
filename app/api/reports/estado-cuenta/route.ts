@@ -443,6 +443,21 @@ function generateEstadoCuentaReportHTML(
       ? `<div style="font-size: 7px; margin-top: 3px;">Montos vencidos | USD: ${fmt(resumen.montosPorMoneda.USD.montoVencido, 'USD')} | UYU: ${fmt(resumen.montosPorMoneda.UYU.montoVencido, 'UYU')}</div>`
       : '';
 
+  // Empresas del reporte (contexto de Operaciones: filtrado por empresa)
+  const empresasInfo = Array.from(
+    new Set(
+      financiamientos
+        .map(f =>
+          typeof f.empresa === 'object' && f.empresa ? f.empresa.nombre : ''
+        )
+        .filter(Boolean)
+    )
+  );
+  const empresaReporteHtml =
+    empresasInfo.length > 0
+      ? `<p style="font-size:11px;color:#333;margin-top:4px;"><strong>Empresa:</strong> ${escapeHtml(empresasInfo.join(', '))}</p>`
+      : '';
+
   const html = `
 <!DOCTYPE html>
 <html lang="es">
@@ -632,6 +647,7 @@ function generateEstadoCuentaReportHTML(
   <div class="header">
     <h1>ESTADO DE CUENTA</h1>
     <p class="fecha">Generado el ${fechaActual}</p>
+    ${empresaReporteHtml}
   </div>
 
   <!-- Información del Cliente -->
@@ -749,7 +765,8 @@ function generateEstadoCuentaReportHTML(
       <tr>
         <th style="width: 3%;">#</th>
         <th style="width: 8%;">Fin.</th>
-        <th style="width: 12%;">Vehículo</th>
+        <th style="width: 10%;">Vehículo</th>
+        <th style="width: 10%;">Empresa</th>
         <th style="width: 6%;" class="text-center">Cuota</th>
         <th style="width: 10%;" class="text-center">Vencimiento</th>
         <th style="width: 10%;" class="text-right">Valor</th>
@@ -776,12 +793,17 @@ function generateEstadoCuentaReportHTML(
               : cuota.estado === 'vencida'
                 ? '#ffebee'
                 : 'transparent';
+          const empresaInfo =
+            typeof cuota.empresa === 'object' && cuota.empresa
+              ? cuota.empresa.nombre
+              : 'N/A';
 
           return `
         <tr style="background-color: ${bgColor};">
           <td class="text-center">${index + 1}</td>
           <td style="font-size: 6px;">${cuota.financiamientoNumero || 'N/A'}</td>
           <td style="font-size: 6px;">${escapeHtml(vehiculoInfo)}</td>
+          <td style="font-size: 6px;">${escapeHtml(empresaInfo)}</td>
           <td class="text-center">#${cuota.numeroCuota}${cuota.esExtra ? ' (E)' : ''}</td>
           <td class="text-center">${formatDate(cuota.fechaVencimiento)}</td>
           <td class="text-right">${fmt(cuota.valorCuota, cuota.moneda)}</td>
