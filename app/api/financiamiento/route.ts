@@ -198,11 +198,52 @@ export async function POST(request: NextRequest) {
     // Calcular fechas y montos (usando parseLocalDate para evitar desfase de timezone)
     const fechaPrimeraCuota = parseLocalDate(body.fechaPrimeraCuota);
 
-    // Si hay cuotasFuturas, usar la última fecha de ahí, sino calcular
+    // Combinar cuotasFuturas con las cuotas extras (cuotasExtrasDetalle)
+    // para que se persistan los montos y fechas correctos de cada cuota extra.
+    // Las cuotas extras se numeran después de las cuotas normales.
+    let cuotasFuturasFinal: Array<{
+      numeroCuota: number;
+      fechaVencimiento: Date;
+      valorCuota: number;
+    }> = body.cuotasFuturas
+      ? body.cuotasFuturas.map((cf: any) => ({
+          numeroCuota: cf.numeroCuota,
+          fechaVencimiento: parseLocalDate(cf.fechaVencimiento),
+          valorCuota: cf.valorCuota,
+        }))
+      : [];
+
+    if (
+      body.cuotasExtrasDetalle &&
+      Array.isArray(body.cuotasExtrasDetalle) &&
+      body.cuotasExtrasDetalle.length > 0
+    ) {
+      const cuotasNormales = body.cuotas || 0;
+      const numeroMaximo = cuotasFuturasFinal.reduce(
+        (max, cf) => (cf.numeroCuota > max ? cf.numeroCuota : max),
+        cuotasNormales
+      );
+
+      body.cuotasExtrasDetalle.forEach((extra: any, index: number) => {
+        // Evitar duplicados: si la cuota con ese número ya existe, no agregarla
+        const yaExiste = cuotasFuturasFinal.some(
+          cf => cf.numeroCuota === extra.numeroCuota
+        );
+        if (yaExiste) return;
+
+        cuotasFuturasFinal.push({
+          numeroCuota: numeroMaximo + index + 1,
+          fechaVencimiento: parseLocalDate(extra.fechaVencimiento),
+          valorCuota: extra.valorCuota,
+        });
+      });
+    }
+
+    // Si hay cuotasFuturas (incluyendo extras), usar la última fecha de ahí, sino calcular
     let fechaUltimaCuota = new Date(fechaPrimeraCuota);
-    if (body.cuotasFuturas && body.cuotasFuturas.length > 0) {
-      const ultimaCuota = body.cuotasFuturas[body.cuotasFuturas.length - 1];
-      fechaUltimaCuota = parseLocalDate(ultimaCuota.fechaVencimiento);
+    if (cuotasFuturasFinal.length > 0) {
+      const ultimaCuota = cuotasFuturasFinal[cuotasFuturasFinal.length - 1];
+      fechaUltimaCuota = new Date(ultimaCuota.fechaVencimiento);
     } else {
       fechaUltimaCuota.setMonth(fechaUltimaCuota.getMonth() + body.cuotas - 1);
     }
@@ -219,13 +260,7 @@ export async function POST(request: NextRequest) {
       costosDocumentacion: body.costosDocumentacion || 0,
       gastosExtras: body.gastosExtras || 0,
       cuotasExtras: body.cuotasExtras || 0,
-      cuotasFuturas: body.cuotasFuturas
-        ? body.cuotasFuturas.map((cf: any) => ({
-            numeroCuota: cf.numeroCuota,
-            fechaVencimiento: parseLocalDate(cf.fechaVencimiento),
-            valorCuota: cf.valorCuota,
-          }))
-        : undefined,
+      cuotasFuturas: cuotasFuturasFinal,
       cuotas: body.cuotas,
       valorCuota: body.valorCuota,
       interesTotal: body.interesTotal || 0,

@@ -113,6 +113,27 @@ export default function PagoCuotaModal({
     return Math.max(0, valorCuotaEspecifica - totalPagado);
   };
 
+  // Calcular la próxima cuota extra pendiente (como cuotasPagadas + 1 para las normales).
+  // Devuelve el índice de la primera cuota extra no completamente pagada.
+  const calcularSiguienteCuotaExtra = (): number => {
+    for (let n = 1; n <= cuotasExtras; n++) {
+      const numeroCuotaTotal = cuotasTotal + n;
+      const valor = obtenerValorCuota(numeroCuotaTotal, true);
+      const totalPagado = pagos
+        .filter(
+          p =>
+            p.esExtra &&
+            p.numeroCuota === numeroCuotaTotal &&
+            p.estadoPago === 'confirmado'
+        )
+        .reduce((sum, p) => sum + p.montoPago, 0);
+      if (totalPagado < valor) {
+        return n;
+      }
+    }
+    return cuotasExtras + 1;
+  };
+
   useEffect(() => {
     if (open) {
       const nuevaCuota = cuotasPagadas + 1;
@@ -133,7 +154,7 @@ export default function PagoCuotaModal({
         esExtra: false,
       });
       setTipoPago('normal');
-      setNumeroCuotaExtra(1);
+      setNumeroCuotaExtra(calcularSiguienteCuotaExtra());
       setError(null);
     }
   }, [open, financiamientoId, cuotasPagadas, valorCuota, pagos, cuotasFuturas]);
@@ -295,12 +316,24 @@ export default function PagoCuotaModal({
                         esExtra: false,
                       }));
                     } else {
-                      // Para cuota extra, usar el valor de la primera cuota extra si existe
-                      const primeraCuotaExtra = cuotasTotal + 1;
-                      const valorCuotaExtra = obtenerValorCuota(primeraCuotaExtra, true);
+                      // Para cuota extra, usar la próxima cuota extra pendiente
+                      const siguienteExtra = calcularSiguienteCuotaExtra();
+                      setNumeroCuotaExtra(siguienteExtra);
+                      const numeroCuotaExtraTotal = cuotasTotal + siguienteExtra;
+                      const saldoPendiente = calcularSaldoPendiente(
+                        numeroCuotaExtraTotal,
+                        true
+                      );
+                      const valorCuotaExtra = obtenerValorCuota(
+                        numeroCuotaExtraTotal,
+                        true
+                      );
                       setFormData(prev => ({
                         ...prev,
-                        montoPago: Math.floor(valorCuotaExtra),
+                        montoPago:
+                          saldoPendiente > 0
+                            ? Math.floor(saldoPendiente)
+                            : Math.floor(valorCuotaExtra),
                         esExtra: true,
                       }));
                     }
