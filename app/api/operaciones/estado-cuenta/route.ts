@@ -202,6 +202,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const busqueda = searchParams.get('busqueda');
+    const empresa = searchParams.get('empresa') || '';
 
     if (!busqueda || busqueda.trim() === '') {
       return NextResponse.json(
@@ -225,10 +226,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Buscar todos los financiamientos donde el cliente es cliente principal o cliente2
-    const financiamientos = await Financiamiento.find({
+    // Buscar los financiamientos donde el cliente es cliente principal o cliente2
+    // Si se indica una empresa, filtrar solo los de esa empresa
+    const clienteQuery: any = {
       $or: [{ cliente: cliente._id }, { cliente2: cliente._id }],
-    })
+    };
+    if (empresa) {
+      clienteQuery.empresa = empresa;
+    }
+
+    const financiamientos = await Financiamiento.find(clienteQuery)
       .populate('cliente', 'NOMBRE TELEFONO cedula DIRECCION correo profesion')
       .populate('cliente2', 'NOMBRE TELEFONO cedula DIRECCION correo profesion')
       .populate('vehiculo', 'Marca Modelo Matricula Año Color')

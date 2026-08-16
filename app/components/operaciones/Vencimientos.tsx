@@ -15,10 +15,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   TextField,
   Grid,
   Stack,
@@ -32,7 +28,7 @@ import {
   CalendarToday as CalendarIcon,
 } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
-import { FinanciamientoType, EmpresaType } from '@/lib/types';
+import { FinanciamientoType } from '@/lib/types';
 import {
   azulBase,
   azulOscuro,
@@ -55,19 +51,9 @@ interface FinanciamientoConVencimientos extends FinanciamientoType {
   montoTotalPorVencer: number;
 }
 
-// Función para cargar empresas
-async function cargarEmpresas(): Promise<EmpresaType[]> {
-  try {
-    const response = await fetch('/api/empresas?limit=1000');
-    if (!response.ok) {
-      throw new Error('Error al cargar empresas');
-    }
-    const result = await response.json();
-    return result.success ? result.data : result;
-  } catch (error) {
-    console.error('Error cargando empresas:', error);
-    return [];
-  }
+interface VencimientosProps {
+  empresaId: string;
+  empresaNombre?: string;
 }
 
 // Función para obtener vencimientos
@@ -94,33 +80,16 @@ async function obtenerVencimientos(
   }
 }
 
-export default function Vencimientos() {
+export default function Vencimientos({
+  empresaId,
+  empresaNombre,
+}: VencimientosProps) {
   const router = useRouter();
-  const [empresas, setEmpresas] = useState<EmpresaType[]>([]);
-  const [empresaSeleccionada, setEmpresaSeleccionada] = useState<string>('');
   const [fechaInicio, setFechaInicio] = useState<string>('');
   const [fechaFin, setFechaFin] = useState<string>('');
   const [vencimientos, setVencimientos] = useState<FinanciamientoConVencimientos[]>([]);
   const [loading, setLoading] = useState(false);
-  const [loadingEmpresas, setLoadingEmpresas] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Cargar empresas al montar
-  useEffect(() => {
-    const cargar = async () => {
-      try {
-        setLoadingEmpresas(true);
-        const listaEmpresas = await cargarEmpresas();
-        setEmpresas(listaEmpresas.filter((e: EmpresaType) => e.estado === 'activa'));
-      } catch (err) {
-        setError('Error al cargar empresas');
-        console.error('Error:', err);
-      } finally {
-        setLoadingEmpresas(false);
-      }
-    };
-    cargar();
-  }, []);
 
   // Establecer fechas por defecto (mes actual)
   useEffect(() => {
@@ -133,8 +102,8 @@ export default function Vencimientos() {
   }, []);
 
   const handleBuscar = async () => {
-    if (!empresaSeleccionada || !fechaInicio || !fechaFin) {
-      setError('Por favor complete todos los campos');
+    if (!empresaId || !fechaInicio || !fechaFin) {
+      setError('Por favor complete los campos requeridos');
       return;
     }
 
@@ -147,7 +116,7 @@ export default function Vencimientos() {
       setLoading(true);
       setError(null);
       const resultados = await obtenerVencimientos(
-        empresaSeleccionada,
+        empresaId,
         fechaInicio,
         fechaFin
       );
@@ -206,12 +175,12 @@ export default function Vencimientos() {
               color="primary"
               variant="outlined"
             />
-            {vencimientos.length > 0 && empresaSeleccionada && (
+            {vencimientos.length > 0 && empresaId && (
               <Button
                 variant="contained"
                 onClick={() => {
                   const params = new URLSearchParams({
-                    empresa: empresaSeleccionada,
+                    empresa: empresaId,
                     fechaInicio,
                     fechaFin,
                   });
@@ -236,23 +205,6 @@ export default function Vencimientos() {
 
         {/* Filtros */}
         <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid size={{ xs: 12, md: 4 }}>
-            <FormControl fullWidth>
-              <InputLabel>Empresa</InputLabel>
-              <Select
-                value={empresaSeleccionada}
-                onChange={(e) => setEmpresaSeleccionada(e.target.value)}
-                label="Empresa"
-                disabled={loadingEmpresas || loading}
-              >
-                {empresas.map((empresa) => (
-                  <MenuItem key={empresa._id} value={empresa._id}>
-                    {empresa.nombre}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
             <TextField
               fullWidth
@@ -284,7 +236,7 @@ export default function Vencimientos() {
               fullWidth
               variant="contained"
               onClick={handleBuscar}
-              disabled={loading || loadingEmpresas}
+              disabled={loading || !empresaId}
               startIcon={loading ? <CircularProgress size={20} /> : <SearchIcon />}
               sx={{
                 height: '56px',
@@ -441,7 +393,7 @@ export default function Vencimientos() {
         </TableContainer>
       )}
 
-      {vencimientos.length === 0 && !loading && empresaSeleccionada && (
+      {vencimientos.length === 0 && !loading && empresaId && (
         <Paper elevation={3} sx={{ p: 4, textAlign: 'center' }}>
           <Typography variant="body1" color={grisTexto}>
             No se encontraron cuotas por vencer en el rango de fechas seleccionado

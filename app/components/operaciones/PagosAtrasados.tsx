@@ -40,9 +40,15 @@ interface CuotaAtrasada {
 }
 
 // Función para obtener todas las cuotas atrasadas
-async function obtenerCuotasAtrasadas(): Promise<CuotaAtrasada[]> {
+async function obtenerCuotasAtrasadas(empresaId: string): Promise<CuotaAtrasada[]> {
   try {
-    const response = await fetch('/api/pagos-cuotas/atrasadas');
+    const params = new URLSearchParams();
+    if (empresaId) {
+      params.set('empresa', empresaId);
+    }
+    const response = await fetch(
+      `/api/pagos-cuotas/atrasadas?${params.toString()}`
+    );
     if (!response.ok) {
       throw new Error('Error al obtener cuotas atrasadas');
     }
@@ -53,7 +59,14 @@ async function obtenerCuotasAtrasadas(): Promise<CuotaAtrasada[]> {
   }
 }
 
-export default function PagosAtrasados() {
+interface PagosAtrasadosProps {
+  empresaId: string;
+  empresaNombre?: string;
+}
+
+export default function PagosAtrasados({
+  empresaId,
+}: PagosAtrasadosProps) {
   const [cuotasAtrasadas, setCuotasAtrasadas] = useState<CuotaAtrasada[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -62,7 +75,7 @@ export default function PagosAtrasados() {
     try {
       setLoading(true);
       setError(null);
-      const resultados = await obtenerCuotasAtrasadas();
+      const resultados = await obtenerCuotasAtrasadas(empresaId);
       setCuotasAtrasadas(resultados);
     } catch (err) {
       setError('Error al cargar cuotas atrasadas');
@@ -74,7 +87,18 @@ export default function PagosAtrasados() {
 
   useEffect(() => {
     handleCargarCuotasAtrasadas();
-  }, []);
+  }, [empresaId]);
+
+  const handleImprimir = () => {
+    const params = new URLSearchParams();
+    if (empresaId) {
+      params.set('empresa', empresaId);
+    }
+    window.open(
+      `/api/reports/pagos-cuotas-atrasadas?${params.toString()}`,
+      '_blank'
+    );
+  };
 
   return (
     <>
@@ -105,12 +129,7 @@ export default function PagosAtrasados() {
             {cuotasAtrasadas.length > 0 && (
               <Button
                 variant="contained"
-                onClick={() => {
-                  window.open(
-                    `/api/reports/pagos-cuotas-atrasadas?format=pdf`,
-                    '_blank'
-                  );
-                }}
+                onClick={handleImprimir}
                 startIcon={<PrintIcon />}
                 color="primary"
               >

@@ -1,19 +1,27 @@
 import { connectDB } from '@/db/dbConnection';
 import Financiamiento from '@/models/financiamiento';
 import PagoCuota from '@/models/pagoCuota';
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await connectDB();
+
+    const { searchParams } = new URL(request.url);
+    const empresa = searchParams.get('empresa') || '';
 
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0); // Normalizar a inicio del día
 
-    // Obtener todos los financiamientos activos
-    const financiamientos = await Financiamiento.find({
+    // Obtener los financiamientos activos (filtrados por empresa si se especifica)
+    const query: any = {
       estadoFinanciamiento: { $in: ['activo', 'en_mora'] },
-    })
+    };
+    if (empresa) {
+      query.empresa = empresa;
+    }
+
+    const financiamientos = await Financiamiento.find(query)
       .populate('cliente', 'NOMBRE TELEFONO cedula')
       .populate('vehiculo', 'Marca Modelo Matricula Año Color')
       .populate('empresa', 'nombre descripcion telefono')

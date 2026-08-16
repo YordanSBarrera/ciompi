@@ -20,23 +20,37 @@ import ListaFinanciamientos from '../ListaFinanciamientos';
 
 // Función para buscar financiamientos por nombre de cliente
 async function buscarFinanciamientosPorCliente(
-  nombreCliente: string
+  nombreCliente: string,
+  empresaId: string
 ): Promise<FinanciamientoType[]> {
   try {
-    const response = await fetch(
-      `/api/financiamiento?nombreCliente=${encodeURIComponent(nombreCliente)}`
-    );
+    const params = new URLSearchParams({
+      nombreCliente: nombreCliente,
+      limit: '100',
+    });
+    if (empresaId) {
+      params.set('empresa', empresaId);
+    }
+    const response = await fetch(`/api/financiamiento?${params.toString()}`);
     if (!response.ok) {
       throw new Error('Error al buscar financiamientos');
     }
-    return await response.json();
+    const result = await response.json();
+    return result.success ? result.data : [];
   } catch (error) {
     console.error('Error buscando financiamientos:', error);
     return [];
   }
 }
 
-export default function BuscarClientes() {
+interface BuscarClientesProps {
+  empresaId: string;
+  empresaNombre?: string;
+}
+
+export default function BuscarClientes({
+  empresaId,
+}: BuscarClientesProps) {
   const [financiamientos, setFinanciamientos] = useState<FinanciamientoType[]>(
     []
   );
@@ -56,7 +70,8 @@ export default function BuscarClientes() {
       setError(null);
       setHasSearched(true);
       const resultados = await buscarFinanciamientosPorCliente(
-        nombreCliente.trim()
+        nombreCliente.trim(),
+        empresaId
       );
       setFinanciamientos(resultados);
 

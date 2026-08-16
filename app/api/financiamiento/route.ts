@@ -30,6 +30,8 @@ export async function GET(request: NextRequest) {
     
     // Parámetros de filtro
     const estado = searchParams.get('estado') || '';
+    const empresa = searchParams.get('empresa') || '';
+    const nombreCliente = searchParams.get('nombreCliente') || '';
     
     // Construir query base
     let query: any = {};
@@ -39,7 +41,20 @@ export async function GET(request: NextRequest) {
       query.estadoFinanciamiento = estado;
     }
     
-    // Nota: La búsqueda de texto se hace en el cliente (frontend) para mejor rendimiento
+    // Filtro por empresa si existe
+    if (empresa) {
+      query.empresa = empresa;
+    }
+
+    // Filtro por nombre de cliente (solo clientes no eliminados)
+    if (nombreCliente.trim()) {
+      const clientes = await Cliente.find({
+        NOMBRE: { $regex: nombreCliente.trim(), $options: 'i' },
+        eliminado: { $ne: true },
+      }).select('_id');
+      const clienteIds = clientes.map(c => c._id);
+      query.$or = [{ cliente: { $in: clienteIds } }, { cliente2: { $in: clienteIds } }];
+    }
     
     // Obtener financiamientos con paginación y populate optimizado
     const financiamientos = await Financiamiento.find(query)

@@ -1,21 +1,38 @@
 import { connectDB } from '@/db/dbConnection';
+import Empresa from '@/models/empresa';
 import Financiamiento from '@/models/financiamiento';
 import PagoCuota from '@/models/pagoCuota';
 import { formatMoney, normalizarMoneda } from '@/lib/moneda';
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { MonedaTipo } from '@/lib/const';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     await connectDB();
+
+    const { searchParams } = new URL(request.url);
+    const empresaId = searchParams.get('empresa') || '';
 
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0); // Normalizar a inicio del día
 
-    // Obtener todos los financiamientos activos
-    const financiamientos = await Financiamiento.find({
+    // Cargar empresa si viene indicada (para el encabezado del reporte)
+    const empresaRaw = empresaId
+      ? await Empresa.findById(empresaId).lean()
+      : null;
+    const empresa: { nombre: string } | null = empresaRaw
+      ? (empresaRaw as unknown as { nombre: string })
+      : null;
+
+    // Obtener los financiamientos activos (filtrados por empresa si se especifica)
+    const query: any = {
       estadoFinanciamiento: { $in: ['activo', 'en_mora'] },
-    })
+    };
+    if (empresaId) {
+      query.empresa = empresaId;
+    }
+
+    const financiamientos = await Financiamiento.find(query)
       .populate('cliente', 'NOMBRE TELEFONO cedula')
       .populate('vehiculo', 'Marca Modelo Matricula Año Color')
       .populate('empresa', 'nombre descripcion telefono')
@@ -139,7 +156,10 @@ export async function GET() {
     });
 
     // Generar HTML para impresión
-    const html = generateCuotasAtrasadasReportHTML(cuotasAtrasadas);
+    const html = generateCuotasAtrasadasReportHTML(
+      cuotasAtrasadas,
+      empresa?.nombre || ''
+    );
 
     return new NextResponse(html, {
       headers: {
@@ -168,7 +188,8 @@ function generateCuotasAtrasadasReportHTML(
     vehiculo: any;
     empresa: any;
     diasAtraso: number;
-  }>
+  }>,
+  empresaNombre: string
 ): string {
   const fechaActual = new Date().toLocaleDateString('es-UY', {
     year: 'numeric',
@@ -361,6 +382,11 @@ function generateCuotasAtrasadasReportHTML(
 <body>
   <div class="header">
     <h1>REPORTE DE CUOTAS ATRASADAS</h1>
+    ${
+      empresaNombre
+        ? `<p style="font-size:13px;color:#333;margin-top:2px;"><strong>Empresa:</strong> ${empresaNombre}</p>`
+        : ''
+    }
     <p class="fecha">Generado el ${fechaActual}</p>
   </div>
   
