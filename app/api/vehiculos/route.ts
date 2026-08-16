@@ -2,10 +2,14 @@ import { connectDB } from '@/db/dbConnection';
 import { getUserIdFromToken, requireAdminAuth } from '@/lib/server-utils';
 import Vehiculo from '@/models/vehiculo';
 import Financiamiento from '@/models/financiamiento';
+import Cliente from '@/models/cliente';
+import Usuario from '@/models/Usuario';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Forzar registro de modelos para populate
 void Financiamiento;
+void Cliente;
+void Usuario;
 
 export async function GET(request: NextRequest) {
   try {

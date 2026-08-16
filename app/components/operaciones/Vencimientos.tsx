@@ -17,7 +17,7 @@ import {
   TableRow,
   TextField,
   Grid,
-  Stack,
+  
   IconButton,
   Tooltip,
   Pagination,
@@ -69,7 +69,9 @@ async function obtenerVencimientos(
       fechaInicio,
       fechaFin,
     });
-    const response = await fetch(`/api/operaciones/vencimientos?${params.toString()}`);
+    const response = await fetch(
+      `/api/operaciones/vencimientos?${params.toString()}`
+    );
     if (!response.ok) {
       throw new Error('Error al obtener vencimientos');
     }
@@ -88,7 +90,9 @@ export default function Vencimientos({
   const router = useRouter();
   const [fechaInicio, setFechaInicio] = useState<string>('');
   const [fechaFin, setFechaFin] = useState<string>('');
-  const [vencimientos, setVencimientos] = useState<FinanciamientoConVencimientos[]>([]);
+  const [vencimientos, setVencimientos] = useState<
+    FinanciamientoConVencimientos[]
+  >([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
@@ -234,7 +238,7 @@ export default function Vencimientos({
               label="Fecha Inicio"
               type="date"
               value={fechaInicio}
-              onChange={(e) => setFechaInicio(e.target.value)}
+              onChange={e => setFechaInicio(e.target.value)}
               InputLabelProps={{
                 shrink: true,
               }}
@@ -247,7 +251,7 @@ export default function Vencimientos({
               label="Fecha Fin"
               type="date"
               value={fechaFin}
-              onChange={(e) => setFechaFin(e.target.value)}
+              onChange={e => setFechaFin(e.target.value)}
               InputLabelProps={{
                 shrink: true,
               }}
@@ -260,7 +264,9 @@ export default function Vencimientos({
               variant="contained"
               onClick={handleBuscar}
               disabled={loading || !empresaId}
-              startIcon={loading ? <CircularProgress size={20} /> : <SearchIcon />}
+              startIcon={
+                loading ? <CircularProgress size={20} /> : <SearchIcon />
+              }
               sx={{
                 height: '56px',
                 background: `linear-gradient(135deg, ${azulBase} 0%, ${azulOscuro} 100%)`,
@@ -294,24 +300,28 @@ export default function Vencimientos({
             }}
           >
             <Typography variant="body1" fontWeight={600}>
-              Total Cuotas: <Chip label={totalCuotasPorVencer} color="primary" size="small" />
+              Total Cuotas:{' '}
+              <Chip label={totalCuotasPorVencer} color="primary" size="small" />
             </Typography>
-            <Typography variant="body1" fontWeight={600} component="div">
+            <Typography
+              variant="body1"
+              fontWeight={600}
+              component="div"
+              sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}
+            >
               Total por moneda:
-              <Stack direction="row" spacing={1} sx={{ mt: 0.5, flexWrap: 'wrap' }}>
-                <Chip
-                  label={formatMoney(totalPorMoneda.USD, 'USD')}
-                  color="primary"
-                  size="small"
-                  variant="outlined"
-                />
-                <Chip
-                  label={formatMoney(totalPorMoneda.UYU, 'UYU')}
-                  color="primary"
-                  size="small"
-                  variant="outlined"
-                />
-              </Stack>
+              <Chip
+                label={formatMoney(totalPorMoneda.USD, 'USD')}
+                color="primary"
+                size="small"
+                variant="outlined"
+              />
+              <Chip
+                label={formatMoney(totalPorMoneda.UYU, 'UYU')}
+                color="primary"
+                size="small"
+                variant="outlined"
+              />
             </Typography>
           </Box>
         )}
@@ -323,23 +333,37 @@ export default function Vencimientos({
           <Table>
             <TableHead>
               <TableRow sx={{ backgroundColor: azulBase }}>
-                <TableCell sx={{ color: blanco, fontWeight: 600 }}>Cliente</TableCell>
-                <TableCell sx={{ color: blanco, fontWeight: 600 }}>Vehículo</TableCell>
-                <TableCell sx={{ color: blanco, fontWeight: 600 }}>Cuotas por Vencer</TableCell>
-                <TableCell sx={{ color: blanco, fontWeight: 600 }}>Monto Total</TableCell>
-                <TableCell sx={{ color: blanco, fontWeight: 600 }}>Próxima Cuota</TableCell>
-                <TableCell sx={{ color: blanco, fontWeight: 600 }}>Acciones</TableCell>
+                <TableCell sx={{ color: blanco, fontWeight: 600 }}>
+                  Cliente
+                </TableCell>
+                <TableCell sx={{ color: blanco, fontWeight: 600 }}>
+                  Vehículo
+                </TableCell>
+                <TableCell sx={{ color: blanco, fontWeight: 600 }}>
+                  Cuotas por Vencer
+                </TableCell>
+                <TableCell sx={{ color: blanco, fontWeight: 600 }}>
+                  Monto Total
+                </TableCell>
+                <TableCell sx={{ color: blanco, fontWeight: 600 }}>
+                  Próxima Cuota
+                </TableCell>
+                <TableCell sx={{ color: blanco, fontWeight: 600 }}>
+                  Acciones
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {vencimientosPaginados.map((fin, index) => {
                 const clienteNombre =
-                  typeof fin.cliente === 'object' && fin.cliente ? fin.cliente.NOMBRE : 's/n';
+                  typeof fin.cliente === 'object' && fin.cliente
+                    ? fin.cliente.NOMBRE
+                    : 's/n';
                 const vehiculoInfo =
                   typeof fin.vehiculo === 'object' && fin.vehiculo
                     ? `${fin.vehiculo.Marca ?? ''} ${fin.vehiculo.Modelo ?? ''}`.trim()
                     : 's/v';
-                
+
                 // Ordenar cuotas por fecha y obtener la próxima
                 const cuotasOrdenadas = [...fin.cuotasPorVencer].sort(
                   (a, b) =>
@@ -454,11 +478,11 @@ export default function Vencimientos({
       {vencimientos.length === 0 && !loading && empresaId && (
         <Paper elevation={3} sx={{ p: 4, textAlign: 'center' }}>
           <Typography variant="body1" color={grisTexto}>
-            No se encontraron cuotas por vencer en el rango de fechas seleccionado
+            No se encontraron cuotas por vencer en el rango de fechas
+            seleccionado
           </Typography>
         </Paper>
       )}
     </>
   );
 }
-

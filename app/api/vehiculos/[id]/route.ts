@@ -2,10 +2,14 @@ import { connectDB } from '@/db/dbConnection';
 import { requireAdminAuth, requireAuth } from '@/lib/server-utils';
 import Vehiculo from '@/models/vehiculo';
 import Financiamiento from '@/models/financiamiento';
+import Cliente from '@/models/cliente';
+import Usuario from '@/models/Usuario';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Forzar registro de modelos para populate
 void Financiamiento;
+void Cliente;
+void Usuario;
 
 interface FinanciamientoActivoResumen {
   _id: string;

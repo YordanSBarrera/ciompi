@@ -2,9 +2,15 @@ import { connectDB } from '@/db/dbConnection';
 import Empresa from '@/models/empresa';
 import Financiamiento from '@/models/financiamiento';
 import PagoCuota from '@/models/pagoCuota';
+import Cliente from '@/models/cliente';
+import Vehiculo from '@/models/vehiculo';
 import { formatMoney, normalizarMoneda } from '@/lib/moneda';
 import { NextResponse, NextRequest } from 'next/server';
 import { MonedaTipo } from '@/lib/const';
+
+// Forzar registro de modelos para populate (evita MissingSchemaError)
+void Cliente;
+void Vehiculo;
 
 export async function GET(request: NextRequest) {
   try {

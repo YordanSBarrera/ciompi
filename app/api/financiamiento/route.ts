@@ -3,6 +3,7 @@ import Financiamiento from '@/models/financiamiento';
 import Cliente from '@/models/cliente';
 import Vehiculo from '@/models/vehiculo';
 import Empresa from '@/models/empresa';
+import Usuario from '@/models/Usuario';
 import { NextResponse, NextRequest } from 'next/server';
 import {
   getUserIdFromToken,
@@ -16,6 +17,7 @@ import { normalizarMoneda } from '@/lib/moneda';
 void Cliente;
 void Vehiculo;
 void Empresa;
+void Usuario;
 
 export async function GET(request: NextRequest) {
   try {

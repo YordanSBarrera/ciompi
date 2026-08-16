@@ -1,8 +1,12 @@
 import { connectDB } from '@/db/dbConnection';
 import PagoCuota from '@/models/pagoCuota';
 import Financiamiento from '@/models/financiamiento';
+import Usuario from '@/models/Usuario';
 import { NextResponse, NextRequest } from 'next/server';
 import { getUserIdFromToken, parseLocalDate, requireAdminAuth } from '@/lib/server-utils';
+
+// Forzar registro de modelos para populate (evita MissingSchemaError)
+void Usuario;
 
 interface CuotaFuturaResumen {
   numeroCuota: number;

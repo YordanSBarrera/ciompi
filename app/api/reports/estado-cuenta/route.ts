@@ -2,8 +2,14 @@ import { connectDB } from '@/db/dbConnection';
 import Cliente from '@/models/cliente';
 import Financiamiento from '@/models/financiamiento';
 import PagoCuota from '@/models/pagoCuota';
+import Empresa from '@/models/empresa';
+import Vehiculo from '@/models/vehiculo';
 import { formatMoney, normalizarMoneda } from '@/lib/moneda';
 import { NextRequest, NextResponse } from 'next/server';
+
+// Forzar registro de modelos para populate (evita MissingSchemaError)
+void Empresa;
+void Vehiculo;
 
 // Función para escapar HTML y prevenir errores
 function escapeHtml(text: any): string {

@@ -2,9 +2,15 @@ import { connectDB } from '@/db/dbConnection';
 import Cliente from '@/models/cliente';
 import Financiamiento from '@/models/financiamiento';
 import PagoCuota from '@/models/pagoCuota';
+import Vehiculo from '@/models/vehiculo';
+import Empresa from '@/models/empresa';
 import { NextRequest, NextResponse } from 'next/server';
 import { normalizarMoneda } from '@/lib/moneda';
 import { CuotaEstado, MonedaTipo } from '@/lib/const';
+
+// Forzar registro de modelos para populate (evita MissingSchemaError)
+void Vehiculo;
+void Empresa;
 
 interface CuotaDetalle {
   numeroCuota: number;
