@@ -11,10 +11,7 @@ import {
   Paper,
   InputAdornment,
 } from '@mui/material';
-import {
-  Search as SearchIcon,
-  Clear as ClearIcon,
-} from '@mui/icons-material';
+import { Search as SearchIcon, Clear as ClearIcon } from '@mui/icons-material';
 import { FinanciamientoType } from '@/lib/types';
 import ListaFinanciamientos from '../ListaFinanciamientos';
 
@@ -48,9 +45,7 @@ interface BuscarClientesProps {
   empresaNombre?: string;
 }
 
-export default function BuscarClientes({
-  empresaId,
-}: BuscarClientesProps) {
+export default function BuscarClientes({ empresaId }: BuscarClientesProps) {
   const [financiamientos, setFinanciamientos] = useState<FinanciamientoType[]>(
     []
   );
@@ -164,7 +159,9 @@ export default function BuscarClientes({
 
       {error && !loading && (
         <Alert
-          severity={hasSearched && financiamientos.length === 0 ? 'info' : 'error'}
+          severity={
+            hasSearched && financiamientos.length === 0 ? 'info' : 'error'
+          }
           sx={{ mb: 2 }}
         >
           {error}
@@ -180,6 +177,7 @@ export default function BuscarClientes({
           <ListaFinanciamientos
             financiamientos={financiamientos}
             onFinanciamientoEliminado={handleFinanciamientoEliminado}
+            VerBarraDeBusqueda={false}
           />
         </Box>
       )}
@@ -194,4 +192,3 @@ export default function BuscarClientes({
     </>
   );
 }
-

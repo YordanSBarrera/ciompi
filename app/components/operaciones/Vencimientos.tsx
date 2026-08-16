@@ -20,6 +20,7 @@ import {
   Stack,
   IconButton,
   Tooltip,
+  Pagination,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -90,6 +91,27 @@ export default function Vencimientos({
   const [vencimientos, setVencimientos] = useState<FinanciamientoConVencimientos[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
+
+  const pagination = {
+    page,
+    limit: pageSize,
+    total: vencimientos.length,
+    pages: Math.ceil(vencimientos.length / pageSize),
+  };
+
+  const vencimientosPaginados = vencimientos.slice(
+    (page - 1) * pageSize,
+    page * pageSize
+  );
+
+  const handlePageChange = (
+    _event: React.ChangeEvent<unknown>,
+    value: number
+  ) => {
+    setPage(value);
+  };
 
   // Establecer fechas por defecto (mes actual)
   useEffect(() => {
@@ -121,6 +143,7 @@ export default function Vencimientos({
         fechaFin
       );
       setVencimientos(resultados);
+      setPage(1);
     } catch (err) {
       setError('Error al buscar vencimientos');
       console.error('Error:', err);
@@ -309,7 +332,7 @@ export default function Vencimientos({
               </TableRow>
             </TableHead>
             <TableBody>
-              {vencimientos.map((fin, index) => {
+              {vencimientosPaginados.map((fin, index) => {
                 const clienteNombre =
                   typeof fin.cliente === 'object' && fin.cliente ? fin.cliente.NOMBRE : 's/n';
                 const vehiculoInfo =
@@ -391,6 +414,41 @@ export default function Vencimientos({
             </TableBody>
           </Table>
         </TableContainer>
+      )}
+
+      {/* Controles de paginación */}
+      {pagination.pages > 1 && (
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            mt: 3,
+            gap: 2,
+            flexWrap: 'wrap',
+          }}
+        >
+          <Pagination
+            count={pagination.pages}
+            page={pagination.page}
+            onChange={handlePageChange}
+            color="primary"
+            size="large"
+            showFirstButton
+            showLastButton
+            sx={{
+              '& .MuiPaginationItem-root': {
+                fontSize: '0.95rem',
+                fontWeight: 500,
+              },
+            }}
+          />
+          <Typography variant="body2" color={grisTexto}>
+            Mostrando {(pagination.page - 1) * pagination.limit + 1} -{' '}
+            {Math.min(pagination.page * pagination.limit, pagination.total)} de{' '}
+            {pagination.total}
+          </Typography>
+        </Box>
       )}
 
       {vencimientos.length === 0 && !loading && empresaId && (
