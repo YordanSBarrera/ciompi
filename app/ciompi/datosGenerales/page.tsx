@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import AuthGuard from '@/app/components/AuthGuard';
 import {
   Box,
@@ -15,7 +15,13 @@ import {
   Chip,
   Button,
   Stack,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
 } from '@mui/material';
+import { SelectChangeEvent } from '@mui/material/Select';
+import { EmpresaType } from '@/lib/types';
 import {
   People as PeopleIcon,
   Business as BusinessIcon,
@@ -29,18 +35,26 @@ import {
   Person as PersonIcon,
   Assessment as AssessmentIcon,
   Print as PrintIcon,
+  WarningAmber as WarningIcon,
 } from '@mui/icons-material';
 import {
   azulBase,
   azulClaro,
   naranja,
   turquesa,
-  grisClaro,
   grisMedio,
   verde,
   rojo,
 } from '@/lib/color';
 import CardDG from './CardDG';
+import { formatMoney, type MonedaFinanciamiento } from '@/lib/moneda';
+
+interface MontoPorMoneda {
+  montoTotal: number;
+  saldoPendiente: number;
+  montoRecaudado: number;
+  cantidad: number;
+}
 
 interface StatsData {
   clientes: {
@@ -58,9 +72,10 @@ interface StatsData {
     cancelados: number;
     enMora: number;
     hoy: number;
-    montoTotal: number;
-    saldoPendiente: number;
-    montoRecaudado: number;
+    montosPorMoneda: Record<MonedaFinanciamiento, MontoPorMoneda>;
+    montosVigentesPorMoneda: Record<MonedaFinanciamiento, MontoPorMoneda>;
+    montosActivosPorMoneda: Record<MonedaFinanciamiento, MontoPorMoneda>;
+    montosEnMoraPorMoneda: Record<MonedaFinanciamiento, MontoPorMoneda>;
   };
   empresas: {
     total: number;
@@ -70,14 +85,184 @@ interface StatsData {
   };
 }
 
+const MONTO_VACIO = {
+  montoTotal: 0,
+  saldoPendiente: 0,
+  montoRecaudado: 0,
+  cantidad: 0,
+};
+
+const pctCobrado = (pagado: number, total: number) =>
+  total > 0 ? Math.round((pagado / total) * 100) : 0;
+
+interface TarjetaMonedaProps {
+  titulo: string;
+  icon: React.ReactNode;
+  color: string;
+  usd: number;
+  uyu: number;
+  subtitulo?: string;
+}
+
+const TarjetaMoneda = ({
+  titulo,
+  icon,
+  color,
+  usd,
+  uyu,
+  subtitulo,
+}: TarjetaMonedaProps) => (
+  <Card
+    sx={{
+      background: `linear-gradient(135deg, ${color} 0%, ${color}CC 100%)`,
+      color: 'white',
+      height: '100%',
+      boxShadow: 3,
+    }}
+  >
+    <CardContent>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            width: 40,
+            height: 40,
+            borderRadius: 2,
+            bgcolor: 'rgba(255,255,255,0.2)',
+            mr: 2,
+            flexShrink: 0,
+          }}
+        >
+          {icon}
+        </Box>
+        <Typography variant="h6" sx={{ fontWeight: 600, lineHeight: 1.3 }}>
+          {titulo}
+        </Typography>
+      </Box>
+      <Typography variant="h4" sx={{ fontWeight: 700, lineHeight: 1.15 }}>
+        {formatMoney(usd, 'USD')}
+      </Typography>
+      <Typography
+        variant="h5"
+        sx={{ fontWeight: 600, opacity: 0.9, lineHeight: 1.15 }}
+      >
+        {formatMoney(uyu, 'UYU')}
+      </Typography>
+      {subtitulo && (
+        <Typography variant="body2" sx={{ opacity: 0.9, mt: 1 }}>
+          {subtitulo}
+        </Typography>
+      )}
+    </CardContent>
+  </Card>
+);
+
+interface BannerMontoProps {
+  titulo: string;
+  icon: React.ReactNode;
+  usd: number;
+  uyu: number;
+  subtitulo?: React.ReactNode;
+}
+
+const BannerMonto = ({
+  titulo,
+  icon,
+  usd,
+  uyu,
+  subtitulo,
+}: BannerMontoProps) => (
+  <Card
+    sx={{
+      background: `linear-gradient(135deg, ${azulBase} 0%, ${azulClaro} 100%)`,
+      color: 'white',
+      mb: 3,
+      boxShadow: 4,
+    }}
+  >
+    <CardContent sx={{ p: { xs: 3, md: 4 } }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+        <Box
+          sx={{
+            width: 48,
+            height: 48,
+            borderRadius: 2,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            bgcolor: 'rgba(255,255,255,0.2)',
+            flexShrink: 0,
+          }}
+        >
+          {icon}
+        </Box>
+        <Typography variant="h5" sx={{ fontWeight: 700 }}>
+          {titulo}
+        </Typography>
+      </Box>
+      <Stack
+        direction={{ xs: 'column', sm: 'row' }}
+        spacing={3}
+        alignItems={{ xs: 'flex-start', sm: 'center' }}
+      >
+        <Box>
+          <Typography variant="overline" sx={{ opacity: 0.85 }}>
+            Dólares (USD)
+          </Typography>
+          <Typography
+            variant="h3"
+            sx={{ fontWeight: 800, lineHeight: 1.1, wordBreak: 'break-word' }}
+          >
+            {formatMoney(usd, 'USD')}
+          </Typography>
+        </Box>
+        <Box>
+          <Typography variant="overline" sx={{ opacity: 0.85 }}>
+            Pesos (UYU)
+          </Typography>
+          <Typography
+            variant="h4"
+            sx={{ fontWeight: 700, opacity: 0.95, lineHeight: 1.1 }}
+          >
+            {formatMoney(uyu, 'UYU')}
+          </Typography>
+        </Box>
+      </Stack>
+      {subtitulo && (
+        <Typography variant="body2" sx={{ opacity: 0.9, mt: 2 }}>
+          {subtitulo}
+        </Typography>
+      )}
+    </CardContent>
+  </Card>
+);
+
 export default function DatosGeneralesPage() {
   const [stats, setStats] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [empresas, setEmpresas] = useState<EmpresaType[]>([]);
+  const [empresaId, setEmpresaId] = useState<string>('');
 
-  const loadStats = async () => {
+  const loadEmpresas = useCallback(async () => {
     try {
-      const response = await fetch('/api/stats');
+      const response = await fetch('/api/empresas');
+      if (response.ok) {
+        const result = await response.json();
+        setEmpresas(result.success ? result.data : []);
+      }
+    } catch (error) {
+      console.error('Error cargando empresas:', error);
+    }
+  }, []);
+
+  const loadStats = useCallback(async (empresa: string) => {
+    try {
+      setLoading(true);
+      const query = empresa ? `?empresa=${encodeURIComponent(empresa)}` : '';
+      const response = await fetch(`/api/stats${query}`);
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
@@ -90,23 +275,23 @@ export default function DatosGeneralesPage() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    loadStats();
-  }, []);
+    loadEmpresas();
+  }, [loadEmpresas]);
+
+  useEffect(() => {
+    loadStats(empresaId);
+  }, [empresaId, loadStats]);
 
   const handleRefresh = () => {
     setRefreshing(true);
-    loadStats();
+    loadStats(empresaId);
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    }).format(amount);
+  const handleEmpresaChange = (event: SelectChangeEvent) => {
+    setEmpresaId(event.target.value);
   };
 
   const handleImprimirClientes = () => {
@@ -123,6 +308,32 @@ export default function DatosGeneralesPage() {
       '_blank'
     );
   };
+
+  const fin = stats?.financiamientos;
+
+  // Vigentes: activos + en mora
+  const vig = fin?.montosVigentesPorMoneda ?? {
+    USD: { ...MONTO_VACIO },
+    UYU: { ...MONTO_VACIO },
+  };
+  // En mora
+  const enMora = fin?.montosEnMoraPorMoneda ?? {
+    USD: { ...MONTO_VACIO },
+    UYU: { ...MONTO_VACIO },
+  };
+  // Históricos: todos los financiamientos
+  const hist = fin?.montosPorMoneda ?? {
+    USD: { ...MONTO_VACIO },
+    UYU: { ...MONTO_VACIO },
+  };
+
+  const vigCantidad = (vig.USD.cantidad || 0) + (vig.UYU.cantidad || 0);
+  const enMoraCantidad = (enMora.USD.cantidad || 0) + (enMora.UYU.cantidad || 0);
+
+  const vigPctUsd = pctCobrado(vig.USD.montoRecaudado, vig.USD.montoTotal);
+  const vigPctUyu = pctCobrado(vig.UYU.montoRecaudado, vig.UYU.montoTotal);
+  const histPctUsd = pctCobrado(hist.USD.montoRecaudado, hist.USD.montoTotal);
+  const histPctUyu = pctCobrado(hist.UYU.montoRecaudado, hist.UYU.montoTotal);
 
   return (
     <AuthGuard>
@@ -160,13 +371,43 @@ export default function DatosGeneralesPage() {
                 Estadísticas e información general de CIOMPI
               </Typography>
             </Box>
-            <IconButton
-              onClick={handleRefresh}
-              disabled={refreshing}
-              sx={{ color: 'white' }}
-            >
-              <RefreshIcon />
-            </IconButton>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <FormControl size="small" sx={{ minWidth: 240 }}>
+                <InputLabel id="empresa-select-label" sx={{ color: 'white' }}>
+                  Empresa
+                </InputLabel>
+                <Select
+                  labelId="empresa-select-label"
+                  label="Empresa"
+                  value={empresaId}
+                  onChange={handleEmpresaChange}
+                  sx={{
+                    color: 'white',
+                    '& .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'rgba(255,255,255,0.5)',
+                    },
+                    '& .MuiSvgIcon-root': { color: 'white' },
+                    '&:hover .MuiOutlinedInput-notchedOutline': {
+                      borderColor: 'white',
+                    },
+                  }}
+                >
+                  <MenuItem value="">Todas las empresas</MenuItem>
+                  {empresas.map(empresa => (
+                    <MenuItem key={empresa._id} value={empresa._id}>
+                      {empresa.nombre}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <IconButton
+                onClick={handleRefresh}
+                disabled={refreshing}
+                sx={{ color: 'white' }}
+              >
+                <RefreshIcon />
+              </IconButton>
+            </Stack>
           </Box>
         </Paper>
 
@@ -176,146 +417,157 @@ export default function DatosGeneralesPage() {
           </Box>
         ) : (
           <>
-            <CardDG titulo="Estadísticas Financieras">
+            {/* 1. Resumen de Financiamientos Vigentes */}
+            <CardDG titulo="Resumen de Financiamientos Vigentes">
+              <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                Financiamientos en curso (activos + en mora). Montos por moneda
+                (USD y UYU).
+              </Typography>
+
+              <BannerMonto
+                titulo="Monto actual financiado"
+                icon={<AccountBalanceIcon sx={{ fontSize: 28 }} />}
+                usd={vig.USD.montoTotal}
+                uyu={vig.UYU.montoTotal}
+                subtitulo={`${vigCantidad} financiamientos vigentes (${fin?.activos ?? 0} activos + ${
+                  fin?.enMora ?? 0
+                } en mora)`}
+              />
+
               <Grid container spacing={3}>
                 <Grid size={{ xs: 12, md: 4 }}>
-                  <Card sx={{ height: '100%', boxShadow: 3 }}>
-                    <CardContent>
-                      <Box
-                        sx={{ display: 'flex', alignItems: 'center', mb: 2 }}
-                      >
-                        <AttachMoneyIcon
-                          sx={{ fontSize: 32, color: verde, mr: 2 }}
-                        />
-                        <Typography variant="h6">
-                          Monto Total Financiado
-                        </Typography>
-                      </Box>
-                      <Typography
-                        variant="h4"
-                        sx={{ fontWeight: 600, color: verde }}
-                      >
-                        {formatCurrency(stats?.financiamientos.montoTotal || 0)}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        color="textSecondary"
-                        sx={{ mt: 1 }}
-                      >
-                        Suma total de todos los financiamientos
-                      </Typography>
-                    </CardContent>
-                  </Card>
+                  <TarjetaMoneda
+                    titulo="Recaudado de los vigentes"
+                    icon={<TrendingUpIcon sx={{ fontSize: 24 }} />}
+                    color={verde}
+                    usd={vig.USD.montoRecaudado}
+                    uyu={vig.UYU.montoRecaudado}
+                    subtitulo={`Progreso de cobro: ${vigPctUsd}% (U$S) · ${vigPctUyu}% ($U)`}
+                  />
                 </Grid>
-
                 <Grid size={{ xs: 12, md: 4 }}>
-                  <Card sx={{ height: '100%', boxShadow: 3 }}>
-                    <CardContent>
-                      <Box
-                        sx={{ display: 'flex', alignItems: 'center', mb: 2 }}
-                      >
-                        <TrendingUpIcon
-                          sx={{ fontSize: 32, color: azulBase, mr: 2 }}
-                        />
-                        <Typography variant="h6">Monto Recaudado</Typography>
-                      </Box>
-                      <Typography
-                        variant="h4"
-                        sx={{ fontWeight: 600, color: azulBase }}
-                      >
-                        {formatCurrency(
-                          stats?.financiamientos.montoRecaudado || 0
-                        )}
-                      </Typography>
-                      <LinearProgress
-                        variant="determinate"
-                        value={
-                          stats && stats.financiamientos.montoTotal > 0
-                            ? (stats.financiamientos.montoRecaudado /
-                                stats.financiamientos.montoTotal) *
-                              100
-                            : 0
-                        }
-                        sx={{ mt: 2, height: 8, borderRadius: 1 }}
-                      />
-                      <Typography
-                        variant="body2"
-                        color="textSecondary"
-                        sx={{ mt: 1 }}
-                      >
-                        {stats && stats.financiamientos.montoTotal > 0
-                          ? `${(
-                              (stats.financiamientos.montoRecaudado /
-                                stats.financiamientos.montoTotal) *
-                              100
-                            ).toFixed(1)}% del total recaudado`
-                          : 'Sin datos'}
-                      </Typography>
-                    </CardContent>
-                  </Card>
+                  <TarjetaMoneda
+                    titulo="Saldo por cobrar pendiente"
+                    icon={<ScheduleIcon sx={{ fontSize: 24 }} />}
+                    color={naranja}
+                    usd={vig.USD.saldoPendiente}
+                    uyu={vig.UYU.saldoPendiente}
+                    subtitulo="Lo que resta cobrar de los financiamientos vigentes"
+                  />
                 </Grid>
-
                 <Grid size={{ xs: 12, md: 4 }}>
-                  <Card sx={{ height: '100%', boxShadow: 3 }}>
-                    <CardContent>
-                      <Box
-                        sx={{ display: 'flex', alignItems: 'center', mb: 2 }}
-                      >
-                        <ScheduleIcon
-                          sx={{ fontSize: 32, color: naranja, mr: 2 }}
-                        />
-                        <Typography variant="h6">Saldo Pendiente</Typography>
-                      </Box>
-                      <Typography
-                        variant="h4"
-                        sx={{ fontWeight: 600, color: naranja }}
-                      >
-                        {formatCurrency(
-                          stats?.financiamientos.saldoPendiente || 0
-                        )}
-                      </Typography>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          gap: 1,
-                          mt: 2,
-                          flexWrap: 'wrap',
-                        }}
-                      >
-                        <Chip
-                          icon={<CheckCircleIcon />}
-                          label={`${stats?.financiamientos.finalizados || 0} finalizados`}
-                          size="small"
-                          color="success"
-                        />
-                        <Chip
-                          label={`${stats?.financiamientos.activos || 0} activos`}
-                          size="small"
-                          color="warning"
-                        />
-                        {stats && (stats.financiamientos.enMora || 0) > 0 && (
-                          <Chip
-                            label={`${stats.financiamientos.enMora} en mora`}
-                            size="small"
-                            color="error"
-                          />
-                        )}
-                        {stats &&
-                          (stats.financiamientos.cancelados || 0) > 0 && (
-                            <Chip
-                              label={`${stats.financiamientos.cancelados} cancelados`}
-                              size="small"
-                              color="default"
-                            />
-                          )}
-                      </Box>
-                    </CardContent>
-                  </Card>
+                  <TarjetaMoneda
+                    titulo="Saldo en mora"
+                    icon={<WarningIcon sx={{ fontSize: 24 }} />}
+                    color={rojo}
+                    usd={enMora.USD.saldoPendiente}
+                    uyu={enMora.UYU.saldoPendiente}
+                    subtitulo={`${enMoraCantidad} financiamientos en mora`}
+                  />
                 </Grid>
               </Grid>
+
+              <Stack
+                direction="row"
+                spacing={1}
+                flexWrap="wrap"
+                useFlexGap
+                sx={{ mt: 2 }}
+              >
+                <Chip
+                  icon={<CheckCircleIcon />}
+                  label={`${fin?.activos ?? 0} activos`}
+                  size="small"
+                  color="success"
+                />
+                <Chip
+                  icon={<WarningIcon />}
+                  label={`${fin?.enMora ?? 0} en mora`}
+                  size="small"
+                  color="error"
+                />
+                <Chip
+                  label={`${fin?.total ?? 0} financiamientos en total`}
+                  size="small"
+                  color="default"
+                />
+              </Stack>
             </CardDG>
 
-            <CardDG titulo="Estadísticas de Clientes y Vehículos">
+            {/* 2. Datos Históricos */}
+            <CardDG titulo="Datos Históricos">
+              <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+                Totales de todos los financiamientos registrados (incluye
+                activos, finalizados y cancelados).
+              </Typography>
+
+              <Grid container spacing={3}>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <TarjetaMoneda
+                    titulo="Total financiado histórico"
+                    icon={<AttachMoneyIcon sx={{ fontSize: 24 }} />}
+                    color={azulBase}
+                    usd={hist.USD.montoTotal}
+                    uyu={hist.UYU.montoTotal}
+                    subtitulo="Monto total financiado de todos los tiempos"
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <TarjetaMoneda
+                    titulo="Total recaudado histórico"
+                    icon={<TrendingUpIcon sx={{ fontSize: 24 }} />}
+                    color={verde}
+                    usd={hist.USD.montoRecaudado}
+                    uyu={hist.UYU.montoRecaudado}
+                    subtitulo={`Progreso de cobro: ${histPctUsd}% (U$S) · ${histPctUyu}% ($U)`}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <TarjetaMoneda
+                    titulo="Saldo global pendiente"
+                    icon={<ScheduleIcon sx={{ fontSize: 24 }} />}
+                    color={naranja}
+                    usd={hist.USD.saldoPendiente}
+                    uyu={hist.UYU.saldoPendiente}
+                    subtitulo="Saldo por cobrar de todos los financiamientos"
+                  />
+                </Grid>
+              </Grid>
+
+              <Stack
+                direction="row"
+                spacing={1}
+                flexWrap="wrap"
+                useFlexGap
+                sx={{ mt: 2 }}
+              >
+                <Chip
+                  icon={<AccountBalanceIcon />}
+                  label={`${fin?.total ?? 0} total`}
+                  size="small"
+                  color="primary"
+                />
+                <Chip
+                  icon={<CheckCircleIcon />}
+                  label={`${fin?.finalizados ?? 0} finalizados`}
+                  size="small"
+                  color="success"
+                />
+                <Chip
+                  label={`${fin?.cancelados ?? 0} cancelados`}
+                  size="small"
+                  color="default"
+                />
+                <Chip
+                  label={`${fin?.enMora ?? 0} en mora`}
+                  size="small"
+                  color="error"
+                />
+              </Stack>
+            </CardDG>
+
+            {/* 3. Otras Estadísticas */}
+            <CardDG titulo="Otras Estadísticas">
               <Grid container spacing={3}>
                 <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                   <Card
@@ -423,34 +675,23 @@ export default function DatosGeneralesPage() {
                       >
                         <Box>
                           <Typography variant="body2" sx={{ opacity: 0.9 }}>
-                            Financiamientos
+                            Financiamientos Hoy
                           </Typography>
                           <Typography
                             variant="h3"
                             sx={{ fontWeight: 600, mt: 1 }}
                           >
-                            {stats?.financiamientos.total || 0}
+                            {stats?.financiamientos.hoy || 0}
                           </Typography>
-                          <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                            <Chip
-                              label={`${stats?.financiamientos.activos || 0} activos`}
-                              size="small"
-                              sx={{
-                                backgroundColor: 'rgba(255,255,255,0.2)',
-                                color: 'white',
-                              }}
-                            />
-                            {stats && stats.financiamientos.hoy > 0 && (
-                              <Chip
-                                label={`+${stats.financiamientos.hoy} hoy`}
-                                size="small"
-                                sx={{
-                                  backgroundColor: 'rgba(255,255,255,0.2)',
-                                  color: 'white',
-                                }}
-                              />
-                            )}
-                          </Box>
+                          <Chip
+                            label={`${fin?.total ?? 0} en total`}
+                            size="small"
+                            sx={{
+                              mt: 1,
+                              backgroundColor: 'rgba(255,255,255,0.2)',
+                              color: 'white',
+                            }}
+                          />
                         </Box>
                         <AccountBalanceIcon
                           sx={{ fontSize: 48, opacity: 0.3 }}
@@ -495,7 +736,7 @@ export default function DatosGeneralesPage() {
               </Grid>
             </CardDG>
 
-            {/* Información Adicional */}
+            {/* 4. Información Adicional */}
             <CardDG titulo="Información Adicional">
               <Grid container spacing={3}>
                 <Grid size={{ xs: 12, md: 6 }}>
@@ -558,16 +799,14 @@ export default function DatosGeneralesPage() {
                           >
                             <Typography variant="body2">Activos</Typography>
                             <Typography variant="body2" fontWeight={600}>
-                              {stats?.financiamientos.activos || 0}
+                              {fin?.activos || 0}
                             </Typography>
                           </Box>
                           <LinearProgress
                             variant="determinate"
                             value={
-                              stats && stats.financiamientos.total > 0
-                                ? (stats.financiamientos.activos /
-                                    stats.financiamientos.total) *
-                                  100
+                              fin && fin.total > 0
+                                ? (fin.activos / fin.total) * 100
                                 : 0
                             }
                             sx={{ height: 8, borderRadius: 1 }}
@@ -584,23 +823,21 @@ export default function DatosGeneralesPage() {
                           >
                             <Typography variant="body2">Finalizados</Typography>
                             <Typography variant="body2" fontWeight={600}>
-                              {stats?.financiamientos.finalizados || 0}
+                              {fin?.finalizados || 0}
                             </Typography>
                           </Box>
                           <LinearProgress
                             variant="determinate"
                             value={
-                              stats && stats.financiamientos.total > 0
-                                ? (stats.financiamientos.finalizados /
-                                    stats.financiamientos.total) *
-                                  100
+                              fin && fin.total > 0
+                                ? (fin.finalizados / fin.total) * 100
                                 : 0
                             }
                             sx={{ height: 8, borderRadius: 1 }}
                             color="success"
                           />
                         </Box>
-                        {stats && (stats.financiamientos.enMora || 0) > 0 && (
+                        {fin && (fin.enMora || 0) > 0 && (
                           <Box>
                             <Box
                               sx={{
@@ -611,16 +848,14 @@ export default function DatosGeneralesPage() {
                             >
                               <Typography variant="body2">En Mora</Typography>
                               <Typography variant="body2" fontWeight={600}>
-                                {stats.financiamientos.enMora}
+                                {fin.enMora}
                               </Typography>
                             </Box>
                             <LinearProgress
                               variant="determinate"
                               value={
-                                stats.financiamientos.total > 0
-                                  ? (stats.financiamientos.enMora /
-                                      stats.financiamientos.total) *
-                                    100
+                                fin.total > 0
+                                  ? (fin.enMora / fin.total) * 100
                                   : 0
                               }
                               sx={{ height: 8, borderRadius: 1 }}
@@ -628,50 +863,43 @@ export default function DatosGeneralesPage() {
                             />
                           </Box>
                         )}
-                        {stats &&
-                          (stats.financiamientos.cancelados || 0) > 0 && (
-                            <Box>
-                              <Box
-                                sx={{
-                                  display: 'flex',
-                                  justifyContent: 'space-between',
-                                  mb: 0.5,
-                                }}
-                              >
-                                <Typography variant="body2">
-                                  Cancelados
-                                </Typography>
-                                <Typography variant="body2" fontWeight={600}>
-                                  {stats.financiamientos.cancelados}
-                                </Typography>
-                              </Box>
-                              <LinearProgress
-                                variant="determinate"
-                                value={
-                                  stats.financiamientos.total > 0
-                                    ? (stats.financiamientos.cancelados /
-                                        stats.financiamientos.total) *
-                                      100
-                                    : 0
-                                }
-                                sx={{
-                                  height: 8,
-                                  borderRadius: 1,
-                                  bgcolor: grisMedio,
-                                }}
-                              />
+                        {fin && (fin.cancelados || 0) > 0 && (
+                          <Box>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                mb: 0.5,
+                              }}
+                            >
+                              <Typography variant="body2">Cancelados</Typography>
+                              <Typography variant="body2" fontWeight={600}>
+                                {fin.cancelados}
+                              </Typography>
                             </Box>
-                          )}
+                            <LinearProgress
+                              variant="determinate"
+                              value={
+                                fin.total > 0
+                                  ? (fin.cancelados / fin.total) * 100
+                                  : 0
+                              }
+                              sx={{
+                                height: 8,
+                                borderRadius: 1,
+                                bgcolor: grisMedio,
+                              }}
+                            />
+                          </Box>
+                        )}
                       </Box>
                     </CardContent>
                   </Card>
                 </Grid>
               </Grid>
-            </CardDG>
 
-            {/* Acciones de Impresión */}
-            <CardDG titulo="Acciones de Impresión">
-              <Card sx={{ boxShadow: 2 }}>
+              {/* Acciones de Impresión */}
+              <Card sx={{ boxShadow: 2, mt: 3 }}>
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                     <PrintIcon sx={{ fontSize: 32, color: azulBase, mr: 2 }} />

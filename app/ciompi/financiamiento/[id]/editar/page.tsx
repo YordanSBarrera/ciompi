@@ -8,6 +8,7 @@ import {
   ClienteFormType,
   CuotaFutura,
   VehiculoFormType,
+  FinanciamientoType,
 } from '@/lib/types';
 import AuthGuard from '@/app/components/AuthGuard';
 import ModalNuevoCliente from '@/app/components/ModalNuevoCliente';
@@ -19,10 +20,11 @@ import {
   CircularProgress,
   Container,
   FormControl,
+  FormHelperText,
   InputLabel,
   MenuItem,
-  Paper,
   Select,
+  Paper,
   Snackbar,
   TextField,
   Typography,
@@ -43,13 +45,14 @@ import {
 } from '@mui/material';
 import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import Link from 'next/link';
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useState, useRef } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 import {
   formatMoney,
   normalizarMoneda,
   MONEDAS_FINANCIAMIENTO,
 } from '@/lib/moneda';
+import { getAuthHeaders } from '@/lib/utils';
 
 // Función para cargar clientes
 async function cargarClientes(): Promise<ClienteType[]> {
@@ -96,8 +99,10 @@ async function cargarEmpresas(): Promise<EmpresaType[]> {
   }
 }
 
-export default function NuevoFinanciamientoPage() {
+export default function EditarFinanciamientoPage() {
   const router = useRouter();
+  const params = useParams();
+  const id = params.id as string;
   const [clientes, setClientes] = useState<ClienteType[]>([]);
   const [vehiculos, setVehiculos] = useState<VehiculoType[]>([]);
   const [empresas, setEmpresas] = useState<EmpresaType[]>([]);
@@ -107,12 +112,13 @@ export default function NuevoFinanciamientoPage() {
   const [success, setSuccess] = useState(false);
   const [modalClienteOpen, setModalClienteOpen] = useState(false);
   const [vehiculoModalOpen, setVehiculoModalOpen] = useState(false);
-  const [clienteModalIndex, setClienteModalIndex] = useState<0 | 1>(0); // Para saber qué cliente estamos creando
+  const [clienteModalIndex, setClienteModalIndex] = useState<0 | 1>(0);
   const [incluirCostosDocumentacion, setIncluirCostosDocumentacion] =
     useState(false);
   const [incluirGastosExtras, setIncluirGastosExtras] = useState(false);
   const [mostrarCuotasExtras, setMostrarCuotasExtras] = useState(false);
   const [cuotasExtras, setCuotasExtras] = useState<CuotaFutura[]>([]);
+  const [estadoFinanciamiento, setEstadoFinanciamiento] = useState<string>('');
   const [nuevaCuotaExtra, setNuevaCuotaExtra] = useState({
     valorCuota: 0,
     fechaCuota: new Date().toISOString().split('T')[0],
@@ -140,31 +146,139 @@ export default function NuevoFinanciamientoPage() {
     Array<ClienteFormType | null>
   >([null, null]);
 
-  // Cargar datos iniciales
+  // Ref para rastrear si ya se cargaron los datos iniciales
+  const datosCargadosRef = useRef(false);
+
+  // Cargar datos iniciales y financiamiento existente
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [clientesData, vehiculosData, empresasData] = await Promise.all([
-          cargarClientes(),
-          cargarVehiculos(),
-          cargarEmpresas(),
-        ]);
+        const [clientesData, vehiculosData, empresasData, financiamientoData] =
+          await Promise.all([
+            cargarClientes(),
+            cargarVehiculos(),
+            cargarEmpresas(),
+            fetch(`/api/financiamiento/${id}`).then(res => res.json()),
+          ]);
+
         setClientes(clientesData);
         setVehiculos(vehiculosData);
         setEmpresas(empresasData);
+
+        // Cargar datos del financiamiento existente
+        if (financiamientoData) {
+          const fin: FinanciamientoType = financiamientoData;
+          
+          // Preparar clientes
+          const clientesArray: Array<string> = [];
+          if (fin.cliente) {
+            clientesArray.push(
+              typeof fin.cliente === 'object' && fin.cliente._id
+                ? fin.cliente._id
+                : (fin.cliente as string)
+            );
+          }
+          if (fin.cliente2) {
+            clientesArray.push(
+              typeof fin.cliente2 === 'object' && fin.cliente2._id
+                ? fin.cliente2._id
+                : (fin.cliente2 as string)
+            );
+          }
+
+          // Preparar cuotas futuras (separar normales de extras)
+          const cuotasFuturasForm: CuotaFutura[] = [];
+          const cuotasExtrasForm: CuotaFutura[] = [];
+          const numCuotasNormales = fin.cuotas || 12;
+          
+          if (fin.cuotasFuturas && fin.cuotasFuturas.length > 0) {
+            fin.cuotasFuturas.forEach(cf => {
+              const cuotaData = {
+                numeroCuota: cf.numeroCuota,
+                fechaVencimiento:
+                  typeof cf.fechaVencimiento === 'string'
+                    ? cf.fechaVencimiento.split('T')[0]
+                    : new Date(cf.fechaVencimiento).toISOString().split('T')[0],
+                valorCuota: cf.valorCuota,
+              };
+              
+              // Si el número de cuota es mayor que el número de cuotas normales, es una cuota extra
+              if (cf.numeroCuota > numCuotasNormales) {
+                cuotasExtrasForm.push(cuotaData);
+              } else {
+                cuotasFuturasForm.push(cuotaData);
+              }
+            });
+          }
+
+          setFormData({
+            clientes: clientesArray.length > 0 ? clientesArray : [''],
+            vehiculo:
+              typeof fin.vehiculo === 'object' && fin.vehiculo._id
+                ? fin.vehiculo._id.toString()
+                : typeof fin.vehiculo === 'string'
+                  ? fin.vehiculo
+                  : '',
+            empresa:
+              typeof fin.empresa === 'object' && fin.empresa._id
+                ? fin.empresa._id.toString()
+                : typeof fin.empresa === 'string'
+                  ? fin.empresa
+                  : '',
+            valorBase: fin.valorBase || fin.costoVehiculo || 0,
+            costosDocumentacion: fin.costosDocumentacion || 0,
+            gastosExtras: fin.gastosExtras || 0,
+            cuotas: fin.cuotas || 12,
+            cuotasExtras: fin.cuotasExtras || 0,
+            valorCuota: fin.valorCuota || 0,
+            interesTotal: fin.interesTotal || 0,
+            montoTotal: fin.montoTotal || 0,
+            fechaPrimeraCuota:
+              typeof fin.fechaPrimeraCuota === 'string'
+                ? fin.fechaPrimeraCuota.split('T')[0]
+                : new Date(fin.fechaPrimeraCuota).toISOString().split('T')[0],
+            cuotasFuturas: cuotasFuturasForm,
+            observaciones: fin.observaciones || '',
+            moneda: normalizarMoneda(fin.moneda),
+          });
+
+          setEstadoFinanciamiento(fin.estadoFinanciamiento || '');
+
+          setIncluirCostosDocumentacion((fin.costosDocumentacion || 0) > 0);
+          setIncluirGastosExtras((fin.gastosExtras || 0) > 0);
+          
+          // Cargar cuotas extras si existen
+          if (cuotasExtrasForm.length > 0) {
+            setCuotasExtras(cuotasExtrasForm);
+            setMostrarCuotasExtras(true);
+          }
+          
+          // Marcar que los datos se cargaron
+          datosCargadosRef.current = true;
+        }
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Error cargando datos');
+        setError(
+          err instanceof Error ? err.message : 'Error cargando datos'
+        );
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, []);
+    if (id) {
+      fetchData();
+    }
+  }, [id]);
 
   // Generar cuotas futuras cuando cambian cuotas, fechaPrimeraCuota o valorCuota
+  // Solo después de que se hayan cargado los datos iniciales
   useEffect(() => {
+    // No regenerar durante la carga inicial
+    if (!datosCargadosRef.current) {
+      return;
+    }
+
     const cuotas = formData.cuotas;
     const fechaPrimeraCuota = formData.fechaPrimeraCuota;
     const valorCuota = formData.valorCuota;
@@ -418,27 +532,15 @@ export default function NuevoFinanciamientoPage() {
       setSaving(true);
       setError(null);
 
-      // Obtener el usuario actual del localStorage o contexto
-      const usuarioActual = localStorage.getItem('user');
-      let usuarioRegistro = '';
-
-      if (usuarioActual) {
-        const user = JSON.parse(usuarioActual);
-        usuarioRegistro = user.id || user._id;
-      }
-
       // Preparar datos de clientes
       const clientesData = formData.clientes.map((cliente, index) => {
         if (typeof cliente === 'object' && cliente.NOMBRE) {
-          return cliente; // Es un cliente nuevo
+          return cliente;
         }
-        return cliente; // Es un ID
+        return cliente;
       });
 
-      // Para compatibilidad con el backend actual, usar el primer cliente
-      // TODO: Actualizar el backend para manejar múltiples clientes
-      // Combinar cuotas futuras normales con cuotas extras para que se
-      // persistan los montos y fechas correctos de cada cuota extra
+      // Combinar cuotas futuras normales con cuotas extras
       const todasLasCuotasFuturas = [
         ...(formData.cuotasFuturas || []),
         ...cuotasExtras,
@@ -446,31 +548,31 @@ export default function NuevoFinanciamientoPage() {
 
       const dataToSend = {
         ...formData,
-        cliente: clientesData[0], // Por ahora solo el primer cliente
-        costoVehiculo: formData.valorBase, // Mapeo temporal para compatibilidad
-        cuotasExtras: cuotasExtras.length, // Número de cuotas extras para compatibilidad
-        cuotasExtrasDetalle: cuotasExtras, // Array completo de cuotas extras
-        cuotasFuturas: todasLasCuotasFuturas, // Normales + extras con sus montos y fechas
-        usuarioRegistro,
+        cliente: clientesData[0],
+        cliente2: clientesData[1] || undefined,
+        costoVehiculo: formData.valorBase,
+        cuotasExtras: cuotasExtras.length,
+        cuotasFuturas: todasLasCuotasFuturas,
+        cuotasExtrasDetalle: cuotasExtras,
+        fechaVenta: formData.fechaPrimeraCuota, // Usar fechaPrimeraCuota como fechaVenta si no está definida
       };
 
-      const response = await fetch('/api/financiamiento', {
-        method: 'POST',
+      const response = await fetch(`/api/financiamiento/${id}`, {
+        method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
         },
         body: JSON.stringify(dataToSend),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al crear financiamiento');
+        throw new Error(errorData.error || 'Error al actualizar financiamiento');
       }
 
       setSuccess(true);
-      // Redirigir después de 2 segundos
       setTimeout(() => {
-        router.push('/ciompi/financiamiento');
+        router.push(`/ciompi/financiamiento/${id}`);
       }, 2000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
@@ -498,28 +600,26 @@ export default function NuevoFinanciamientoPage() {
   }
 
   return (
-    <AuthGuard>
+    <AuthGuard requireAdmin>
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-        {/* Header */}
         <Box sx={{ mb: 3 }}>
           <Button
             component={Link}
-            href="/ciompi/financiamiento"
+            href={`/ciompi/financiamiento/${id}`}
             variant="outlined"
             sx={{ mb: 2 }}
           >
-            ← Volver al listado
+            ← Volver a detalles
           </Button>
 
           <Typography variant="h4" component="h1" gutterBottom>
-            Nueva Venta Financiada
+            Editar Financiamiento
           </Typography>
           <Typography variant="body1" color="textSecondary">
-            Registrar un nuevo financiamiento de vehículo
+            Modificar información del financiamiento
           </Typography>
         </Box>
 
-        {/* Formulario */}
         <Paper
           elevation={3}
           sx={{ p: 4, bgcolor: grisClaro, border: `1px solid ${grisMedio}` }}
@@ -576,18 +676,19 @@ export default function NuevoFinanciamientoPage() {
                         + Crear Cliente Nuevo
                       </Typography>
                     </MenuItem>
-                    {Array.isArray(clientes) && clientes.map(cliente => (
-                      <MenuItem key={cliente._id} value={cliente._id}>
-                        <Box>
-                          <Typography variant="body1">
-                            {cliente.NOMBRE}
-                          </Typography>
-                          <Typography variant="caption" color="textSecondary">
-                            {cliente.cedula}
-                          </Typography>
-                        </Box>
-                      </MenuItem>
-                    ))}
+                    {Array.isArray(clientes) &&
+                      clientes.map(cliente => (
+                        <MenuItem key={cliente._id} value={cliente._id}>
+                          <Box>
+                            <Typography variant="body1">
+                              {cliente.NOMBRE}
+                            </Typography>
+                            <Typography variant="caption" color="textSecondary">
+                              {cliente.cedula}
+                            </Typography>
+                          </Box>
+                        </MenuItem>
+                      ))}
                   </Select>
                 </FormControl>
               </Grid>
@@ -673,21 +774,22 @@ export default function NuevoFinanciamientoPage() {
                             + Crear Cliente Nuevo
                           </Typography>
                         </MenuItem>
-                        {Array.isArray(clientes) && clientes.map(cliente => (
-                          <MenuItem key={cliente._id} value={cliente._id}>
-                            <Box>
-                              <Typography variant="body1">
-                                {cliente.NOMBRE}
-                              </Typography>
-                              <Typography
-                                variant="caption"
-                                color="textSecondary"
-                              >
-                                {cliente.cedula}
-                              </Typography>
-                            </Box>
-                          </MenuItem>
-                        ))}
+                        {Array.isArray(clientes) &&
+                          clientes.map(cliente => (
+                            <MenuItem key={cliente._id} value={cliente._id}>
+                              <Box>
+                                <Typography variant="body1">
+                                  {cliente.NOMBRE}
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  color="textSecondary"
+                                >
+                                  {cliente.cedula}
+                                </Typography>
+                              </Box>
+                            </MenuItem>
+                          ))}
                       </Select>
                     </FormControl>
                   </Grid>
@@ -746,6 +848,7 @@ export default function NuevoFinanciamientoPage() {
                     value={formData.empresa}
                     onChange={handleSelectChange}
                     label="Empresa"
+                    disabled={estadoFinanciamiento === 'finalizado'}
                   >
                     {empresas
                       .filter(empresa => empresa.estado === 'activa')
@@ -757,6 +860,12 @@ export default function NuevoFinanciamientoPage() {
                         </MenuItem>
                       ))}
                   </Select>
+                  {estadoFinanciamiento === 'finalizado' && (
+                    <FormHelperText>
+                      La empresa no se puede modificar en un financiamiento
+                      finalizado
+                    </FormHelperText>
+                  )}
                 </FormControl>
               </Grid>
 
@@ -818,8 +927,8 @@ export default function NuevoFinanciamientoPage() {
                     {vehiculos
                       .filter(
                         vehiculo =>
-                          vehiculo.disponible !== false &&
-                          !vehiculo.financiamientoActivo
+                          !vehiculo.financiamientoActivo ||
+                          vehiculo.financiamientoActivo._id === id
                       )
                       .map(vehiculo => (
                         <MenuItem key={vehiculo._id} value={vehiculo._id}>
@@ -1077,6 +1186,7 @@ export default function NuevoFinanciamientoPage() {
                   </Card>
                 </Grid>
               )}
+
               {/* Cuotas Extras */}
               <Grid size={{ xs: 12 }}>
                 <FormControlLabel
@@ -1228,6 +1338,7 @@ export default function NuevoFinanciamientoPage() {
                   )}
                 </>
               )}
+
               <Grid size={{ xs: 12 }}>
                 <TextField
                   fullWidth
@@ -1338,7 +1449,7 @@ export default function NuevoFinanciamientoPage() {
                 >
                   <Button
                     component={Link}
-                    href="/ciompi/financiamiento"
+                    href={`/ciompi/financiamiento/${id}`}
                     variant="outlined"
                     disabled={saving}
                   >
@@ -1353,7 +1464,7 @@ export default function NuevoFinanciamientoPage() {
                     {saving ? (
                       <CircularProgress size={24} />
                     ) : (
-                      'Registrar Financiamiento'
+                      'Guardar Cambios'
                     )}
                   </Button>
                 </Box>
@@ -1373,7 +1484,7 @@ export default function NuevoFinanciamientoPage() {
           open={success}
           autoHideDuration={6000}
           onClose={() => setSuccess(false)}
-          message="Financiamiento registrado correctamente"
+          message="Financiamiento actualizado correctamente"
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         />
 
@@ -1393,3 +1504,4 @@ export default function NuevoFinanciamientoPage() {
     </AuthGuard>
   );
 }
+

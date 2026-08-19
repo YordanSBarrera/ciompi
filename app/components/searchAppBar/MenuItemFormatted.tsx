@@ -6,6 +6,7 @@ interface MenuItemFormattedProps {
   href: string;
   onHandleClose: () => void;
   icon?: React.ReactNode;
+  onMouseEnter?: (event: React.MouseEvent<HTMLElement>) => void;
 }
 
 const MenuItemFormatted = ({
@@ -13,11 +14,13 @@ const MenuItemFormatted = ({
   href,
   onHandleClose,
   icon,
+  onMouseEnter,
 }: MenuItemFormattedProps) => {
   return (
     <Link href={href} style={{ textDecoration: 'none', color: 'inherit' }}>
       <MenuItem
         onClick={onHandleClose}
+        onMouseEnter={onMouseEnter}
         sx={{
           color: '#ffffff',
           '&:hover': {

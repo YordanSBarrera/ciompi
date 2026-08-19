@@ -45,7 +45,7 @@ import {
   Error as ErrorIcon,
   Info as InfoIcon,
 } from '@mui/icons-material';
-import { VehiculoType, VehiculoFormType } from '@/lib/types';
+import { VehiculoType, VehiculoFormType, FinanciamientoActivoResumen } from '@/lib/types';
 import {
   azulBase,
   azulOscuro,
@@ -83,10 +83,13 @@ export default function FormularioVehiculo({
     Descripcion: '',
     Año: undefined,
     Color: '',
+    disponible: true,
   });
 
   const [errors, setErrors] = useState<Partial<VehiculoFormType>>({});
   const [loading, setLoading] = useState(false);
+  const [financiamientoActivo, setFinanciamientoActivo] =
+    useState<FinanciamientoActivoResumen | null>(null);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -103,6 +106,7 @@ export default function FormularioVehiculo({
         Descripcion: vehiculo.Descripcion || '',
         Año: vehiculo.Año || undefined,
         Color: vehiculo.Color || '',
+        disponible: vehiculo.disponible !== false,
       });
     } else {
       setFormData({
@@ -113,10 +117,36 @@ export default function FormularioVehiculo({
         Descripcion: '',
         Año: undefined,
         Color: '',
+        disponible: true,
       });
     }
     setErrors({});
   }, [vehiculo, open]);
+
+  useEffect(() => {
+    const cargarFinanciamientoActivo = async () => {
+      if (!open || !vehiculo?._id) {
+        setFinanciamientoActivo(null);
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/vehiculos/${vehiculo._id}`);
+        if (response.ok) {
+          const data = await response.json();
+          const activo = data.financiamientoActivo ?? null;
+          setFinanciamientoActivo(activo);
+          if (activo) {
+            setFormData(prev => ({ ...prev, disponible: false }));
+          }
+        }
+      } catch {
+        setFinanciamientoActivo(null);
+      }
+    };
+
+    cargarFinanciamientoActivo();
+  }, [open, vehiculo?._id]);
 
   const validateForm = (): boolean => {
     const newErrors: Partial<VehiculoFormType> = {};
@@ -183,6 +213,15 @@ export default function FormularioVehiculo({
   };
 
   const handleInputChange = (field: keyof VehiculoFormType, value: any) => {
+    if (field === 'disponible' && value === true && financiamientoActivo) {
+      setSnackbar({
+        open: true,
+        message: `No se puede marcar como disponible: está asociado al financiamiento ${financiamientoActivo._id}`,
+        severity: 'warning',
+      });
+      return;
+    }
+
     setFormData(prev => ({ ...prev, [field]: value }));
 
     // Limpiar error del campo cuando el usuario empieza a escribir
@@ -1116,6 +1155,63 @@ export default function FormularioVehiculo({
                               Padrón válido
                             </Typography>
                           </Box>
+                        )}
+                      </Grid>
+
+                      {/* Disponible */}
+                      <Grid size={{ xs: 12, sm: 6 }}>
+                        <FormControl
+                          fullWidth
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              borderRadius: 2,
+                              backgroundColor: 'rgba(255,255,255,0.8)',
+                              transition: 'all 0.2s ease-in-out',
+                              '&:hover': {
+                                backgroundColor: 'rgba(255,255,255,1)',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                              },
+                              '&.Mui-focused': {
+                                backgroundColor: 'rgba(255,255,255,1)',
+                                boxShadow: `0 0 0 2px ${verde}20`,
+                              },
+                            },
+                          }}
+                        >
+                          <InputLabel sx={{ fontWeight: 600 }}>
+                            Disponible
+                          </InputLabel>
+                          <Select
+                            value={
+                              formData.disponible !== false ? 'si' : 'no'
+                            }
+                            onChange={e =>
+                              handleInputChange(
+                                'disponible',
+                                e.target.value === 'si'
+                              )
+                            }
+                            label="Disponible"
+                            disabled={!!financiamientoActivo}
+                            startAdornment={
+                              <InputAdornment position="start">
+                                <CheckIcon sx={{ color: verde }} />
+                              </InputAdornment>
+                            }
+                          >
+                            <MenuItem value="si">Sí</MenuItem>
+                            <MenuItem value="no">No</MenuItem>
+                          </Select>
+                        </FormControl>
+                        {financiamientoActivo && (
+                          <Alert severity="warning" sx={{ mt: 1 }}>
+                            Este vehículo está asociado a un financiamiento
+                            {financiamientoActivo.clienteNombre
+                              ? ` del cliente ${financiamientoActivo.clienteNombre}`
+                              : ''}{' '}
+                            (estado: {financiamientoActivo.estadoFinanciamiento}
+                            ). No puede marcarse como disponible.
+                          </Alert>
                         )}
                       </Grid>
 

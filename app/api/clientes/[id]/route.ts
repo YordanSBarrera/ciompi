@@ -1,12 +1,14 @@
 import { connectDB } from '@/db/dbConnection';
 import { RouteParams } from '@/lib/types';
-import { getUserIdFromToken } from '@/lib/server-utils';
+import { requireAdminAuth, requireAuth } from '@/lib/server-utils';
 import Cliente from '@/models/cliente';
 import Financiamiento from '@/models/financiamiento';
+import Usuario from '@/models/Usuario';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Forzar registro de modelos para populate
 void Financiamiento;
+void Usuario;
 
 export async function GET(
   request: NextRequest,
@@ -37,6 +39,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = requireAdminAuth(request);
+    if (!auth.authorized) {
+      return auth.response;
+    }
+
     await connectDB();
     const { id } = await params;
 
@@ -57,27 +64,25 @@ export async function DELETE(
       );
     }
 
-    // Verificar si está en algún financiamiento ACTIVO (como cliente o cliente2)
-    const financiamientoActivo = await Financiamiento.findOne({
-      $or: [
-        { cliente: id },
-        { cliente2: id }
-      ],
-      estadoFinanciamiento: { $in: ['activo', 'en_mora'] }
+    // Regla de negocio: un cliente asociado a cualquier financiamiento
+    // (sin importar su estado) no se puede eliminar de la BD
+    const financiamientoAsociado = await Financiamiento.findOne({
+      $or: [{ cliente: id }, { cliente2: id }],
     });
 
-    if (financiamientoActivo) {
+    if (financiamientoAsociado) {
       return NextResponse.json(
-        { 
-          error: 'No se puede eliminar el cliente porque está asociado a un financiamiento activo',
-          financiamientoId: financiamientoActivo._id 
+        {
+          error:
+            'No se puede eliminar el cliente porque está asociado a un financiamiento',
+          financiamientoId: financiamientoAsociado._id,
         },
         { status: 409 } // Conflict
       );
     }
 
     // Obtener ID del usuario para auditoría
-    const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb';
+    const userId = auth.user.id;
 
     // Soft delete: marcar como eliminado en lugar de borrar
     const clienteEliminado = await Cliente.findByIdAndUpdate(
@@ -118,12 +123,16 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = requireAuth(request);
+    if (!auth.authorized) {
+      return auth.response;
+    }
+
     await connectDB();
     const data = await request.json();
     const { id } = await params;
 
-    // Obtener ID del usuario desde el token con fallback
-    const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb'; // Fallback al admin
+    const userId = auth.user.id;
 
     // Agregar usuario de modificación
     const updateData = {

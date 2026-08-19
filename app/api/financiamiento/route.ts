@@ -3,13 +3,21 @@ import Financiamiento from '@/models/financiamiento';
 import Cliente from '@/models/cliente';
 import Vehiculo from '@/models/vehiculo';
 import Empresa from '@/models/empresa';
+import Usuario from '@/models/Usuario';
 import { NextResponse, NextRequest } from 'next/server';
-import { getUserIdFromToken } from '@/lib/server-utils';
+import {
+  getUserIdFromToken,
+  parseLocalDate,
+  requireAdminAuth,
+  sincronizarDisponibilidadVehiculo,
+} from '@/lib/server-utils';
+import { normalizarMoneda } from '@/lib/moneda';
 
 // Forzar registro de modelos para populate (evita MissingSchemaError)
 void Cliente;
 void Vehiculo;
 void Empresa;
+void Usuario;
 
 export async function GET(request: NextRequest) {
   try {
@@ -24,6 +32,8 @@ export async function GET(request: NextRequest) {
     
     // Parámetros de filtro
     const estado = searchParams.get('estado') || '';
+    const empresa = searchParams.get('empresa') || '';
+    const nombreCliente = searchParams.get('nombreCliente') || '';
     
     // Construir query base
     let query: any = {};
@@ -33,7 +43,20 @@ export async function GET(request: NextRequest) {
       query.estadoFinanciamiento = estado;
     }
     
-    // Nota: La búsqueda de texto se hace en el cliente (frontend) para mejor rendimiento
+    // Filtro por empresa si existe
+    if (empresa) {
+      query.empresa = empresa;
+    }
+
+    // Filtro por nombre de cliente (solo clientes no eliminados)
+    if (nombreCliente.trim()) {
+      const clientes = await Cliente.find({
+        NOMBRE: { $regex: nombreCliente.trim(), $options: 'i' },
+        eliminado: { $ne: true },
+      }).select('_id');
+      const clienteIds = clientes.map(c => c._id);
+      query.$or = [{ cliente: { $in: clienteIds } }, { cliente2: { $in: clienteIds } }];
+    }
     
     // Obtener financiamientos con paginación y populate optimizado
     const financiamientos = await Financiamiento.find(query)
@@ -104,6 +127,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Verificar que el vehículo no esté sujeto a otro financiamiento activo
+    if (body.vehiculo && typeof body.vehiculo === 'string') {
+      const financiamientoActivo = await Financiamiento.findOne({
+        vehiculo: body.vehiculo,
+        estadoFinanciamiento: { $in: ['activo', 'en_mora'] },
+      });
+      if (financiamientoActivo) {
+        return NextResponse.json(
+          {
+            error:
+              'El vehículo seleccionado ya está asociado a un financiamiento activo y no puede financiarse nuevamente',
+            financiamientoId: financiamientoActivo._id,
+          },
+          { status: 409 }
+        );
+      }
+    }
+
     // Manejar cliente nuevo (si viene como objeto, crearlo)
     let clienteId = body.cliente;
     if (typeof body.cliente === 'object' && body.cliente.NOMBRE) {
@@ -156,13 +197,54 @@ export async function POST(request: NextRequest) {
     const costoVehiculo = body.costoVehiculo || body.valorBase || 0;
     const valorBase = body.valorBase || body.costoVehiculo || 0;
 
-    // Calcular fechas y montos
-    const fechaPrimeraCuota = new Date(body.fechaPrimeraCuota);
+    // Calcular fechas y montos (usando parseLocalDate para evitar desfase de timezone)
+    const fechaPrimeraCuota = parseLocalDate(body.fechaPrimeraCuota);
 
-    // Si hay cuotasFuturas, usar la última fecha de ahí, sino calcular
+    // Combinar cuotasFuturas con las cuotas extras (cuotasExtrasDetalle)
+    // para que se persistan los montos y fechas correctos de cada cuota extra.
+    // Las cuotas extras se numeran después de las cuotas normales.
+    let cuotasFuturasFinal: Array<{
+      numeroCuota: number;
+      fechaVencimiento: Date;
+      valorCuota: number;
+    }> = body.cuotasFuturas
+      ? body.cuotasFuturas.map((cf: any) => ({
+          numeroCuota: cf.numeroCuota,
+          fechaVencimiento: parseLocalDate(cf.fechaVencimiento),
+          valorCuota: cf.valorCuota,
+        }))
+      : [];
+
+    if (
+      body.cuotasExtrasDetalle &&
+      Array.isArray(body.cuotasExtrasDetalle) &&
+      body.cuotasExtrasDetalle.length > 0
+    ) {
+      const cuotasNormales = body.cuotas || 0;
+      const numeroMaximo = cuotasFuturasFinal.reduce(
+        (max, cf) => (cf.numeroCuota > max ? cf.numeroCuota : max),
+        cuotasNormales
+      );
+
+      body.cuotasExtrasDetalle.forEach((extra: any, index: number) => {
+        // Evitar duplicados: si la cuota con ese número ya existe, no agregarla
+        const yaExiste = cuotasFuturasFinal.some(
+          cf => cf.numeroCuota === extra.numeroCuota
+        );
+        if (yaExiste) return;
+
+        cuotasFuturasFinal.push({
+          numeroCuota: numeroMaximo + index + 1,
+          fechaVencimiento: parseLocalDate(extra.fechaVencimiento),
+          valorCuota: extra.valorCuota,
+        });
+      });
+    }
+
+    // Si hay cuotasFuturas (incluyendo extras), usar la última fecha de ahí, sino calcular
     let fechaUltimaCuota = new Date(fechaPrimeraCuota);
-    if (body.cuotasFuturas && body.cuotasFuturas.length > 0) {
-      const ultimaCuota = body.cuotasFuturas[body.cuotasFuturas.length - 1];
+    if (cuotasFuturasFinal.length > 0) {
+      const ultimaCuota = cuotasFuturasFinal[cuotasFuturasFinal.length - 1];
       fechaUltimaCuota = new Date(ultimaCuota.fechaVencimiento);
     } else {
       fechaUltimaCuota.setMonth(fechaUltimaCuota.getMonth() + body.cuotas - 1);
@@ -174,18 +256,13 @@ export async function POST(request: NextRequest) {
       cliente2: cliente2Id || undefined, // Segundo cliente opcional
       vehiculo: body.vehiculo || undefined, // Opcional
       empresa: body.empresa,
+      moneda: normalizarMoneda(body.moneda),
       costoVehiculo: costoVehiculo, // Mantener para compatibilidad
       valorBase: valorBase, // Nuevo campo
       costosDocumentacion: body.costosDocumentacion || 0,
       gastosExtras: body.gastosExtras || 0,
       cuotasExtras: body.cuotasExtras || 0,
-      cuotasFuturas: body.cuotasFuturas
-        ? body.cuotasFuturas.map((cf: any) => ({
-            numeroCuota: cf.numeroCuota,
-            fechaVencimiento: new Date(cf.fechaVencimiento),
-            valorCuota: cf.valorCuota,
-          }))
-        : undefined,
+      cuotasFuturas: cuotasFuturasFinal,
       cuotas: body.cuotas,
       valorCuota: body.valorCuota,
       interesTotal: body.interesTotal || 0,
@@ -198,7 +275,7 @@ export async function POST(request: NextRequest) {
       montoPagado: 0,
       estadoFinanciamiento: 'activo',
       observaciones: body.observaciones,
-      fechaVenta: body.fechaVenta || new Date(),
+      fechaVenta: body.fechaVenta ? parseLocalDate(body.fechaVenta) : new Date(),
       usuarioRegistro: body.usuarioRegistro || userId,
       usuarioCreacion: body.usuarioRegistro || userId,
       usuarioModificacion: userId,
@@ -206,12 +283,10 @@ export async function POST(request: NextRequest) {
 
     const financiamientoGuardado = await nuevoFinanciamiento.save();
 
-    // Si se asignó un vehículo, marcarlo como no disponible
-    if (body.vehiculo) {
-      await Vehiculo.findByIdAndUpdate(body.vehiculo, {
-        disponible: false,
-        usuarioModificacion: userId,
-      });
+    // Si se asignó un vehículo, sincronizar su disponibilidad
+    // (queda no disponible por tener un financiamiento activo)
+    if (body.vehiculo && typeof body.vehiculo === 'string') {
+      await sincronizarDisponibilidadVehiculo(body.vehiculo, userId);
     }
 
     // Devolver el financiamiento con información poblada
@@ -245,6 +320,11 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: Request) {
   try {
+    const auth = requireAdminAuth(request);
+    if (!auth.authorized) {
+      return auth.response;
+    }
+
     await connectDB();
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
@@ -269,13 +349,11 @@ export async function DELETE(request: Request) {
     // Eliminar el financiamiento
     await Financiamiento.findByIdAndDelete(id);
 
-    // Si tenía un vehículo asignado, marcarlo como disponible nuevamente
+    // Si tenía un vehículo asignado, sincronizar su disponibilidad
+    // (vuelve a estar disponible si no hay otro financiamiento activo)
     if (financiamiento.vehiculo) {
-      const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb';
-      await Vehiculo.findByIdAndUpdate(financiamiento.vehiculo, {
-        disponible: true,
-        usuarioModificacion: userId,
-      });
+      const userId = auth.user.id;
+      await sincronizarDisponibilidadVehiculo(financiamiento.vehiculo, userId);
     }
 
     return NextResponse.json({

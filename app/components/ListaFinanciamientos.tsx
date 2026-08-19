@@ -36,6 +36,7 @@ import {
   Add as AddIcon,
   Print as PrintIcon,
   Delete as DeleteIcon,
+  Edit as EditIcon,
 } from '@mui/icons-material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { Menu, MenuItem } from '@mui/material';
@@ -53,6 +54,8 @@ import {
   turquesa,
 } from '@/lib/color';
 import { useRouter } from 'next/navigation';
+import { isAdmin } from '@/lib/utils';
+import { formatMoney, normalizarMoneda } from '@/lib/moneda';
 
 interface PaginationData {
   page: number;
@@ -75,6 +78,7 @@ interface ListaFinanciamientosProps {
   onPageChange?: (page: number) => void;
   onSearchChange?: (search: string) => void;
   initialSearch?: string;
+  VerBarraDeBusqueda?: boolean;
 }
 
 interface MenuState {
@@ -93,6 +97,7 @@ export default function ListaFinanciamientos({
   onPageChange,
   onSearchChange,
   initialSearch = '',
+  VerBarraDeBusqueda = true,
 }: ListaFinanciamientosProps) {
   const [filter, setFilter] = React.useState(initialSearch);
   const [menuState, setMenuState] = React.useState<MenuState>({
@@ -102,6 +107,7 @@ export default function ListaFinanciamientos({
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const esAdministrativo = isAdmin();
 
   // Debounce para la búsqueda
   const searchTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
@@ -120,14 +126,6 @@ export default function ListaFinanciamientos({
     handleCancelEliminar,
     handleCloseSnackbar,
   } = useEliminarFinanciamiento({ onFinanciamientoEliminado });
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    }).format(amount);
-  };
 
   const formatDate = (date: Date | string) => {
     return new Date(date).toLocaleDateString('es-UY');
@@ -170,6 +168,11 @@ export default function ListaFinanciamientos({
     router.push(`/ciompi/financiamiento/${id}`);
   };
 
+  const handleClickEditar = (id: string) => {
+    handleMenuClose();
+    router.push(`/ciompi/financiamiento/${id}/editar`);
+  };
+
   const handleClickImprimir = (id: string) => {
     handleMenuClose();
     if (onImprimir) {
@@ -186,9 +189,11 @@ export default function ListaFinanciamientos({
   // Función para obtener el nombre del financiamiento para mostrar en el diálogo
   const getFinanciamientoNombre = (fin: FinanciamientoType): string => {
     const clienteNombre =
-      typeof fin.cliente === 'object' ? fin.cliente.NOMBRE : 's/n';
+      typeof fin.cliente === 'object' && fin.cliente
+        ? fin.cliente.NOMBRE
+        : 's/n';
     const vehiculoInfo =
-      typeof fin.vehiculo === 'object'
+      typeof fin.vehiculo === 'object' && fin.vehiculo
         ? `${fin.vehiculo.Marca} ${fin.vehiculo.Modelo}`
         : 's/v';
     return `${clienteNombre} - ${vehiculoInfo}`;
@@ -297,43 +302,44 @@ export default function ListaFinanciamientos({
           )}
         </Box>
       </Box>
-
       {/* Barra de búsqueda */}
-      <TextField
-        placeholder="Buscar por cliente, cédula, teléfono, vehículo, empresa o estado..."
-        value={filter}
-        onChange={e => handleFilterChange(e.target.value)}
-        disabled={loading}
-        sx={{
-          maxWidth: 500,
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 2,
-            backgroundColor: 'rgba(255,255,255,0.8)',
-            transition: 'all 0.2s ease-in-out',
-            '&:hover': {
-              backgroundColor: 'rgba(255,255,255,1)',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-              '& fieldset': {
-                borderColor: azulClaro,
+      {VerBarraDeBusqueda && (
+        <TextField
+          placeholder="Buscar por cliente, cédula, teléfono, vehículo, empresa o estado..."
+          value={filter}
+          onChange={e => handleFilterChange(e.target.value)}
+          disabled={loading}
+          sx={{
+            maxWidth: 500,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 2,
+              backgroundColor: 'rgba(255,255,255,0.8)',
+              transition: 'all 0.2s ease-in-out',
+              '&:hover': {
+                backgroundColor: 'rgba(255,255,255,1)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                '& fieldset': {
+                  borderColor: azulClaro,
+                },
+              },
+              '&.Mui-focused': {
+                backgroundColor: 'rgba(255,255,255,1)',
+                boxShadow: `0 0 0 2px ${azulBase}20`,
+                '& fieldset': {
+                  borderColor: azulBase,
+                },
               },
             },
-            '&.Mui-focused': {
-              backgroundColor: 'rgba(255,255,255,1)',
-              boxShadow: `0 0 0 2px ${azulBase}20`,
-              '& fieldset': {
-                borderColor: azulBase,
-              },
-            },
-          },
-        }}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchIcon sx={{ color: azulBase }} />
-            </InputAdornment>
-          ),
-        }}
-      />
+          }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ color: azulBase }} />
+              </InputAdornment>
+            ),
+          }}
+        />
+      )}
 
       <TableContainer
         component={Paper}
@@ -398,6 +404,15 @@ export default function ListaFinanciamientos({
                 }}
               >
                 Vehículo
+              </TableCell>
+              <TableCell
+                sx={{
+                  color: blanco,
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
+                }}
+              >
+                Mon.
               </TableCell>
               <TableCell
                 sx={{
@@ -478,7 +493,7 @@ export default function ListaFinanciamientos({
           <TableBody>
             {filteredFinanciamientos.length === 0 && (
               <TableRow>
-                <TableCell colSpan={mostrarAtrasos ? 10 : 8} align="center">
+                <TableCell colSpan={mostrarAtrasos ? 11 : 9} align="center">
                   <Typography variant="body1" color={grisTexto} sx={{ py: 4 }}>
                     {filter
                       ? 'No se encontraron financiamientos que coincidan con la búsqueda'
@@ -507,7 +522,7 @@ export default function ListaFinanciamientos({
                 <TableCell>
                   <Box>
                     <Typography variant="body2" fontWeight={600}>
-                      {typeof fin.cliente === 'object'
+                      {typeof fin.cliente === 'object' && fin.cliente
                         ? (fin.cliente.NOMBRE ?? 's/n')
                         : '-'}
                     </Typography>
@@ -526,19 +541,29 @@ export default function ListaFinanciamientos({
                 </TableCell>
                 <TableCell>
                   <Typography variant="body2" fontWeight={600}>
-                    {typeof fin.vehiculo === 'object'
-                      ? `${fin.vehiculo.Marca} ${fin.vehiculo.Modelo}`
+                    {typeof fin.vehiculo === 'object' && fin.vehiculo
+                      ? `${fin.vehiculo.Marca ?? 'no encontrado'} ${fin.vehiculo.Modelo ?? 'no encontrado'}`
                       : '-'}
                   </Typography>
                   <Typography variant="caption" color={grisTexto}>
-                    {typeof fin.vehiculo === 'object'
+                    {typeof fin.vehiculo === 'object' && fin.vehiculo
                       ? fin.vehiculo.Matricula
                       : ''}
                   </Typography>
                 </TableCell>
                 <TableCell>
+                  <Chip
+                    label={normalizarMoneda(fin.moneda)}
+                    size="small"
+                    variant="outlined"
+                  />
+                </TableCell>
+                <TableCell>
                   <Typography variant="body2" fontWeight={600}>
-                    {formatCurrency(fin.costoVehiculo)}
+                    {formatMoney(
+                      fin.costoVehiculo,
+                      normalizarMoneda(fin.moneda)
+                    )}
                   </Typography>
                 </TableCell>
                 <TableCell>
@@ -591,7 +616,10 @@ export default function ListaFinanciamientos({
                       fontWeight={600}
                       color="error.main"
                     >
-                      {formatCurrency(fin.montoAtrasado || 0)}
+                      {formatMoney(
+                        fin.montoAtrasado || 0,
+                        normalizarMoneda(fin.moneda)
+                      )}
                     </Typography>
                   </TableCell>
                 )}
@@ -672,31 +700,43 @@ export default function ListaFinanciamientos({
                         />
                         Ver Detalles
                       </MenuItem>
-                      {onImprimir && (
-                        <MenuItem
-                          onClick={() => handleClickImprimir(fin._id || '')}
-                        >
-                          <PrintIcon
-                            sx={{ fontSize: 18, mr: 1, color: azulOscuro }}
-                          />
-                          Imprimir
-                        </MenuItem>
+                      {esAdministrativo && (
+                        <>
+                          <MenuItem
+                            onClick={() => handleClickEditar(fin._id || '')}
+                          >
+                            <EditIcon
+                              sx={{ fontSize: 18, mr: 1, color: azulOscuro }}
+                            />
+                            Editar
+                          </MenuItem>
+                          {onImprimir && (
+                            <MenuItem
+                              onClick={() => handleClickImprimir(fin._id || '')}
+                            >
+                              <PrintIcon
+                                sx={{ fontSize: 18, mr: 1, color: azulOscuro }}
+                              />
+                              Imprimir
+                            </MenuItem>
+                          )}
+                          <MenuItem
+                            onClick={() =>
+                              handleClickEliminarWrapper(
+                                fin._id || '',
+                                getFinanciamientoNombre(fin)
+                              )
+                            }
+                          >
+                            <DeleteIcon
+                              sx={{ fontSize: 18, mr: 1, color: 'error.main' }}
+                            />
+                            <Typography variant="body2" color="error.main">
+                              Eliminar
+                            </Typography>
+                          </MenuItem>
+                        </>
                       )}
-                      <MenuItem
-                        onClick={() =>
-                          handleClickEliminarWrapper(
-                            fin._id || '',
-                            getFinanciamientoNombre(fin)
-                          )
-                        }
-                      >
-                        <DeleteIcon
-                          sx={{ fontSize: 18, mr: 1, color: 'error.main' }}
-                        />
-                        <Typography variant="body2" color="error.main">
-                          Eliminar
-                        </Typography>
-                      </MenuItem>
                     </Menu>
                   </Stack>
                 </TableCell>

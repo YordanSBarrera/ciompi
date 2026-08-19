@@ -1,5 +1,5 @@
 import { connectDB } from '@/db/dbConnection';
-import { getUserIdFromToken } from '@/lib/server-utils';
+import { requireAdminAuth, requireAuth } from '@/lib/server-utils';
 import Usuario from '@/models/Usuario';
 import Financiamiento from '@/models/financiamiento';
 import { NextResponse } from 'next/server';
@@ -58,11 +58,15 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = requireAuth(request);
+    if (!auth.authorized) {
+      return auth.response;
+    }
+
     await connectDB();
     const { id } = await params;
 
-    // Obtener ID del usuario desde el token con fallback
-    const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb';
+    const userId = auth.user.id;
     const body = await request.json();
 
     // Validar campos requeridos
@@ -82,6 +86,15 @@ export async function PUT(
       );
     }
 
+    // Regla de negocio: un rol Usuario solo puede editar su propio usuario
+    const esAdmin = auth.user.rol === 'Administrativo';
+    if (!esAdmin && id !== userId) {
+      return NextResponse.json(
+        { error: 'Sin permisos para editar otro usuario' },
+        { status: 403 }
+      );
+    }
+
     // Verificar si el usuario o email ya existe en otro registro
     const usuarioDuplicado = await Usuario.findOne({
       _id: { $ne: id },
@@ -92,6 +105,14 @@ export async function PUT(
       return NextResponse.json(
         { error: 'El usuario o email ya existe' },
         { status: 400 }
+      );
+    }
+
+    // Un rol Usuario no puede modificar su propio rol
+    if (!esAdmin && body.rol && body.rol !== usuarioExistente.rol) {
+      return NextResponse.json(
+        { error: 'No puedes modificar tu propio rol' },
+        { status: 403 }
       );
     }
 
@@ -152,6 +173,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = requireAdminAuth(request);
+    if (!auth.authorized) {
+      return auth.response;
+    }
+
     await connectDB();
     const { id } = await params;
 
@@ -192,7 +218,7 @@ export async function DELETE(
     }
 
     // Obtener ID del usuario que realiza la eliminación
-    const currentUserId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb';
+    const currentUserId = auth.user.id;
 
     // Verificar que no se está eliminando a sí mismo
     if (id === currentUserId) {

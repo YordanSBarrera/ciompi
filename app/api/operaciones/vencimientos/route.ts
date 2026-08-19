@@ -2,6 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/db/dbConnection';
 import Financiamiento from '@/models/financiamiento';
 import PagoCuota from '@/models/pagoCuota';
+import Cliente from '@/models/cliente';
+import Vehiculo from '@/models/vehiculo';
+import Empresa from '@/models/empresa';
+
+// Forzar registro de modelos para populate (evita MissingSchemaError)
+void Cliente;
+void Vehiculo;
+void Empresa;
 
 export async function GET(request: NextRequest) {
   try {

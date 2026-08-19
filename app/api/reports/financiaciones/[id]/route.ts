@@ -1,7 +1,18 @@
 import { connectDB } from '@/db/dbConnection';
 import Financiamiento from '@/models/financiamiento';
 import PagoCuota from '@/models/pagoCuota';
+import Cliente from '@/models/cliente';
+import Empresa from '@/models/empresa';
+import Vehiculo from '@/models/vehiculo';
+import Usuario from '@/models/Usuario';
 import { NextRequest, NextResponse } from 'next/server';
+import { formatMoney, normalizarMoneda } from '@/lib/moneda';
+
+// Forzar registro de modelos para populate (evita MissingSchemaError)
+void Cliente;
+void Empresa;
+void Vehiculo;
+void Usuario;
 
 export async function GET(
   request: NextRequest,
@@ -76,17 +87,13 @@ function generateFinanciamientoDetailReportHTML(
     day: 'numeric',
   });
 
+  const monedaInforme = normalizarMoneda(financiamiento.moneda);
+
   const formatCurrency = (amount: number | null | undefined) => {
-    if (amount === null || amount === undefined) return '$0.00';
-    try {
-      return new Intl.NumberFormat('es-UY', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 2,
-      }).format(amount);
-    } catch {
-      return '$0.00';
+    if (amount === null || amount === undefined || Number.isNaN(Number(amount))) {
+      return formatMoney(0, monedaInforme);
     }
+    return formatMoney(Number(amount), monedaInforme);
   };
 
   const formatDate = (date: Date | string | null | undefined) => {
@@ -194,7 +201,25 @@ function generateFinanciamientoDetailReportHTML(
     ) {
       financiamiento.cuotasFuturas.forEach((cuota: { numeroCuota: number; fechaVencimiento: Date; valorCuota: number }) => {
         const fechaVencimiento = new Date(cuota.fechaVencimiento);
-        const montoPagado = pagosPorCuota[cuota.numeroCuota] || 0;
+        const esExtra = cuota.numeroCuota > financiamiento.cuotas;
+        
+        // Calcular pagos para esta cuota específica
+        let montoPagado = 0;
+        if (esExtra) {
+          // Para cuotas extras, buscar pagos extras con este número de cuota
+          montoPagado = pagos
+            .filter(
+              pago =>
+                pago.esExtra &&
+                pago.numeroCuota === cuota.numeroCuota &&
+                pago.estadoPago === 'confirmado'
+            )
+            .reduce((sum, pago) => sum + pago.montoPago, 0);
+        } else {
+          // Para cuotas normales, usar el cálculo existente
+          montoPagado = pagosPorCuota[cuota.numeroCuota] || 0;
+        }
+        
         const pagada = montoPagado >= cuota.valorCuota;
         const montoPendiente = Math.max(0, cuota.valorCuota - montoPagado);
 
@@ -202,7 +227,7 @@ function generateFinanciamientoDetailReportHTML(
           numeroCuota: cuota.numeroCuota,
           fechaVencimiento,
           valorCuota: cuota.valorCuota,
-          esExtra: false,
+          esExtra: esExtra,
           pagada,
           montoPagado,
           montoPendiente,
@@ -234,51 +259,64 @@ function generateFinanciamientoDetailReportHTML(
       }
     }
 
-    // Agregar cuotas extras si existen
+    // Agregar cuotas extras si existen y no están ya en cuotasFuturas
+    // Solo si no hay cuotasFuturas o si hay menos cuotas extras de las esperadas
     if (financiamiento.cuotasExtras && financiamiento.cuotasExtras > 0) {
-      const fechaUltima =
-        todasLasCuotas.length > 0
-          ? new Date(todasLasCuotas[todasLasCuotas.length - 1].fechaVencimiento)
-          : financiamiento.cuotasFuturas &&
-              financiamiento.cuotasFuturas.length > 0
-            ? new Date(
-                financiamiento.cuotasFuturas[
-                  financiamiento.cuotasFuturas.length - 1
-                ].fechaVencimiento
-              )
-            : new Date(financiamiento.fechaUltimaCuota);
+      // Contar cuántas cuotas extras ya están en todasLasCuotas
+      const cuotasExtrasExistentes = todasLasCuotas.filter(
+        c => c.esExtra
+      ).length;
+      
+      // Si faltan cuotas extras, generarlas
+      if (cuotasExtrasExistentes < financiamiento.cuotasExtras) {
+        // Obtener la fecha de la última cuota normal
+        const fechaUltima =
+          todasLasCuotas.length > 0
+            ? new Date(todasLasCuotas[todasLasCuotas.length - 1].fechaVencimiento)
+            : financiamiento.cuotasFuturas &&
+                financiamiento.cuotasFuturas.length > 0
+              ? new Date(
+                  financiamiento.cuotasFuturas[
+                    financiamiento.cuotasFuturas.length - 1
+                  ].fechaVencimiento
+                )
+              : new Date(financiamiento.fechaUltimaCuota);
 
-      const pagosExtras = pagos.filter(
-        pago => pago.esExtra && pago.estadoPago === 'confirmado'
-      );
+        // Obtener el número de cuota más alto para las extras
+        const maxNumeroCuota = todasLasCuotas.length > 0
+          ? Math.max(...todasLasCuotas.map(c => c.numeroCuota))
+          : financiamiento.cuotas;
 
-      for (let i = 1; i <= financiamiento.cuotasExtras; i++) {
-        const fechaVencimiento = new Date(fechaUltima);
-        fechaVencimiento.setMonth(fechaVencimiento.getMonth() + i);
+        // Generar solo las cuotas extras faltantes
+        const cuotasExtrasFaltantes = financiamiento.cuotasExtras - cuotasExtrasExistentes;
+        for (let i = 1; i <= cuotasExtrasFaltantes; i++) {
+          const fechaVencimiento = new Date(fechaUltima);
+          fechaVencimiento.setMonth(fechaVencimiento.getMonth() + i);
 
-        const numeroCuotaExtra = financiamiento.cuotas + i;
-        const montoPagadoExtra = pagos
-          .filter(
-            pago =>
-              pago.esExtra &&
-              pago.numeroCuota === numeroCuotaExtra &&
-              pago.estadoPago === 'confirmado'
-          )
-          .reduce((sum, pago) => sum + pago.montoPago, 0);
-        const montoPendienteExtra = Math.max(
-          0,
-          financiamiento.valorCuota - montoPagadoExtra
-        );
+          const numeroCuotaExtra = maxNumeroCuota + i;
+          const montoPagadoExtra = pagos
+            .filter(
+              pago =>
+                pago.esExtra &&
+                pago.numeroCuota === numeroCuotaExtra &&
+                pago.estadoPago === 'confirmado'
+            )
+            .reduce((sum, pago) => sum + pago.montoPago, 0);
+          const montoPendienteExtra = Math.max(
+            0,
+            financiamiento.valorCuota - montoPagadoExtra
+          );
 
-        todasLasCuotas.push({
-          numeroCuota: numeroCuotaExtra,
-          fechaVencimiento,
-          valorCuota: financiamiento.valorCuota,
-          esExtra: true,
-          pagada: montoPagadoExtra >= financiamiento.valorCuota,
-          montoPagado: montoPagadoExtra,
-          montoPendiente: montoPendienteExtra,
-        });
+          todasLasCuotas.push({
+            numeroCuota: numeroCuotaExtra,
+            fechaVencimiento,
+            valorCuota: financiamiento.valorCuota,
+            esExtra: true,
+            pagada: montoPagadoExtra >= financiamiento.valorCuota,
+            montoPagado: montoPagadoExtra,
+            montoPendiente: montoPendienteExtra,
+          });
+        }
       }
     }
 

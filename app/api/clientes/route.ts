@@ -1,11 +1,13 @@
 import { connectDB } from '@/db/dbConnection';
-import { getUserIdFromToken } from '@/lib/server-utils';
+import { getUserIdFromToken, requireAdminAuth } from '@/lib/server-utils';
 import Cliente from '@/models/cliente';
 import Financiamiento from '@/models/financiamiento';
+import Usuario from '@/models/Usuario';
 import { NextRequest, NextResponse } from 'next/server';
 
 // Forzar registro de modelos para populate
 void Financiamiento;
+void Usuario;
 
 export async function GET(request: NextRequest) {
   try {
@@ -126,6 +128,11 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const auth = requireAdminAuth(request);
+    if (!auth.authorized) {
+      return auth.response;
+    }
+
     await connectDB();
     const { searchParams } = new URL(request.url);
     const clienteId = searchParams.get('id');
@@ -154,27 +161,25 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    // Verificar si está en algún financiamiento ACTIVO (como cliente o cliente2)
-    const financiamientoActivo = await Financiamiento.findOne({
-      $or: [
-        { cliente: clienteId },
-        { cliente2: clienteId }
-      ],
-      estadoFinanciamiento: { $in: ['activo', 'en_mora'] }
+    // Regla de negocio: un cliente asociado a cualquier financiamiento
+    // (sin importar su estado) no se puede eliminar de la BD
+    const financiamientoAsociado = await Financiamiento.findOne({
+      $or: [{ cliente: clienteId }, { cliente2: clienteId }],
     });
 
-    if (financiamientoActivo) {
+    if (financiamientoAsociado) {
       return NextResponse.json(
-        { 
-          error: 'No se puede eliminar el cliente porque está asociado a un financiamiento activo',
-          financiamientoId: financiamientoActivo._id 
+        {
+          error:
+            'No se puede eliminar el cliente porque está asociado a un financiamiento',
+          financiamientoId: financiamientoAsociado._id,
         },
         { status: 409 } // Conflict
       );
     }
 
     // Obtener ID del usuario para auditoría
-    const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb';
+    const userId = auth.user.id;
 
     // Soft delete: marcar como eliminado en lugar de borrar
     const clienteEliminado = await Cliente.findByIdAndUpdate(

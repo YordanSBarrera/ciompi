@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/db/dbConnection';
-import { getUserIdFromToken } from '@/lib/server-utils';
+import { requireAdminAuth } from '@/lib/server-utils';
 import Empresa from '@/models/empresa';
 import Financiamiento from '@/models/financiamiento';
+import Usuario from '@/models/Usuario';
 
 // Forzar registro de modelos para populate
 void Financiamiento;
+void Usuario;
 
 // GET - Obtener empresa por ID
 export async function GET(
@@ -46,6 +48,11 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = requireAdminAuth(request);
+    if (!auth.authorized) {
+      return auth.response;
+    }
+
     await connectDB();
     const { id } = await params;
 
@@ -89,8 +96,8 @@ export async function PUT(
     if (estado) {
       empresa.estado = estado;
     }
-    // Asignar usuario de modificación si existe token
-    const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb';
+    // Asignar usuario de modificación autenticado
+    const userId = auth.user.id;
     empresa.usuarioModificacion = userId as any;
 
     await empresa.save();
@@ -117,6 +124,11 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = requireAdminAuth(request);
+    if (!auth.authorized) {
+      return auth.response;
+    }
+
     await connectDB();
     const { id } = await params;
 
@@ -154,7 +166,7 @@ export async function DELETE(
     }
 
     // Obtener ID del usuario para auditoría
-    const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb';
+    const userId = auth.user.id;
 
     // Soft delete: marcar como eliminado y cambiar estado a inactiva
     empresa.eliminado = true;
