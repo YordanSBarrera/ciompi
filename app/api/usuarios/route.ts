@@ -1,5 +1,5 @@
 import { connectDB } from '@/db/dbConnection';
-import { getUserIdFromToken } from '@/lib/server-utils';
+import { requireAdminAuth } from '@/lib/server-utils';
 import Usuario from '@/models/Usuario';
 import Financiamiento from '@/models/financiamiento';
 import { NextRequest, NextResponse } from 'next/server';
@@ -54,10 +54,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: Request) {
   try {
+    const auth = requireAdminAuth(request);
+    if (!auth.authorized) {
+      return auth.response;
+    }
+
     await connectDB();
 
     // Obtener ID del usuario desde el token
-    const userId = getUserIdFromToken(request) || '68f83df25d5fc999682c6dfb'; // Fallback al admin
+    const userId = auth.user.id;
 
     const body = await request.json();
 

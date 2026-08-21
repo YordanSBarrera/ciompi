@@ -2,31 +2,40 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/hook/useAuth';
+import { UsuarioRoles } from '@/lib/const';
 import { Box, CircularProgress } from '@mui/material';
 
 interface AuthGuardProps {
   children: React.ReactNode;
   requireAuth?: boolean;
+  requireAdmin?: boolean;
 }
 
 export default function AuthGuard({
   children,
   requireAuth = true,
+  requireAdmin = false,
 }: AuthGuardProps) {
   const { user, loading, isAuthenticated } = useAuth();
   const router = useRouter();
+
+  const esAdmin = user?.rol === UsuarioRoles.Administrativo;
 
   useEffect(() => {
     if (!loading) {
       if (requireAuth && !isAuthenticated) {
         // Usuario no autenticado, redirigir al login
-        router.push('/login');
+        router.replace('/login');
+      } else if (requireAuth && isAuthenticated && requireAdmin && !esAdmin) {
+        // Usuario autenticado sin rol Administrativo en una página de
+        // administración: redirigir al panel de control
+        router.replace('/ciompi');
       } else if (!requireAuth && isAuthenticated) {
         // Usuario autenticado en página de login, redirigir al home
         router.push('/ciompi');
       }
     }
-  }, [loading, isAuthenticated, requireAuth, router]);
+  }, [loading, isAuthenticated, requireAuth, requireAdmin, esAdmin, router]);
 
   // Mostrar loading mientras se verifica la autenticación
   if (loading) {
@@ -45,6 +54,11 @@ export default function AuthGuard({
 
   // Si requiere autenticación y no está autenticado, no mostrar contenido
   if (requireAuth && !isAuthenticated) {
+    return null;
+  }
+
+  // Si la página exige rol Administrativo y no lo tiene, no mostrar contenido
+  if (requireAuth && requireAdmin && !esAdmin) {
     return null;
   }
 

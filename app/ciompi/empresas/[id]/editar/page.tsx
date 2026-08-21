@@ -180,7 +180,7 @@ export default function EditarEmpresaPage() {
   }
 
   return (
-    <AuthGuard>
+    <AuthGuard requireAdmin>
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         {/* Header */}
         <Box sx={{ mb: 3 }}>

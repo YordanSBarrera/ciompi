@@ -11,32 +11,41 @@ import {
   Paper,
   InputAdornment,
 } from '@mui/material';
-import {
-  Search as SearchIcon,
-  Clear as ClearIcon,
-} from '@mui/icons-material';
+import { Search as SearchIcon, Clear as ClearIcon } from '@mui/icons-material';
 import { FinanciamientoType } from '@/lib/types';
 import ListaFinanciamientos from '../ListaFinanciamientos';
 
 // Función para buscar financiamientos por nombre de cliente
 async function buscarFinanciamientosPorCliente(
-  nombreCliente: string
+  nombreCliente: string,
+  empresaId: string
 ): Promise<FinanciamientoType[]> {
   try {
-    const response = await fetch(
-      `/api/financiamiento?nombreCliente=${encodeURIComponent(nombreCliente)}`
-    );
+    const params = new URLSearchParams({
+      nombreCliente: nombreCliente,
+      limit: '100',
+    });
+    if (empresaId) {
+      params.set('empresa', empresaId);
+    }
+    const response = await fetch(`/api/financiamiento?${params.toString()}`);
     if (!response.ok) {
       throw new Error('Error al buscar financiamientos');
     }
-    return await response.json();
+    const result = await response.json();
+    return result.success ? result.data : [];
   } catch (error) {
     console.error('Error buscando financiamientos:', error);
     return [];
   }
 }
 
-export default function BuscarClientes() {
+interface BuscarClientesProps {
+  empresaId: string;
+  empresaNombre?: string;
+}
+
+export default function BuscarClientes({ empresaId }: BuscarClientesProps) {
   const [financiamientos, setFinanciamientos] = useState<FinanciamientoType[]>(
     []
   );
@@ -56,7 +65,8 @@ export default function BuscarClientes() {
       setError(null);
       setHasSearched(true);
       const resultados = await buscarFinanciamientosPorCliente(
-        nombreCliente.trim()
+        nombreCliente.trim(),
+        empresaId
       );
       setFinanciamientos(resultados);
 
@@ -149,7 +159,9 @@ export default function BuscarClientes() {
 
       {error && !loading && (
         <Alert
-          severity={hasSearched && financiamientos.length === 0 ? 'info' : 'error'}
+          severity={
+            hasSearched && financiamientos.length === 0 ? 'info' : 'error'
+          }
           sx={{ mb: 2 }}
         >
           {error}
@@ -165,6 +177,7 @@ export default function BuscarClientes() {
           <ListaFinanciamientos
             financiamientos={financiamientos}
             onFinanciamientoEliminado={handleFinanciamientoEliminado}
+            VerBarraDeBusqueda={false}
           />
         </Box>
       )}
@@ -179,4 +192,3 @@ export default function BuscarClientes() {
     </>
   );
 }
-

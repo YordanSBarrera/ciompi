@@ -1,3 +1,5 @@
+import { UsuarioRoles } from './const';
+
 /**
  * Valida si una cédula tiene exactamente 8 dígitos
  * @param cedula - Número de cédula a validar
@@ -63,17 +65,14 @@ export const handleCedulaInput = (
   return limitedValue;
 };
 
-export enum Roles {
-  Administrativo = 'Administrativo',
-  Usuario = 'Usuario',
-}
-
-export const isAdmin = (role: string): boolean => {
-  return role === Roles.Administrativo;
+export const isAdmin = (): boolean => {
+  const user = getCurrentUser();
+  return user ? user.rol === UsuarioRoles.Administrativo : false;
 };
 
-export const isUser = (role: string): boolean => {
-  return role === Roles.Usuario;
+export const isUser = (): boolean => {
+  const user = getCurrentUser();
+  return user ? user.rol === UsuarioRoles.Usuario : false;
 };
 
 /**
@@ -148,58 +147,3 @@ export const getAuthHeaders = (): HeadersInit => {
     Authorization: `Bearer ${token}`,
   };
 };
-
-export const marcaVehiculos = [
-  'Toyota',
-  'Volkswagen',
-  'Chevrolet',
-  'Ford',
-  'Fiat',
-  'Renault',
-  'Nissan',
-  'Hyundai',
-  'Kia',
-  'Peugeot',
-  'Citroën',
-  'Mercedes-Benz',
-  'BMW',
-  'Audi',
-  'Volvo',
-  'Suzuki',
-  'Mitsubishi',
-  'Honda',
-  'Mazda',
-  'Jeep',
-  'Dodge',
-  'Chrysler',
-  'Subaru',
-  'Lexus',
-  'Infiniti',
-  'Land Rover',
-  'Jaguar',
-  'Porsche',
-  'Mini',
-  'Seat',
-  'Skoda',
-  'BYD',
-  'Chery',
-  'Geely',
-  'Great Wall',
-  'BAIC',
-  'JAC',
-  'Scania',
-  'Volvo Trucks',
-  'Mercedes-Benz Trucks',
-  'Iveco',
-  'MAN',
-  'DAF',
-  'Agrale',
-  'Alfa Romeo',
-  'Ferrari',
-  'Lamborghini',
-  'Maserati',
-  'Bentley',
-  'Rolls-Royce',
-  'Aston Martin',
-  'McLaren',
-];

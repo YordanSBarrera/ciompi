@@ -54,6 +54,8 @@ import {
 } from '@/lib/color';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { useRouter } from 'next/navigation';
+import { getCurrentUserId, isAdmin } from '@/lib/utils';
+import { UsuarioRoles } from '@/lib/const';
 
 interface ListaUsuariosProps {
   usuarios: Usuario[];
@@ -91,6 +93,8 @@ export default function ListaUsuarios({
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const esAdministrativo = isAdmin();
+  const currentUserId = getCurrentUserId();
   const emptyData = '-';
 
   // Helper function to truncate text
@@ -152,11 +156,9 @@ export default function ListaUsuarios({
 
   const getRolColor = (rol: string) => {
     switch (rol) {
-      case 'admin':
-        return 'error';
-      case 'Administrativo':
+      case UsuarioRoles.Administrativo:
         return 'warning';
-      case 'Usuario':
+      case UsuarioRoles.Usuario:
         return 'info';
       default:
         return 'default';
@@ -200,7 +202,7 @@ export default function ListaUsuarios({
             }}
           />
 
-          {onAgregarUsuario && (
+          {onAgregarUsuario && isAdmin() && (
             <Button
               variant="contained"
               startIcon={<AddIcon />}
@@ -592,27 +594,44 @@ export default function ListaUsuarios({
                         />
                         Ver Detalles
                       </MenuItem>
-                      <MenuItem onClick={() => handleClickEditar(usuario._id!)}>
-                        <EditIcon
-                          sx={{ fontSize: 18, mr: 1, color: azulBase }}
-                        />
-                        Editar
-                      </MenuItem>
-                      <MenuItem
-                        onClick={() =>
-                          handleClickEliminarWrapper(
-                            usuario._id!,
-                            usuario.nombre
-                          )
-                        }
-                      >
-                        <DeleteIcon
-                          sx={{ fontSize: 18, mr: 1, color: 'error.main' }}
-                        />
-                        <Typography variant="body2" color="error.main">
-                          Eliminar
-                        </Typography>
-                      </MenuItem>
+                      {esAdministrativo ? (
+                        <>
+                          <MenuItem
+                            onClick={() => handleClickEditar(usuario._id!)}
+                          >
+                            <EditIcon
+                              sx={{ fontSize: 18, mr: 1, color: azulBase }}
+                            />
+                            Editar
+                          </MenuItem>
+                          <MenuItem
+                            onClick={() =>
+                              handleClickEliminarWrapper(
+                                usuario._id!,
+                                usuario.nombre
+                              )
+                            }
+                          >
+                            <DeleteIcon
+                              sx={{
+                                fontSize: 18,
+                                mr: 1,
+                                color: 'error.main',
+                              }}
+                            />
+                            Eliminar
+                          </MenuItem>
+                        </>
+                      ) : usuario._id === currentUserId ? (
+                        <MenuItem
+                          onClick={() => handleClickEditar(usuario._id!)}
+                        >
+                          <EditIcon
+                            sx={{ fontSize: 18, mr: 1, color: azulBase }}
+                          />
+                          Editar
+                        </MenuItem>
+                      ) : null}
                     </Menu>
                   </Stack>
                 </TableCell>

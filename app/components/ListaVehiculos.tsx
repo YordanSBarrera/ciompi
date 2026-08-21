@@ -53,7 +53,12 @@ import {
   grisTexto,
   naranja,
   colorMap,
+  verde,
+  verdeClaro,
+  rojo,
+  rojoClaro,
 } from '@/lib/color';
+import { isAdmin } from '@/lib/utils';
 
 interface ListaVehiculosProps {
   vehiculos: VehiculoType[];
@@ -100,6 +105,7 @@ export default function ListaVehiculos({
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const esAdministrativo = isAdmin();
 
   const filteredVehiculos = vehiculos.filter(vehiculo => {
     // Solo filtro de búsqueda general
@@ -430,6 +436,16 @@ export default function ListaVehiculos({
                   color: blanco,
                   fontWeight: 600,
                   fontSize: '0.875rem',
+                  minWidth: 120,
+                }}
+              >
+                Disponible
+              </TableCell>
+              <TableCell
+                sx={{
+                  color: blanco,
+                  fontWeight: 600,
+                  fontSize: '0.875rem',
                   minWidth: 100,
                   width: 100,
                   position: 'sticky',
@@ -446,7 +462,7 @@ export default function ListaVehiculos({
           <TableBody>
             {filteredVehiculos.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
+                <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
                   <Typography color="textSecondary">
                     {searchTerm
                       ? 'No se encontraron vehículos que coincidan con la búsqueda'
@@ -589,6 +605,51 @@ export default function ListaVehiculos({
                     </Typography>
                   </TableCell>
 
+                  <TableCell>
+                    <Chip
+                      size="small"
+                      icon={
+                        <Box
+                          component="span"
+                          sx={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: '50%',
+                            backgroundColor:
+                              vehiculo.disponible !== false
+                                ? verde
+                                : rojo,
+                            boxShadow: `0 0 0 3px ${
+                              vehiculo.disponible !== false
+                                ? verdeClaro
+                                : rojoClaro
+                            }`,
+                          }}
+                        />
+                      }
+                      label={
+                        vehiculo.disponible !== false
+                          ? 'Disponible'
+                          : 'No disponible'
+                      }
+                      sx={{
+                        backgroundColor:
+                          vehiculo.disponible !== false
+                            ? verdeClaro
+                            : rojoClaro,
+                        color:
+                          vehiculo.disponible !== false
+                            ? verde
+                            : rojo,
+                        fontWeight: 600,
+                        fontSize: '0.75rem',
+                        border: `1px solid ${
+                          vehiculo.disponible !== false ? verde : rojo
+                        }`,
+                      }}
+                    />
+                  </TableCell>
+
                   <TableCell
                     className="sticky-actions-cell"
                     sx={{
@@ -664,14 +725,20 @@ export default function ListaVehiculos({
                           />
                           Editar
                         </MenuItem>
-                        <MenuItem onClick={() => handleClickEliminar(vehiculo)}>
-                          <DeleteIcon
-                            sx={{ fontSize: 18, mr: 1, color: 'error.main' }}
-                          />
-                          <Typography variant="body2" color="error.main">
-                            Eliminar
-                          </Typography>
-                        </MenuItem>
+                        {esAdministrativo && (
+                          <MenuItem onClick={() => handleClickEliminar(vehiculo)}>
+                            <DeleteIcon
+                              sx={{
+                                fontSize: 18,
+                                mr: 1,
+                                color: 'error.main',
+                              }}
+                            />
+                            <Typography variant="body2" color="error.main">
+                              Eliminar
+                            </Typography>
+                          </MenuItem>
+                        )}
                       </Menu>
                     </Stack>
                   </TableCell>

@@ -1,19 +1,44 @@
 import { connectDB } from '@/db/dbConnection';
+import Empresa from '@/models/empresa';
 import Financiamiento from '@/models/financiamiento';
 import PagoCuota from '@/models/pagoCuota';
-import { NextResponse } from 'next/server';
+import Cliente from '@/models/cliente';
+import Vehiculo from '@/models/vehiculo';
+import { formatMoney, normalizarMoneda } from '@/lib/moneda';
+import { NextResponse, NextRequest } from 'next/server';
+import { MonedaTipo } from '@/lib/const';
 
-export async function GET() {
+// Forzar registro de modelos para populate (evita MissingSchemaError)
+void Cliente;
+void Vehiculo;
+
+export async function GET(request: NextRequest) {
   try {
     await connectDB();
+
+    const { searchParams } = new URL(request.url);
+    const empresaId = searchParams.get('empresa') || '';
 
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
 
-    // Obtener todos los financiamientos activos
-    const financiamientos = await Financiamiento.find({
+    // Cargar empresa si viene indicada (para el encabezado del reporte)
+    const empresaRaw = empresaId
+      ? await Empresa.findById(empresaId).lean()
+      : null;
+    const empresa: { nombre: string } | null = empresaRaw
+      ? (empresaRaw as unknown as { nombre: string })
+      : null;
+
+    // Obtener los financiamientos activos (filtrados por empresa si se especifica)
+    const query: any = {
       estadoFinanciamiento: { $in: ['activo', 'en_mora'] },
-    })
+    };
+    if (empresaId) {
+      query.empresa = empresaId;
+    }
+
+    const financiamientos = await Financiamiento.find(query)
       .populate('cliente', 'NOMBRE TELEFONO cedula')
       .populate('vehiculo', 'Marca Modelo Matricula Año Color')
       .populate('empresa', 'nombre descripcion telefono')
@@ -32,15 +57,20 @@ export async function GET() {
         pagos.filter(p => !p.esExtra).map(p => p.numeroCuota)
       );
 
-      if (financiamiento.cuotasFuturas && financiamiento.cuotasFuturas.length > 0) {
-        const cuotasAtrasadas = financiamiento.cuotasFuturas.filter((cuota: any) => {
-          const fechaVencimiento = new Date(cuota.fechaVencimiento);
-          fechaVencimiento.setHours(0, 0, 0, 0);
-          return (
-            fechaVencimiento < hoy &&
-            !numerosCuotasPagadas.has(cuota.numeroCuota)
-          );
-        });
+      if (
+        financiamiento.cuotasFuturas &&
+        financiamiento.cuotasFuturas.length > 0
+      ) {
+        const cuotasAtrasadas = financiamiento.cuotasFuturas.filter(
+          (cuota: any) => {
+            const fechaVencimiento = new Date(cuota.fechaVencimiento);
+            fechaVencimiento.setHours(0, 0, 0, 0);
+            return (
+              fechaVencimiento < hoy &&
+              !numerosCuotasPagadas.has(cuota.numeroCuota)
+            );
+          }
+        );
 
         if (cuotasAtrasadas.length > 0) {
           const montoAtrasado = cuotasAtrasadas.reduce(
@@ -92,7 +122,8 @@ export async function GET() {
 
     // Generar HTML para impresión
     const html = generateFinanciamientosAtrasadosReportHTML(
-      financiamientosConAtrasos
+      financiamientosConAtrasos,
+      empresa?.nombre || ''
     );
 
     return new NextResponse(html, {
@@ -101,7 +132,10 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error('Error generando reporte de financiamientos atrasados:', error);
+    console.error(
+      'Error generando reporte de financiamientos atrasados:',
+      error
+    );
     return NextResponse.json(
       { error: 'Error generando reporte' },
       { status: 500 }
@@ -110,7 +144,8 @@ export async function GET() {
 }
 
 function generateFinanciamientosAtrasadosReportHTML(
-  financiamientos: any[]
+  financiamientos: any[],
+  empresaNombre: string
 ): string {
   const fechaActual = new Date().toLocaleDateString('es-UY', {
     year: 'numeric',
@@ -118,13 +153,8 @@ function generateFinanciamientosAtrasadosReportHTML(
     day: 'numeric',
   });
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-UY', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-    }).format(amount);
-  };
+  const formatCurrency = (amount: number, fin: any) =>
+    formatMoney(amount, normalizarMoneda(fin?.moneda));
 
   const formatDate = (date: Date | string) => {
     if (!date) return '-';
@@ -137,10 +167,16 @@ function generateFinanciamientosAtrasadosReportHTML(
     (sum, fin) => sum + (fin.cuotasAtrasadas || 0),
     0
   );
-  const totalMontoAtrasado = financiamientos.reduce(
-    (sum, fin) => sum + (fin.montoAtrasado || 0),
-    0
-  );
+  const totalMontoUsd = financiamientos.reduce((sum, fin) => {
+    return normalizarMoneda(fin.moneda) === MonedaTipo.USD
+      ? sum + (fin.montoAtrasado || 0)
+      : sum;
+  }, 0);
+  const totalMontoUyu = financiamientos.reduce((sum, fin) => {
+    return normalizarMoneda(fin.moneda) === MonedaTipo.UYU
+      ? sum + (fin.montoAtrasado || 0)
+      : sum;
+  }, 0);
 
   const html = `
 <!DOCTYPE html>
@@ -312,6 +348,11 @@ function generateFinanciamientosAtrasadosReportHTML(
 <body>
   <div class="header">
     <h1>FINANCIAMIENTOS CON CUOTAS ATRASADAS</h1>
+    ${
+      empresaNombre
+        ? `<p style="font-size:13px;color:#333;margin-top:2px;"><strong>Empresa:</strong> ${empresaNombre}</p>`
+        : ''
+    }
     <p class="fecha">Generado el ${fechaActual}</p>
   </div>
   
@@ -326,11 +367,17 @@ function generateFinanciamientosAtrasadosReportHTML(
     </div>
     <div class="summary-box error">
       <h3>Total Monto Atrasado</h3>
-      <div class="value">${formatCurrency(totalMontoAtrasado)}</div>
+      <div class="value" style="font-size:11px;line-height:1.35;">
+        <div>USD: ${formatMoney(totalMontoUsd, 'USD')}</div>
+        <div>UYU: ${formatMoney(totalMontoUyu, 'UYU')}</div>
+      </div>
     </div>
   </div>
   
-  ${financiamientos.length === 0 ? '<div class="no-data">No hay financiamientos con cuotas atrasadas</div>' : `
+  ${
+    financiamientos.length === 0
+      ? '<div class="no-data">No hay financiamientos con cuotas atrasadas</div>'
+      : `
   <table>
     <thead>
       <tr>
@@ -351,34 +398,33 @@ function generateFinanciamientosAtrasadosReportHTML(
     </thead>
     <tbody>
       ${financiamientos
-        .map(
-          (fin, index) => {
-            const clienteNombre =
-              typeof fin.cliente === 'object' && fin.cliente
-                ? fin.cliente.NOMBRE
-                : '-';
-            const vehiculoInfo =
-              typeof fin.vehiculo === 'object' && fin.vehiculo
-                ? `${fin.vehiculo.Marca || ''} ${fin.vehiculo.Modelo || ''}`.trim()
-                : '-';
-            const matricula =
-              typeof fin.vehiculo === 'object' && fin.vehiculo
-                ? fin.vehiculo.Matricula || '-'
-                : '-';
-            
-            return `
+        .map((fin, index) => {
+          const clienteNombre =
+            typeof fin.cliente === 'object' && fin.cliente
+              ? fin.cliente.NOMBRE
+              : '-';
+          const vehiculoInfo =
+            typeof fin.vehiculo === 'object' && fin.vehiculo
+              ? `${fin.vehiculo.Marca || ''} ${fin.vehiculo.Modelo || ''}`.trim()
+              : '-';
+          const matricula =
+            typeof fin.vehiculo === 'object' && fin.vehiculo
+              ? fin.vehiculo.Matricula || '-'
+              : '-';
+
+          return `
         <tr>
           <td class="text-center">${index + 1}</td>
           <td><strong>${clienteNombre}</strong></td>
           <td>${vehiculoInfo}</td>
           <td>${matricula}</td>
-          <td class="text-right">${formatCurrency(fin.costoVehiculo || 0)}</td>
+          <td class="text-right">${formatCurrency(fin.costoVehiculo || 0, fin)}</td>
           <td class="text-center">${fin.cuotas || 0}</td>
           <td class="text-center">${fin.cuotasPagadas || 0}</td>
           <td class="text-center cuotas-atrasadas">${fin.cuotasAtrasadas || 0}</td>
-          <td class="text-right">${formatCurrency(fin.valorCuota || 0)}</td>
-          <td class="text-right monto-atrasado"><strong>${formatCurrency(fin.montoAtrasado || 0)}</strong></td>
-          <td class="text-right">${formatCurrency(fin.saldoPendiente || 0)}</td>
+          <td class="text-right">${formatCurrency(fin.valorCuota || 0, fin)}</td>
+          <td class="text-right monto-atrasado"><strong>${formatCurrency(fin.montoAtrasado || 0, fin)}</strong></td>
+          <td class="text-right">${formatCurrency(fin.saldoPendiente || 0, fin)}</td>
           <td class="text-center">
             <span class="estado-badge">
               ${fin.estadoFinanciamiento || 'activo'}
@@ -387,12 +433,12 @@ function generateFinanciamientosAtrasadosReportHTML(
           <td class="text-center">${formatDate(fin.fechaVenta)}</td>
         </tr>
       `;
-          }
-        )
+        })
         .join('')}
     </tbody>
   </table>
-  `}
+  `
+  }
   
   <div class="footer">
     <p>CIOMPI - Sistema de Gestión de Financiamientos</p>
@@ -410,4 +456,3 @@ function generateFinanciamientosAtrasadosReportHTML(
 
   return html;
 }
-

@@ -3,9 +3,11 @@ import { connectDB } from '@/db/dbConnection';
 import { getUserIdFromToken } from '@/lib/server-utils';
 import Empresa from '@/models/empresa';
 import Financiamiento from '@/models/financiamiento';
+import Usuario from '@/models/Usuario';
 
 // Forzar registro de modelos para populate
 void Financiamiento;
+void Usuario;
 
 // GET - Obtener todas las empresas
 export async function GET(request: NextRequest) {

@@ -1,6 +1,7 @@
 'use client';
 import { useRouter } from 'next/navigation';
 import FormularioUsuario from '@/app/components/FormularioUsuario';
+import AuthGuard from '@/app/components/AuthGuard';
 import { Usuario } from '@/lib/types';
 import { getAuthHeaders } from '@/lib/utils';
 
@@ -40,5 +41,9 @@ export default function NuevoUsuarioPage() {
     router.push('/ciompi/usuario');
   };
 
-  return <FormularioUsuario onSubmit={handleSubmit} onCancel={handleCancel} />;
+  return (
+    <AuthGuard requireAdmin>
+      <FormularioUsuario onSubmit={handleSubmit} onCancel={handleCancel} />
+    </AuthGuard>
+  );
 }

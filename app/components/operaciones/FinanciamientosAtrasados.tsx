@@ -18,11 +18,19 @@ import { FinanciamientoType } from '@/lib/types';
 import ListaFinanciamientos from '../ListaFinanciamientos';
 
 // Función para obtener financiamientos con cuotas atrasadas
-async function obtenerFinanciamientosAtrasados(): Promise<
+async function obtenerFinanciamientosAtrasados(
+  empresaId: string
+): Promise<
   (FinanciamientoType & { cuotasAtrasadas?: number; montoAtrasado?: number })[]
 > {
   try {
-    const response = await fetch('/api/financiamiento/atrasados');
+    const params = new URLSearchParams();
+    if (empresaId) {
+      params.set('empresa', empresaId);
+    }
+    const response = await fetch(
+      `/api/financiamiento/atrasados?${params.toString()}`
+    );
     if (!response.ok) {
       throw new Error('Error al obtener financiamientos atrasados');
     }
@@ -33,7 +41,14 @@ async function obtenerFinanciamientosAtrasados(): Promise<
   }
 }
 
-export default function FinanciamientosAtrasados() {
+interface FinanciamientosAtrasadosProps {
+  empresaId: string;
+  empresaNombre?: string;
+}
+
+export default function FinanciamientosAtrasados({
+  empresaId,
+}: FinanciamientosAtrasadosProps) {
   const [financiamientosAtrasados, setFinanciamientosAtrasados] = useState<
     (FinanciamientoType & {
       cuotasAtrasadas?: number;
@@ -42,13 +57,32 @@ export default function FinanciamientosAtrasados() {
   >([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
+
+  const pagination = {
+    page,
+    limit: pageSize,
+    total: financiamientosAtrasados.length,
+    pages: Math.ceil(financiamientosAtrasados.length / pageSize),
+  };
+
+  const financiamientosPaginados = financiamientosAtrasados.slice(
+    (page - 1) * pageSize,
+    page * pageSize
+  );
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
 
   const handleCargarAtrasados = async () => {
     try {
       setLoading(true);
       setError(null);
-      const resultados = await obtenerFinanciamientosAtrasados();
+      const resultados = await obtenerFinanciamientosAtrasados(empresaId);
       setFinanciamientosAtrasados(resultados);
+      setPage(1);
     } catch (err) {
       setError('Error al cargar financiamientos atrasados');
       console.error('Error:', err);
@@ -58,7 +92,14 @@ export default function FinanciamientosAtrasados() {
   };
 
   const handleImprimirListadoAtrasados = () => {
-    window.open(`/api/reports/financiamientos-atrasados?format=pdf`, '_blank');
+    const params = new URLSearchParams();
+    if (empresaId) {
+      params.set('empresa', empresaId);
+    }
+    window.open(
+      `/api/reports/financiamientos-atrasados?${params.toString()}`,
+      '_blank'
+    );
   };
 
   const handleImprimirFinanciamientoAtrasado = (id: string) => {
@@ -67,7 +108,7 @@ export default function FinanciamientosAtrasados() {
 
   useEffect(() => {
     handleCargarAtrasados();
-  }, []);
+  }, [empresaId]);
 
   return (
     <>
@@ -141,7 +182,9 @@ export default function FinanciamientosAtrasados() {
             financiamiento(s) con cuotas atrasadas
           </Alert>
           <ListaFinanciamientos
-            financiamientos={financiamientosAtrasados}
+            financiamientos={financiamientosPaginados}
+            pagination={pagination}
+            onPageChange={handlePageChange}
             onFinanciamientoEliminado={handleCargarAtrasados}
             mostrarAtrasos={true}
             onImprimir={handleImprimirFinanciamientoAtrasado}

@@ -7,6 +7,7 @@ import { azulBase } from '@/lib/color';
 import {
   Divider,
   IconButton,
+  ListItemIcon,
   Menu,
   MenuItem,
   Toolbar,
@@ -15,12 +16,8 @@ import {
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
-import SearchIcon from '@mui/icons-material/Search';
-import WarningIcon from '@mui/icons-material/Warning';
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import EventIcon from '@mui/icons-material/Event';
 import { useRouter } from 'next/navigation';
-import { routes } from '@/lib/rutas';
+import { homeModule, appModules } from '@/lib/modules';
 import MenuItemFormatted from './MenuItemFormatted';
 import { getCurrentUser } from '@/lib/utils';
 import AccountMenu from './AccountMenu';
@@ -33,16 +30,48 @@ export default function HeaderAppBar() {
   const [user, setUser] = useState<any>(null);
   const openMainMenu = Boolean(anchorEl);
   const operacionesMenuOpen = Boolean(operacionesAnchorEl);
+  const operacionesModule = appModules.find(module => module.submenu);
+  const submenuCloseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
 
   useEffect(() => {
     const currentUser = getCurrentUser();
     setUser(currentUser);
+    return () => clearSubmenuTimer();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const clearSubmenuTimer = () => {
+    if (submenuCloseTimerRef.current) {
+      clearTimeout(submenuCloseTimerRef.current);
+      submenuCloseTimerRef.current = null;
+    }
+  };
+
+  const openSubmenu = (event: MouseEvent<HTMLElement>) => {
+    clearSubmenuTimer();
+    setOperacionesAnchorEl(event.currentTarget);
+  };
+
+  const scheduleCloseSubmenu = () => {
+    clearSubmenuTimer();
+    submenuCloseTimerRef.current = setTimeout(() => {
+      setOperacionesAnchorEl(null);
+      submenuCloseTimerRef.current = null;
+    }, 350);
+  };
+
+  const closeSubmenu = () => {
+    clearSubmenuTimer();
+    setOperacionesAnchorEl(null);
+  };
 
   const handleClick = (event: MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
   const handleClose = () => {
+    clearSubmenuTimer();
     setAnchorEl(null);
     setOperacionesAnchorEl(null);
   };
@@ -102,6 +131,8 @@ export default function HeaderAppBar() {
                     mt: 1,
                     minWidth: 200,
                   },
+                  onMouseEnter: clearSubmenuTimer,
+                  onMouseLeave: scheduleCloseSubmenu,
                 }}
                 MenuListProps={{
                   sx: {
@@ -110,54 +141,64 @@ export default function HeaderAppBar() {
                 }}
               >
                 <MenuItemFormatted
-                  title="Financiamiento"
-                  href={`/${routes.financiamiento}`}
+                  title={homeModule.title}
+                  href={homeModule.href}
                   onHandleClose={handleClose}
-                />
-                <MenuItemFormatted
-                  title="Clientes"
-                  href={`/${routes.clientes}`}
-                  onHandleClose={handleClose}
-                />
-                <MenuItemFormatted
-                  title="Vehículos"
-                  href={`/${routes.vehiculos}`}
-                  onHandleClose={handleClose}
-                />
-                <MenuItem
-                  onMouseEnter={e => setOperacionesAnchorEl(e.currentTarget)}
-                  sx={{
-                    color: '#ffffff',
-                    '&:hover': {
-                      backgroundColor: '#333333',
-                      color: '#ffffff',
-                    },
-                    '&:focus': {
-                      backgroundColor: '#444444',
-                    },
-                    py: 1.5,
-                    px: 2,
-                  }}
-                >
-                  Operaciones
-                  <ChevronRightIcon sx={{ ml: 'auto' }} />
-                </MenuItem>
-                <MenuItemFormatted
-                  title="Datos Generales"
-                  href={`/${routes.datosGenerales}`}
-                  onHandleClose={handleClose}
-                />
-                <MenuItemFormatted
-                  title="Empresas"
-                  href={`/${routes.empresas}`}
-                  onHandleClose={handleClose}
+                  icon={
+                    <homeModule.icon
+                      fontSize="small"
+                      sx={{ color: '#ffffff' }}
+                    />
+                  }
                 />
                 <Divider sx={{ backgroundColor: '#444444', my: 1 }} />
-                <MenuItemFormatted
-                  title="Usuarios"
-                  href={`/${routes.usuarios}`}
-                  onHandleClose={handleClose}
-                />
+                {appModules.map(module =>
+                  module.submenu ? (
+                    <MenuItem
+                      key={module.id}
+                      onMouseEnter={openSubmenu}
+                      onMouseLeave={scheduleCloseSubmenu}
+                      sx={{
+                        color: '#ffffff',
+                        backgroundColor: operacionesMenuOpen
+                          ? '#333333'
+                          : undefined,
+                        '&:hover': {
+                          backgroundColor: '#333333',
+                          color: '#ffffff',
+                        },
+                        '&:focus': {
+                          backgroundColor: '#444444',
+                        },
+                        py: 1.5,
+                        px: 2,
+                      }}
+                    >
+                      <ListItemIcon>
+                        <module.icon
+                          fontSize="small"
+                          sx={{ color: module.color }}
+                        />
+                      </ListItemIcon>
+                      {module.title}
+                      <ChevronRightIcon sx={{ ml: 'auto' }} />
+                    </MenuItem>
+                  ) : (
+                    <MenuItemFormatted
+                      key={module.id}
+                      title={module.title}
+                      href={module.href}
+                      onHandleClose={handleClose}
+                      onMouseEnter={closeSubmenu}
+                      icon={
+                        <module.icon
+                          fontSize="small"
+                          sx={{ color: module.color }}
+                        />
+                      }
+                    />
+                  )
+                )}
               </Menu>
 
               {/* Submenú de Operaciones */}
@@ -165,6 +206,11 @@ export default function HeaderAppBar() {
                 anchorEl={operacionesAnchorEl}
                 open={operacionesMenuOpen}
                 onClose={() => setOperacionesAnchorEl(null)}
+                hideBackdrop
+                disableScrollLock
+                slotProps={{
+                  root: { sx: { pointerEvents: 'none' } },
+                }}
                 MenuListProps={{
                   sx: {
                     py: 1,
@@ -190,53 +236,26 @@ export default function HeaderAppBar() {
                     minWidth: 250,
                     pointerEvents: 'auto',
                   },
+                  onMouseEnter: clearSubmenuTimer,
+                  onMouseLeave: scheduleCloseSubmenu,
                 }}
                 disableAutoFocusItem
                 disableEnforceFocus
               >
-                <MenuItemFormatted
-                  title=" Buscar Clientes"
-                  icon={
-                    <SearchIcon fontSize="small" sx={{ color: '#ffffff' }} />
-                  }
-                  href={`/${routes.operaciones}?tab=buscar`}
-                  onHandleClose={handleClose}
-                />
-                <MenuItemFormatted
-                  title="Financiamientos Atrasados"
-                  icon={
-                    <WarningIcon fontSize="small" sx={{ color: '#ff9800' }} />
-                  }
-                  href={`/${routes.operaciones}?tab=financiamientos-atrasados`}
-                  onHandleClose={handleClose}
-                />
-                <MenuItemFormatted
-                  title="Pagos Atrasados"
-                  icon={
-                    <WarningIcon fontSize="small" sx={{ color: '#ff9800' }} />
-                  }
-                  href={`/${routes.operaciones}?tab=pagos-atrasados`}
-                  onHandleClose={handleClose}
-                />
-                <MenuItemFormatted
-                  title="Estado de Cuenta"
-                  icon={
-                    <AccountBalanceIcon
-                      fontSize="small"
-                      sx={{ color: '#2196f3' }}
-                    />
-                  }
-                  href={`/${routes.operaciones}?tab=estado-cuenta`}
-                  onHandleClose={handleClose}
-                />
-                <MenuItemFormatted
-                  title="Vencimientos"
-                  icon={
-                    <EventIcon fontSize="small" sx={{ color: '#4caf50' }} />
-                  }
-                  href={`/${routes.operaciones}?tab=vencimientos`}
-                  onHandleClose={handleClose}
-                />
+                {operacionesModule?.submenu?.map(item => (
+                  <MenuItemFormatted
+                    key={item.title}
+                    title={item.title}
+                    icon={
+                      <item.icon
+                        fontSize="small"
+                        sx={{ color: item.iconColor }}
+                      />
+                    }
+                    href={item.href}
+                    onHandleClose={handleClose}
+                  />
+                ))}
               </Menu>
             </>
           )}

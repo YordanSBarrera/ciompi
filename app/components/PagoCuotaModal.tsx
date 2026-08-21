@@ -2,6 +2,11 @@
 import { PagoCuotaFormType } from '@/lib/types';
 import { getAuthHeaders } from '@/lib/utils';
 import {
+  formatMoney,
+  normalizarMoneda,
+  type MonedaFinanciamiento,
+} from '@/lib/moneda';
+import {
   Alert,
   Box,
   Button,
@@ -34,7 +39,14 @@ interface PagoCuotaModalProps {
     esExtra?: boolean;
     estadoPago?: string;
   }>;
+  cuotasFuturas?: Array<{
+    numeroCuota: number;
+    fechaVencimiento: Date | string;
+    valorCuota: number;
+  }>;
   onPagoRegistrado: () => void;
+  /** Moneda del financiamiento (histórico sin campo → USD). */
+  moneda?: MonedaFinanciamiento;
 }
 
 export default function PagoCuotaModal({
@@ -46,7 +58,9 @@ export default function PagoCuotaModal({
   cuotasTotal,
   cuotasExtras = 0,
   pagos = [],
+  cuotasFuturas = [],
   onPagoRegistrado,
+  moneda = 'USD',
 }: PagoCuotaModalProps) {
   const [formData, setFormData] = useState<PagoCuotaFormType>({
     financiamiento: financiamientoId,
@@ -64,11 +78,28 @@ export default function PagoCuotaModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Obtener el valor de una cuota específica
+  const obtenerValorCuota = (
+    numeroCuota: number,
+    esExtra: boolean = false
+  ): number => {
+    // Buscar en cuotasFuturas primero
+    const cuotaFutura = cuotasFuturas.find(
+      cf => cf.numeroCuota === numeroCuota
+    );
+    if (cuotaFutura) {
+      return cuotaFutura.valorCuota;
+    }
+    // Si no se encuentra, usar el valorCuota general
+    return valorCuota;
+  };
+
   // Calcular el saldo pendiente de la cuota seleccionada
   const calcularSaldoPendiente = (
     numeroCuota: number,
     esExtra: boolean = false
   ): number => {
+    const valorCuotaEspecifica = obtenerValorCuota(numeroCuota, esExtra);
     const pagosConfirmados = pagos.filter(
       p =>
         p.estadoPago === 'confirmado' &&
@@ -79,20 +110,42 @@ export default function PagoCuotaModal({
       (sum, p) => sum + p.montoPago,
       0
     );
-    return Math.max(0, valorCuota - totalPagado);
+    return Math.max(0, valorCuotaEspecifica - totalPagado);
+  };
+
+  // Calcular la próxima cuota extra pendiente (como cuotasPagadas + 1 para las normales).
+  // Devuelve el índice de la primera cuota extra no completamente pagada.
+  const calcularSiguienteCuotaExtra = (): number => {
+    for (let n = 1; n <= cuotasExtras; n++) {
+      const numeroCuotaTotal = cuotasTotal + n;
+      const valor = obtenerValorCuota(numeroCuotaTotal, true);
+      const totalPagado = pagos
+        .filter(
+          p =>
+            p.esExtra &&
+            p.numeroCuota === numeroCuotaTotal &&
+            p.estadoPago === 'confirmado'
+        )
+        .reduce((sum, p) => sum + p.montoPago, 0);
+      if (totalPagado < valor) {
+        return n;
+      }
+    }
+    return cuotasExtras + 1;
   };
 
   useEffect(() => {
     if (open) {
       const nuevaCuota = cuotasPagadas + 1;
       const saldoPendiente = calcularSaldoPendiente(nuevaCuota, false);
+      const valorCuotaEspecifica = obtenerValorCuota(nuevaCuota, false);
       setFormData({
         financiamiento: financiamientoId,
         numeroCuota: nuevaCuota,
         montoPago:
           saldoPendiente > 0
             ? Math.floor(saldoPendiente)
-            : Math.floor(valorCuota),
+            : Math.floor(valorCuotaEspecifica),
         fechaPago: new Date().toISOString().split('T')[0],
         metodoPago: 'efectivo',
         observaciones: '',
@@ -101,10 +154,10 @@ export default function PagoCuotaModal({
         esExtra: false,
       });
       setTipoPago('normal');
-      setNumeroCuotaExtra(1);
+      setNumeroCuotaExtra(calcularSiguienteCuotaExtra());
       setError(null);
     }
-  }, [open, financiamientoId, cuotasPagadas, valorCuota, pagos]);
+  }, [open, financiamientoId, cuotasPagadas, valorCuota, pagos, cuotasFuturas]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -120,10 +173,11 @@ export default function PagoCuotaModal({
       // Si cambió el número de cuota y es pago normal, actualizar el monto al saldo pendiente
       if (name === 'numeroCuota' && tipoPago === 'normal') {
         const saldoPendiente = calcularSaldoPendiente(Number(value), false);
+        const valorCuotaEspecifica = obtenerValorCuota(Number(value), false);
         updated.montoPago =
           saldoPendiente > 0
             ? Math.floor(saldoPendiente)
-            : Math.floor(valorCuota);
+            : Math.floor(valorCuotaEspecifica);
       }
 
       // Si cambió el monto, redondear a entero
@@ -217,12 +271,8 @@ export default function PagoCuotaModal({
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(amount);
-  };
+  const formatCurrency = (amount: number) =>
+    formatMoney(amount, normalizarMoneda(moneda));
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -255,19 +305,35 @@ export default function PagoCuotaModal({
                         nuevaCuota,
                         false
                       );
+                      const valorCuotaEspecifica = obtenerValorCuota(nuevaCuota, false);
                       setFormData(prev => ({
                         ...prev,
                         numeroCuota: nuevaCuota,
                         montoPago:
                           saldoPendiente > 0
                             ? Math.floor(saldoPendiente)
-                            : Math.floor(valorCuota),
+                            : Math.floor(valorCuotaEspecifica),
                         esExtra: false,
                       }));
                     } else {
+                      // Para cuota extra, usar la próxima cuota extra pendiente
+                      const siguienteExtra = calcularSiguienteCuotaExtra();
+                      setNumeroCuotaExtra(siguienteExtra);
+                      const numeroCuotaExtraTotal = cuotasTotal + siguienteExtra;
+                      const saldoPendiente = calcularSaldoPendiente(
+                        numeroCuotaExtraTotal,
+                        true
+                      );
+                      const valorCuotaExtra = obtenerValorCuota(
+                        numeroCuotaExtraTotal,
+                        true
+                      );
                       setFormData(prev => ({
                         ...prev,
-                        montoPago: Math.floor(valorCuota),
+                        montoPago:
+                          saldoPendiente > 0
+                            ? Math.floor(saldoPendiente)
+                            : Math.floor(valorCuotaExtra),
                         esExtra: true,
                       }));
                     }
@@ -300,14 +366,15 @@ export default function PagoCuotaModal({
                   required
                   inputProps={{ min: 1, max: cuotasTotal }}
                   helperText={(() => {
+                    const valorCuotaEspecifica = obtenerValorCuota(formData.numeroCuota, false);
                     const saldoPendiente = calcularSaldoPendiente(
                       formData.numeroCuota,
                       false
                     );
                     if (saldoPendiente > 0) {
-                      return `Saldo pendiente: ${formatCurrency(saldoPendiente)} de ${formatCurrency(valorCuota)}`;
+                      return `Saldo pendiente: ${formatCurrency(saldoPendiente)} de ${formatCurrency(valorCuotaEspecifica)}`;
                     }
-                    return `Cuota completamente pagada. Puede registrar pagos adicionales.`;
+                    return `Cuota completamente pagada. Puede registrar pagos adicionales. Valor de cuota: ${formatCurrency(valorCuotaEspecifica)}`;
                   })()}
                 />
               </Grid>
@@ -322,10 +389,29 @@ export default function PagoCuotaModal({
                   name="numeroCuotaExtra"
                   type="number"
                   value={numeroCuotaExtra}
-                  onChange={e => setNumeroCuotaExtra(Number(e.target.value))}
+                  onChange={e => {
+                    const nuevoNumero = Number(e.target.value);
+                    setNumeroCuotaExtra(nuevoNumero);
+                    // Ajustar el monto según la cuota extra seleccionada
+                    const numeroCuotaExtraTotal = cuotasTotal + nuevoNumero;
+                    const valorCuotaExtra = obtenerValorCuota(numeroCuotaExtraTotal, true);
+                    const saldoPendiente = calcularSaldoPendiente(numeroCuotaExtraTotal, true);
+                    setFormData(prev => ({
+                      ...prev,
+                      montoPago:
+                        saldoPendiente > 0
+                          ? Math.floor(saldoPendiente)
+                          : Math.floor(valorCuotaExtra),
+                    }));
+                  }}
                   required
                   inputProps={{ min: 1, max: cuotasExtras }}
-                  helperText={`Cuota extra #${numeroCuotaExtra} de ${cuotasExtras} (Cuota total: #${cuotasTotal + numeroCuotaExtra})`}
+                  helperText={(() => {
+                    const numeroCuotaExtraTotal = cuotasTotal + numeroCuotaExtra;
+                    const valorCuotaExtra = obtenerValorCuota(numeroCuotaExtraTotal, true);
+                    const saldoPendiente = calcularSaldoPendiente(numeroCuotaExtraTotal, true);
+                    return `Cuota extra #${numeroCuotaExtra} de ${cuotasExtras} (Cuota total: #${numeroCuotaExtraTotal}). Valor: ${formatCurrency(valorCuotaExtra)}. Saldo pendiente: ${formatCurrency(saldoPendiente)}`;
+                  })()}
                 />
               </Grid>
             )}
@@ -345,22 +431,32 @@ export default function PagoCuotaModal({
                   max:
                     tipoPago === 'normal'
                       ? calcularSaldoPendiente(formData.numeroCuota, false) ||
-                        valorCuota
-                      : undefined,
+                        obtenerValorCuota(formData.numeroCuota, false)
+                      : calcularSaldoPendiente(cuotasTotal + numeroCuotaExtra, true) ||
+                        obtenerValorCuota(cuotasTotal + numeroCuotaExtra, true),
                 }}
                 helperText={
                   tipoPago === 'normal'
                     ? (() => {
+                        const valorCuotaEspecifica = obtenerValorCuota(formData.numeroCuota, false);
                         const saldoPendiente = calcularSaldoPendiente(
                           formData.numeroCuota,
                           false
                         );
                         if (saldoPendiente > 0) {
-                          return `Valor de cuota: ${formatCurrency(valorCuota)}. Saldo pendiente: ${formatCurrency(saldoPendiente)}`;
+                          return `Valor de cuota: ${formatCurrency(valorCuotaEspecifica)}. Saldo pendiente: ${formatCurrency(saldoPendiente)}`;
                         }
-                        return `Valor de cuota: ${formatCurrency(valorCuota)}. Cuota completamente pagada.`;
+                        return `Valor de cuota: ${formatCurrency(valorCuotaEspecifica)}. Cuota completamente pagada.`;
                       })()
-                    : `Valor de cuota: ${formatCurrency(valorCuota)}`
+                    : (() => {
+                        const numeroCuotaExtraTotal = cuotasTotal + numeroCuotaExtra;
+                        const valorCuotaExtra = obtenerValorCuota(numeroCuotaExtraTotal, true);
+                        const saldoPendiente = calcularSaldoPendiente(numeroCuotaExtraTotal, true);
+                        if (saldoPendiente > 0) {
+                          return `Valor de cuota extra: ${formatCurrency(valorCuotaExtra)}. Saldo pendiente: ${formatCurrency(saldoPendiente)}`;
+                        }
+                        return `Valor de cuota extra: ${formatCurrency(valorCuotaExtra)}. Cuota completamente pagada.`;
+                      })()
                 }
               />
             </Grid>

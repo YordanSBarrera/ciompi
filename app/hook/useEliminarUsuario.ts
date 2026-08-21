@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { getAuthHeaders } from '@/lib/utils';
 
 interface UseEliminarUsuarioProps {
   onUsuarioEliminado?: () => void;
@@ -59,9 +60,7 @@ export const useEliminarUsuario = ({
 
       const response = await fetch(url, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
       });
 
       console.log(
