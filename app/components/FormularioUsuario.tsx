@@ -49,6 +49,7 @@ interface FormularioUsuarioProps {
   onSubmit: (usuarioData: Partial<Usuario>) => Promise<void>;
   onCancel?: () => void;
   loading?: boolean;
+  permitirCambioRol?: boolean;
 }
 
 export default function FormularioUsuario({
@@ -56,6 +57,7 @@ export default function FormularioUsuario({
   onSubmit,
   onCancel,
   loading = false,
+  permitirCambioRol = true,
 }: FormularioUsuarioProps) {
   const [formData, setFormData] = useState<Partial<Usuario>>({
     usuario: '',
@@ -425,7 +427,7 @@ export default function FormularioUsuario({
                           value={formData.rol || UsuarioRoles.Usuario}
                           onChange={handleChange('rol')}
                           label="Rol *"
-                          disabled={loading}
+                          disabled={loading || !permitirCambioRol}
                           sx={{ borderRadius: 2 }}
                         >
                           {roleValues.map(role => (

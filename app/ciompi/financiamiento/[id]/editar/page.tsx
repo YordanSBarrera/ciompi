@@ -20,6 +20,7 @@ import {
   CircularProgress,
   Container,
   FormControl,
+  FormHelperText,
   InputLabel,
   MenuItem,
   Select,
@@ -117,6 +118,7 @@ export default function EditarFinanciamientoPage() {
   const [incluirGastosExtras, setIncluirGastosExtras] = useState(false);
   const [mostrarCuotasExtras, setMostrarCuotasExtras] = useState(false);
   const [cuotasExtras, setCuotasExtras] = useState<CuotaFutura[]>([]);
+  const [estadoFinanciamiento, setEstadoFinanciamiento] = useState<string>('');
   const [nuevaCuotaExtra, setNuevaCuotaExtra] = useState({
     valorCuota: 0,
     fechaCuota: new Date().toISOString().split('T')[0],
@@ -240,6 +242,8 @@ export default function EditarFinanciamientoPage() {
             observaciones: fin.observaciones || '',
             moneda: normalizarMoneda(fin.moneda),
           });
+
+          setEstadoFinanciamiento(fin.estadoFinanciamiento || '');
 
           setIncluirCostosDocumentacion((fin.costosDocumentacion || 0) > 0);
           setIncluirGastosExtras((fin.gastosExtras || 0) > 0);
@@ -504,6 +508,10 @@ export default function EditarFinanciamientoPage() {
       setError('El número de cuotas debe ser mayor a 0');
       return false;
     }
+    if (formData.cuotas > 100) {
+      setError('El número de cuotas no puede superar 100');
+      return false;
+    }
     if (formData.valorCuota <= 0) {
       setError('El valor de la cuota debe ser mayor a 0');
       return false;
@@ -592,7 +600,7 @@ export default function EditarFinanciamientoPage() {
   }
 
   return (
-    <AuthGuard>
+    <AuthGuard requireAdmin>
       <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
         <Box sx={{ mb: 3 }}>
           <Button
@@ -840,6 +848,7 @@ export default function EditarFinanciamientoPage() {
                     value={formData.empresa}
                     onChange={handleSelectChange}
                     label="Empresa"
+                    disabled={estadoFinanciamiento === 'finalizado'}
                   >
                     {empresas
                       .filter(empresa => empresa.estado === 'activa')
@@ -851,6 +860,12 @@ export default function EditarFinanciamientoPage() {
                         </MenuItem>
                       ))}
                   </Select>
+                  {estadoFinanciamiento === 'finalizado' && (
+                    <FormHelperText>
+                      La empresa no se puede modificar en un financiamiento
+                      finalizado
+                    </FormHelperText>
+                  )}
                 </FormControl>
               </Grid>
 
@@ -909,18 +924,24 @@ export default function EditarFinanciamientoPage() {
                         + Crear Vehículo Nuevo
                       </Typography>
                     </MenuItem>
-                    {vehiculos.map(vehiculo => (
-                      <MenuItem key={vehiculo._id} value={vehiculo._id}>
-                        <Box>
-                          <Typography variant="body1">
-                            {vehiculo.Marca} {vehiculo.Modelo}
-                          </Typography>
-                          <Typography variant="caption" color="textSecondary">
-                            {vehiculo.Matricula} - {vehiculo.Año}
-                          </Typography>
-                        </Box>
-                      </MenuItem>
-                    ))}
+                    {vehiculos
+                      .filter(
+                        vehiculo =>
+                          !vehiculo.financiamientoActivo ||
+                          vehiculo.financiamientoActivo._id === id
+                      )
+                      .map(vehiculo => (
+                        <MenuItem key={vehiculo._id} value={vehiculo._id}>
+                          <Box>
+                            <Typography variant="body1">
+                              {vehiculo.Marca} {vehiculo.Modelo}
+                            </Typography>
+                            <Typography variant="caption" color="textSecondary">
+                              {vehiculo.Matricula} - {vehiculo.Año}
+                            </Typography>
+                          </Box>
+                        </MenuItem>
+                      ))}
                   </Select>
                 </FormControl>
               </Grid>
@@ -1070,6 +1091,9 @@ export default function EditarFinanciamientoPage() {
                   value={formData.cuotas}
                   onChange={handleChange}
                   required
+                  type="number"
+                  inputProps={{ min: 1, max: 100 }}
+                  helperText="Máximo 100 cuotas"
                 />
               </Grid>
 

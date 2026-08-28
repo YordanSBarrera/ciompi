@@ -135,6 +135,8 @@ export interface VehiculoType {
   Año?: number;
   Color?: string;
   disponible?: boolean;
+  /** Financiamiento activo asociado (el vehículo no está disponible para financiarse nuevamente). */
+  financiamientoActivo?: FinanciamientoActivoResumen | null;
   // Campos de Soft Delete
   eliminado?: boolean;
   fechaEliminacion?: Date;

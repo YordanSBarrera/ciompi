@@ -2,7 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import FormularioUsuario from '@/app/components/FormularioUsuario';
+import AuthGuard from '@/app/components/AuthGuard';
 import { Usuario } from '@/lib/types';
+import { getCurrentUserId, isAdmin } from '@/lib/utils';
 import { CircularProgress, Alert, Box } from '@mui/material';
 
 async function cargarUsuario(id: string): Promise<Usuario> {
@@ -86,34 +88,37 @@ export default function EditarUsuarioPage() {
     router.push(`/ciompi/usuario/${usuarioId}`);
   };
 
-  if (loading) {
-    return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="50vh"
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error || !usuarioExistente) {
-    return (
-      <Box sx={{ p: 2 }}>
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error || 'Usuario no encontrado'}
-        </Alert>
-      </Box>
-    );
-  }
-
   return (
-    <FormularioUsuario
-      usuarioExistente={usuarioExistente}
-      onSubmit={handleSubmit}
-      onCancel={handleCancel}
-    />
+    <AuthGuard>
+      {!isAdmin() && usuarioId !== getCurrentUserId() ? (
+        <Box sx={{ p: 2 }}>
+          <Alert severity="error">
+            No tienes permisos para editar a este usuario.
+          </Alert>
+        </Box>
+      ) : loading ? (
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          minHeight="50vh"
+        >
+          <CircularProgress />
+        </Box>
+      ) : error || !usuarioExistente ? (
+        <Box sx={{ p: 2 }}>
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error || 'Usuario no encontrado'}
+          </Alert>
+        </Box>
+      ) : (
+        <FormularioUsuario
+          usuarioExistente={usuarioExistente}
+          onSubmit={handleSubmit}
+          onCancel={handleCancel}
+          permitirCambioRol={isAdmin() || usuarioId !== getCurrentUserId()}
+        />
+      )}
+    </AuthGuard>
   );
 }

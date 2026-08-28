@@ -1,8 +1,37 @@
 import { connectDB } from '@/db/dbConnection';
 import PagoCuota from '@/models/pagoCuota';
 import Financiamiento from '@/models/financiamiento';
+import Usuario from '@/models/Usuario';
 import { NextResponse, NextRequest } from 'next/server';
-import { getUserIdFromToken, parseLocalDate } from '@/lib/server-utils';
+import { getUserIdFromToken, parseLocalDate, requireAdminAuth } from '@/lib/server-utils';
+
+// Forzar registro de modelos para populate (evita MissingSchemaError)
+void Usuario;
+
+interface CuotaFuturaResumen {
+  numeroCuota: number;
+  valorCuota: number;
+}
+
+interface FinanciamientoResumen {
+  cuotas: number;
+  cuotasExtras?: number;
+  valorCuota: number;
+  montoTotal: number;
+  cuotasFuturas?: CuotaFuturaResumen[];
+}
+
+// Devuelve el valor esperado de una cuota (usa cuotasFuturas si existe,
+// de lo contrario el valorCuota general). Soporta cuotas extras con montos distintos.
+function obtenerValorCuotaEsperado(
+  financiamiento: FinanciamientoResumen,
+  numeroCuota: number
+): number {
+  const cuotaFutura = financiamiento.cuotasFuturas?.find(
+    cf => cf.numeroCuota === numeroCuota
+  );
+  return cuotaFutura ? cuotaFutura.valorCuota : financiamiento.valorCuota;
+}
 
 export async function GET() {
   try {
@@ -120,11 +149,12 @@ export async function POST(request: NextRequest) {
     // Calcular total de cuotas incluyendo extras
     const cuotasTotales = financiamiento.cuotas + (financiamiento.cuotasExtras || 0);
 
-    // Contar cuántas cuotas están completamente pagadas (incluyendo extras)
+    // Contar cuántas cuotas están completamente pagadas (incluyendo extras,
+    // usando el monto correcto de cada cuota desde cuotasFuturas)
     let cuotasPagadas = 0;
     for (let i = 1; i <= cuotasTotales; i++) {
       const totalPagadoCuota = pagosPorCuota[i] || 0;
-      if (totalPagadoCuota >= financiamiento.valorCuota) {
+      if (totalPagadoCuota >= obtenerValorCuotaEsperado(financiamiento, i)) {
         cuotasPagadas++;
       }
     }
@@ -174,18 +204,16 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const auth = requireAdminAuth(request);
+    if (!auth.authorized) {
+      return auth.response;
+    }
+
     await connectDB();
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-    
-    // Obtener el usuario logueado
-    const userId = getUserIdFromToken(request);
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Usuario no autenticado' },
-        { status: 401 }
-      );
-    }
+
+    const userId = auth.user.id;
 
     if (!id) {
       return NextResponse.json(
@@ -235,11 +263,12 @@ export async function DELETE(request: NextRequest) {
       // Calcular total de cuotas incluyendo extras
       const cuotasTotales = financiamiento.cuotas + (financiamiento.cuotasExtras || 0);
 
-      // Contar cuántas cuotas están completamente pagadas (incluyendo extras)
+      // Contar cuántas cuotas están completamente pagadas (incluyendo extras,
+      // usando el monto correcto de cada cuota desde cuotasFuturas)
       let cuotasPagadas = 0;
       for (let i = 1; i <= cuotasTotales; i++) {
         const totalPagadoCuota = pagosPorCuota[i] || 0;
-        if (totalPagadoCuota >= financiamiento.valorCuota) {
+        if (totalPagadoCuota >= obtenerValorCuotaEsperado(financiamiento, i)) {
           cuotasPagadas++;
         }
       }

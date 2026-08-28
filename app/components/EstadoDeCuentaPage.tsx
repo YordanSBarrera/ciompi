@@ -93,12 +93,15 @@ interface EstadoCuenta {
 
 // Función para obtener estado de cuenta de un cliente
 async function obtenerEstadoCuenta(
-  busqueda: string
+  busqueda: string,
+  empresaId: string
 ): Promise<EstadoCuenta | null> {
   try {
-    const response = await fetch(
-      `/api/operaciones/estado-cuenta?busqueda=${encodeURIComponent(busqueda)}`
-    );
+    const params = new URLSearchParams({ busqueda });
+    if (empresaId) {
+      params.set('empresa', empresaId);
+    }
+    const response = await fetch(`/api/operaciones/estado-cuenta?${params.toString()}`);
     if (!response.ok) {
       if (response.status === 404) {
         throw new Error('Cliente no encontrado');
@@ -112,7 +115,12 @@ async function obtenerEstadoCuenta(
   }
 }
 
-const EstadoDeCuentaPage = () => {
+interface EstadoDeCuentaPageProps {
+  empresaId: string;
+  empresaNombre?: string;
+}
+
+const EstadoDeCuentaPage = ({ empresaId }: EstadoDeCuentaPageProps) => {
   const [busquedaEstadoCuenta, setBusquedaEstadoCuenta] = useState('');
   const [loadingEstadoCuenta, setLoadingEstadoCuenta] = useState(false);
 
@@ -129,7 +137,10 @@ const EstadoDeCuentaPage = () => {
       setLoadingEstadoCuenta(true);
       setError(null);
       setHasSearchedEstadoCuenta(true);
-      const resultado = await obtenerEstadoCuenta(busquedaEstadoCuenta.trim());
+      const resultado = await obtenerEstadoCuenta(
+        busquedaEstadoCuenta.trim(),
+        empresaId
+      );
       setEstadoCuenta(resultado);
     } catch (err) {
       setError(
@@ -644,8 +655,14 @@ const EstadoDeCuentaPage = () => {
                 <Button
                   variant="contained"
                   onClick={() => {
+                    const params = new URLSearchParams({
+                      busqueda: busquedaEstadoCuenta,
+                    });
+                    if (empresaId) {
+                      params.set('empresa', empresaId);
+                    }
                     window.open(
-                      `/api/reports/estado-cuenta?busqueda=${encodeURIComponent(busquedaEstadoCuenta)}`,
+                      `/api/reports/estado-cuenta?${params.toString()}`,
                       '_blank'
                     );
                   }}

@@ -343,8 +343,10 @@ export default function NuevoFinanciamientoPage() {
 
   const handleAgregarCuotaExtra = () => {
     if (nuevaCuotaExtra.valorCuota > 0 && nuevaCuotaExtra.fechaCuota) {
+      // El número de cuota extra debe ser mayor que el número de cuotas normales
+      const numeroCuotaExtra = formData.cuotas + cuotasExtras.length + 1;
       const nuevaCuota: CuotaFutura = {
-        numeroCuota: cuotasExtras.length + 1,
+        numeroCuota: numeroCuotaExtra,
         fechaVencimiento: nuevaCuotaExtra.fechaCuota,
         valorCuota: nuevaCuotaExtra.valorCuota,
       };
@@ -358,10 +360,10 @@ export default function NuevoFinanciamientoPage() {
 
   const handleEliminarCuotaExtra = (index: number) => {
     const nuevasCuotasExtras = cuotasExtras.filter((_, i) => i !== index);
-    // Renumerar las cuotas
+    // Renumerar las cuotas extras para que sean consecutivas después de las cuotas normales
     const cuotasRenumeradas = nuevasCuotasExtras.map((cuota, i) => ({
       ...cuota,
-      numeroCuota: i + 1,
+      numeroCuota: formData.cuotas + i + 1,
     }));
     setCuotasExtras(cuotasRenumeradas);
   };
@@ -390,6 +392,10 @@ export default function NuevoFinanciamientoPage() {
     }
     if (formData.cuotas <= 0) {
       setError('El número de cuotas debe ser mayor a 0');
+      return false;
+    }
+    if (formData.cuotas > 100) {
+      setError('El número de cuotas no puede superar 100');
       return false;
     }
     if (formData.valorCuota <= 0) {
@@ -431,12 +437,20 @@ export default function NuevoFinanciamientoPage() {
 
       // Para compatibilidad con el backend actual, usar el primer cliente
       // TODO: Actualizar el backend para manejar múltiples clientes
+      // Combinar cuotas futuras normales con cuotas extras para que se
+      // persistan los montos y fechas correctos de cada cuota extra
+      const todasLasCuotasFuturas = [
+        ...(formData.cuotasFuturas || []),
+        ...cuotasExtras,
+      ].sort((a, b) => a.numeroCuota - b.numeroCuota);
+
       const dataToSend = {
         ...formData,
         cliente: clientesData[0], // Por ahora solo el primer cliente
         costoVehiculo: formData.valorBase, // Mapeo temporal para compatibilidad
         cuotasExtras: cuotasExtras.length, // Número de cuotas extras para compatibilidad
         cuotasExtrasDetalle: cuotasExtras, // Array completo de cuotas extras
+        cuotasFuturas: todasLasCuotasFuturas, // Normales + extras con sus montos y fechas
         usuarioRegistro,
       };
 
@@ -802,7 +816,11 @@ export default function NuevoFinanciamientoPage() {
                       </Typography>
                     </MenuItem>
                     {vehiculos
-                      .filter(vehiculo => vehiculo.disponible !== false)
+                      .filter(
+                        vehiculo =>
+                          vehiculo.disponible !== false &&
+                          !vehiculo.financiamientoActivo
+                      )
                       .map(vehiculo => (
                         <MenuItem key={vehiculo._id} value={vehiculo._id}>
                           <Box>
@@ -964,6 +982,9 @@ export default function NuevoFinanciamientoPage() {
                   value={formData.cuotas}
                   onChange={handleChange}
                   required
+                  type="number"
+                  inputProps={{ min: 1, max: 100 }}
+                  helperText="Máximo 100 cuotas"
                 />
               </Grid>
 

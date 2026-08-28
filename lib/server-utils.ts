@@ -1,6 +1,8 @@
 import jwt from 'jsonwebtoken';
 import { NextResponse } from 'next/server';
 import { UsuarioRoles } from './const';
+import Financiamiento from '@/models/financiamiento';
+import Vehiculo from '@/models/vehiculo';
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -62,6 +64,29 @@ export function getAuthUserFromToken(
 }
 
 /**
+ * Exige usuario autenticado (cualquier rol) para operaciones sensibles.
+ */
+export function requireAuth(
+  request: Request
+):
+  | { authorized: true; user: AuthUserFromToken }
+  | { authorized: false; response: NextResponse } {
+  const authUser = getAuthUserFromToken(request);
+
+  if (!authUser?.id) {
+    return {
+      authorized: false,
+      response: NextResponse.json(
+        { error: 'No autenticado. Token requerido.' },
+        { status: 401 }
+      ),
+    };
+  }
+
+  return { authorized: true, user: authUser };
+}
+
+/**
  * Exige usuario autenticado con rol Administrativo para operaciones sensibles.
  */
 export function requireAdminAuth(
@@ -94,4 +119,45 @@ export function requireAdminAuth(
   }
 
   return { authorized: true, user: authUser };
+}
+
+/**
+ * Estados de financiamiento que mantienen al vehículo "no disponible".
+ */
+const ESTADOS_FINANCIAMIENTO_ACTIVO = ['activo', 'en_mora'];
+
+/**
+ * Sincroniza la disponibilidad de un vehículo según si está asociado
+ * a un financiamiento activo. Un vehículo sujeto a un financiamiento
+ * activo deja de estar disponible para financiarse nuevamente.
+ *
+ * @param vehiculoId - ID del vehículo (string u ObjectId)
+ * @param userId - Usuario que realiza el cambio (auditoría)
+ * @param excluirFinanciamientoId - ID de financiamiento a ignorar (p.ej. el que se está editando)
+ */
+export async function sincronizarDisponibilidadVehiculo(
+  vehiculoId: string | { toString(): string } | undefined | null,
+  userId?: string | null,
+  excluirFinanciamientoId?: string
+): Promise<void> {
+  if (!vehiculoId) return;
+  const id = vehiculoId.toString();
+
+  const query: {
+    vehiculo: string;
+    estadoFinanciamiento: { $in: string[] };
+    _id?: { $ne: string };
+  } = {
+    vehiculo: id,
+    estadoFinanciamiento: { $in: ESTADOS_FINANCIAMIENTO_ACTIVO },
+  };
+  if (excluirFinanciamientoId) {
+    query._id = { $ne: excluirFinanciamientoId };
+  }
+
+  const tieneFinanciamientoActivo = await Financiamiento.exists(query);
+  await Vehiculo.findByIdAndUpdate(id, {
+    disponible: !tieneFinanciamientoActivo,
+    ...(userId ? { usuarioModificacion: userId } : {}),
+  });
 }

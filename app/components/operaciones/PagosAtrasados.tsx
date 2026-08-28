@@ -17,6 +17,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Pagination,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -40,9 +41,15 @@ interface CuotaAtrasada {
 }
 
 // Función para obtener todas las cuotas atrasadas
-async function obtenerCuotasAtrasadas(): Promise<CuotaAtrasada[]> {
+async function obtenerCuotasAtrasadas(empresaId: string): Promise<CuotaAtrasada[]> {
   try {
-    const response = await fetch('/api/pagos-cuotas/atrasadas');
+    const params = new URLSearchParams();
+    if (empresaId) {
+      params.set('empresa', empresaId);
+    }
+    const response = await fetch(
+      `/api/pagos-cuotas/atrasadas?${params.toString()}`
+    );
     if (!response.ok) {
       throw new Error('Error al obtener cuotas atrasadas');
     }
@@ -53,17 +60,43 @@ async function obtenerCuotasAtrasadas(): Promise<CuotaAtrasada[]> {
   }
 }
 
-export default function PagosAtrasados() {
+interface PagosAtrasadosProps {
+  empresaId: string;
+  empresaNombre?: string;
+}
+
+export default function PagosAtrasados({
+  empresaId,
+}: PagosAtrasadosProps) {
   const [cuotasAtrasadas, setCuotasAtrasadas] = useState<CuotaAtrasada[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
+
+  const pagination = {
+    page,
+    limit: pageSize,
+    total: cuotasAtrasadas.length,
+    pages: Math.ceil(cuotasAtrasadas.length / pageSize),
+  };
+
+  const cuotasAtrasadasPaginadas = cuotasAtrasadas.slice(
+    (page - 1) * pageSize,
+    page * pageSize
+  );
+
+  const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
+    setPage(value);
+  };
 
   const handleCargarCuotasAtrasadas = async () => {
     try {
       setLoading(true);
       setError(null);
-      const resultados = await obtenerCuotasAtrasadas();
+      const resultados = await obtenerCuotasAtrasadas(empresaId);
       setCuotasAtrasadas(resultados);
+      setPage(1);
     } catch (err) {
       setError('Error al cargar cuotas atrasadas');
       console.error('Error:', err);
@@ -74,7 +107,18 @@ export default function PagosAtrasados() {
 
   useEffect(() => {
     handleCargarCuotasAtrasadas();
-  }, []);
+  }, [empresaId]);
+
+  const handleImprimir = () => {
+    const params = new URLSearchParams();
+    if (empresaId) {
+      params.set('empresa', empresaId);
+    }
+    window.open(
+      `/api/reports/pagos-cuotas-atrasadas?${params.toString()}`,
+      '_blank'
+    );
+  };
 
   return (
     <>
@@ -105,12 +149,7 @@ export default function PagosAtrasados() {
             {cuotasAtrasadas.length > 0 && (
               <Button
                 variant="contained"
-                onClick={() => {
-                  window.open(
-                    `/api/reports/pagos-cuotas-atrasadas?format=pdf`,
-                    '_blank'
-                  );
-                }}
+                onClick={handleImprimir}
                 startIcon={<PrintIcon />}
                 color="primary"
               >
@@ -186,7 +225,7 @@ export default function PagosAtrasados() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {cuotasAtrasadas.map((cuota, index) => {
+                {cuotasAtrasadasPaginadas.map((cuota, index) => {
                   const clienteNombre =
                     typeof cuota.cliente === 'object'
                       ? cuota.cliente.NOMBRE
@@ -212,7 +251,9 @@ export default function PagosAtrasados() {
                         },
                       }}
                     >
-                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>
+                        {(page - 1) * pageSize + index + 1}
+                      </TableCell>
                       <TableCell>{clienteNombre}</TableCell>
                       <TableCell>{vehiculoInfo}</TableCell>
                       <TableCell>
@@ -254,6 +295,44 @@ export default function PagosAtrasados() {
               </TableBody>
             </Table>
           </TableContainer>
+
+          {/* Controles de paginación */}
+          {pagination.pages > 1 && (
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                mt: 3,
+                gap: 2,
+                flexWrap: 'wrap',
+              }}
+            >
+              <Pagination
+                count={pagination.pages}
+                page={pagination.page}
+                onChange={handlePageChange}
+                color="primary"
+                size="large"
+                showFirstButton
+                showLastButton
+                sx={{
+                  '& .MuiPaginationItem-root': {
+                    fontSize: '0.95rem',
+                    fontWeight: 500,
+                  },
+                }}
+              />
+              <Typography variant="body2" color="text.secondary">
+                Mostrando {(pagination.page - 1) * pagination.limit + 1} -{' '}
+                {Math.min(
+                  pagination.page * pagination.limit,
+                  pagination.total
+                )}{' '}
+                de {pagination.total}
+              </Typography>
+            </Box>
+          )}
         </Box>
       )}
     </>

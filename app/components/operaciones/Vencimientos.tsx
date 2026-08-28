@@ -15,15 +15,12 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   TextField,
   Grid,
-  Stack,
+  
   IconButton,
   Tooltip,
+  Pagination,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -32,7 +29,7 @@ import {
   CalendarToday as CalendarIcon,
 } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
-import { FinanciamientoType, EmpresaType } from '@/lib/types';
+import { FinanciamientoType } from '@/lib/types';
 import {
   azulBase,
   azulOscuro,
@@ -55,19 +52,9 @@ interface FinanciamientoConVencimientos extends FinanciamientoType {
   montoTotalPorVencer: number;
 }
 
-// Función para cargar empresas
-async function cargarEmpresas(): Promise<EmpresaType[]> {
-  try {
-    const response = await fetch('/api/empresas?limit=1000');
-    if (!response.ok) {
-      throw new Error('Error al cargar empresas');
-    }
-    const result = await response.json();
-    return result.success ? result.data : result;
-  } catch (error) {
-    console.error('Error cargando empresas:', error);
-    return [];
-  }
+interface VencimientosProps {
+  empresaId: string;
+  empresaNombre?: string;
 }
 
 // Función para obtener vencimientos
@@ -82,7 +69,9 @@ async function obtenerVencimientos(
       fechaInicio,
       fechaFin,
     });
-    const response = await fetch(`/api/operaciones/vencimientos?${params.toString()}`);
+    const response = await fetch(
+      `/api/operaciones/vencimientos?${params.toString()}`
+    );
     if (!response.ok) {
       throw new Error('Error al obtener vencimientos');
     }
@@ -94,33 +83,39 @@ async function obtenerVencimientos(
   }
 }
 
-export default function Vencimientos() {
+export default function Vencimientos({
+  empresaId,
+  empresaNombre,
+}: VencimientosProps) {
   const router = useRouter();
-  const [empresas, setEmpresas] = useState<EmpresaType[]>([]);
-  const [empresaSeleccionada, setEmpresaSeleccionada] = useState<string>('');
   const [fechaInicio, setFechaInicio] = useState<string>('');
   const [fechaFin, setFechaFin] = useState<string>('');
-  const [vencimientos, setVencimientos] = useState<FinanciamientoConVencimientos[]>([]);
+  const [vencimientos, setVencimientos] = useState<
+    FinanciamientoConVencimientos[]
+  >([]);
   const [loading, setLoading] = useState(false);
-  const [loadingEmpresas, setLoadingEmpresas] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
 
-  // Cargar empresas al montar
-  useEffect(() => {
-    const cargar = async () => {
-      try {
-        setLoadingEmpresas(true);
-        const listaEmpresas = await cargarEmpresas();
-        setEmpresas(listaEmpresas.filter((e: EmpresaType) => e.estado === 'activa'));
-      } catch (err) {
-        setError('Error al cargar empresas');
-        console.error('Error:', err);
-      } finally {
-        setLoadingEmpresas(false);
-      }
-    };
-    cargar();
-  }, []);
+  const pagination = {
+    page,
+    limit: pageSize,
+    total: vencimientos.length,
+    pages: Math.ceil(vencimientos.length / pageSize),
+  };
+
+  const vencimientosPaginados = vencimientos.slice(
+    (page - 1) * pageSize,
+    page * pageSize
+  );
+
+  const handlePageChange = (
+    _event: React.ChangeEvent<unknown>,
+    value: number
+  ) => {
+    setPage(value);
+  };
 
   // Establecer fechas por defecto (mes actual)
   useEffect(() => {
@@ -133,8 +128,8 @@ export default function Vencimientos() {
   }, []);
 
   const handleBuscar = async () => {
-    if (!empresaSeleccionada || !fechaInicio || !fechaFin) {
-      setError('Por favor complete todos los campos');
+    if (!empresaId || !fechaInicio || !fechaFin) {
+      setError('Por favor complete los campos requeridos');
       return;
     }
 
@@ -147,11 +142,12 @@ export default function Vencimientos() {
       setLoading(true);
       setError(null);
       const resultados = await obtenerVencimientos(
-        empresaSeleccionada,
+        empresaId,
         fechaInicio,
         fechaFin
       );
       setVencimientos(resultados);
+      setPage(1);
     } catch (err) {
       setError('Error al buscar vencimientos');
       console.error('Error:', err);
@@ -206,12 +202,12 @@ export default function Vencimientos() {
               color="primary"
               variant="outlined"
             />
-            {vencimientos.length > 0 && empresaSeleccionada && (
+            {vencimientos.length > 0 && empresaId && (
               <Button
                 variant="contained"
                 onClick={() => {
                   const params = new URLSearchParams({
-                    empresa: empresaSeleccionada,
+                    empresa: empresaId,
                     fechaInicio,
                     fechaFin,
                   });
@@ -236,30 +232,13 @@ export default function Vencimientos() {
 
         {/* Filtros */}
         <Grid container spacing={2} sx={{ mb: 3 }}>
-          <Grid size={{ xs: 12, md: 4 }}>
-            <FormControl fullWidth>
-              <InputLabel>Empresa</InputLabel>
-              <Select
-                value={empresaSeleccionada}
-                onChange={(e) => setEmpresaSeleccionada(e.target.value)}
-                label="Empresa"
-                disabled={loadingEmpresas || loading}
-              >
-                {empresas.map((empresa) => (
-                  <MenuItem key={empresa._id} value={empresa._id}>
-                    {empresa.nombre}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
             <TextField
               fullWidth
               label="Fecha Inicio"
               type="date"
               value={fechaInicio}
-              onChange={(e) => setFechaInicio(e.target.value)}
+              onChange={e => setFechaInicio(e.target.value)}
               InputLabelProps={{
                 shrink: true,
               }}
@@ -272,7 +251,7 @@ export default function Vencimientos() {
               label="Fecha Fin"
               type="date"
               value={fechaFin}
-              onChange={(e) => setFechaFin(e.target.value)}
+              onChange={e => setFechaFin(e.target.value)}
               InputLabelProps={{
                 shrink: true,
               }}
@@ -284,8 +263,10 @@ export default function Vencimientos() {
               fullWidth
               variant="contained"
               onClick={handleBuscar}
-              disabled={loading || loadingEmpresas}
-              startIcon={loading ? <CircularProgress size={20} /> : <SearchIcon />}
+              disabled={loading || !empresaId}
+              startIcon={
+                loading ? <CircularProgress size={20} /> : <SearchIcon />
+              }
               sx={{
                 height: '56px',
                 background: `linear-gradient(135deg, ${azulBase} 0%, ${azulOscuro} 100%)`,
@@ -319,24 +300,28 @@ export default function Vencimientos() {
             }}
           >
             <Typography variant="body1" fontWeight={600}>
-              Total Cuotas: <Chip label={totalCuotasPorVencer} color="primary" size="small" />
+              Total Cuotas:{' '}
+              <Chip label={totalCuotasPorVencer} color="primary" size="small" />
             </Typography>
-            <Typography variant="body1" fontWeight={600} component="div">
+            <Typography
+              variant="body1"
+              fontWeight={600}
+              component="div"
+              sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}
+            >
               Total por moneda:
-              <Stack direction="row" spacing={1} sx={{ mt: 0.5, flexWrap: 'wrap' }}>
-                <Chip
-                  label={formatMoney(totalPorMoneda.USD, 'USD')}
-                  color="primary"
-                  size="small"
-                  variant="outlined"
-                />
-                <Chip
-                  label={formatMoney(totalPorMoneda.UYU, 'UYU')}
-                  color="primary"
-                  size="small"
-                  variant="outlined"
-                />
-              </Stack>
+              <Chip
+                label={formatMoney(totalPorMoneda.USD, 'USD')}
+                color="primary"
+                size="small"
+                variant="outlined"
+              />
+              <Chip
+                label={formatMoney(totalPorMoneda.UYU, 'UYU')}
+                color="primary"
+                size="small"
+                variant="outlined"
+              />
             </Typography>
           </Box>
         )}
@@ -348,23 +333,37 @@ export default function Vencimientos() {
           <Table>
             <TableHead>
               <TableRow sx={{ backgroundColor: azulBase }}>
-                <TableCell sx={{ color: blanco, fontWeight: 600 }}>Cliente</TableCell>
-                <TableCell sx={{ color: blanco, fontWeight: 600 }}>Vehículo</TableCell>
-                <TableCell sx={{ color: blanco, fontWeight: 600 }}>Cuotas por Vencer</TableCell>
-                <TableCell sx={{ color: blanco, fontWeight: 600 }}>Monto Total</TableCell>
-                <TableCell sx={{ color: blanco, fontWeight: 600 }}>Próxima Cuota</TableCell>
-                <TableCell sx={{ color: blanco, fontWeight: 600 }}>Acciones</TableCell>
+                <TableCell sx={{ color: blanco, fontWeight: 600 }}>
+                  Cliente
+                </TableCell>
+                <TableCell sx={{ color: blanco, fontWeight: 600 }}>
+                  Vehículo
+                </TableCell>
+                <TableCell sx={{ color: blanco, fontWeight: 600 }}>
+                  Cuotas por Vencer
+                </TableCell>
+                <TableCell sx={{ color: blanco, fontWeight: 600 }}>
+                  Monto Total
+                </TableCell>
+                <TableCell sx={{ color: blanco, fontWeight: 600 }}>
+                  Próxima Cuota
+                </TableCell>
+                <TableCell sx={{ color: blanco, fontWeight: 600 }}>
+                  Acciones
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {vencimientos.map((fin, index) => {
+              {vencimientosPaginados.map((fin, index) => {
                 const clienteNombre =
-                  typeof fin.cliente === 'object' ? fin.cliente.NOMBRE : 's/n';
+                  typeof fin.cliente === 'object' && fin.cliente
+                    ? fin.cliente.NOMBRE
+                    : 's/n';
                 const vehiculoInfo =
-                  typeof fin.vehiculo === 'object'
-                    ? `${fin.vehiculo.Marca} ${fin.vehiculo.Modelo}`
+                  typeof fin.vehiculo === 'object' && fin.vehiculo
+                    ? `${fin.vehiculo.Marca ?? ''} ${fin.vehiculo.Modelo ?? ''}`.trim()
                     : 's/v';
-                
+
                 // Ordenar cuotas por fecha y obtener la próxima
                 const cuotasOrdenadas = [...fin.cuotasPorVencer].sort(
                   (a, b) =>
@@ -441,14 +440,49 @@ export default function Vencimientos() {
         </TableContainer>
       )}
 
-      {vencimientos.length === 0 && !loading && empresaSeleccionada && (
+      {/* Controles de paginación */}
+      {pagination.pages > 1 && (
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            mt: 3,
+            gap: 2,
+            flexWrap: 'wrap',
+          }}
+        >
+          <Pagination
+            count={pagination.pages}
+            page={pagination.page}
+            onChange={handlePageChange}
+            color="primary"
+            size="large"
+            showFirstButton
+            showLastButton
+            sx={{
+              '& .MuiPaginationItem-root': {
+                fontSize: '0.95rem',
+                fontWeight: 500,
+              },
+            }}
+          />
+          <Typography variant="body2" color={grisTexto}>
+            Mostrando {(pagination.page - 1) * pagination.limit + 1} -{' '}
+            {Math.min(pagination.page * pagination.limit, pagination.total)} de{' '}
+            {pagination.total}
+          </Typography>
+        </Box>
+      )}
+
+      {vencimientos.length === 0 && !loading && empresaId && (
         <Paper elevation={3} sx={{ p: 4, textAlign: 'center' }}>
           <Typography variant="body1" color={grisTexto}>
-            No se encontraron cuotas por vencer en el rango de fechas seleccionado
+            No se encontraron cuotas por vencer en el rango de fechas
+            seleccionado
           </Typography>
         </Paper>
       )}
     </>
   );
 }
-

@@ -2,8 +2,14 @@ import { connectDB } from '@/db/dbConnection';
 import Cliente from '@/models/cliente';
 import Financiamiento from '@/models/financiamiento';
 import PagoCuota from '@/models/pagoCuota';
+import Empresa from '@/models/empresa';
+import Vehiculo from '@/models/vehiculo';
 import { formatMoney, normalizarMoneda } from '@/lib/moneda';
 import { NextRequest, NextResponse } from 'next/server';
+
+// Forzar registro de modelos para populate (evita MissingSchemaError)
+void Empresa;
+void Vehiculo;
 
 // Función para escapar HTML y prevenir errores
 function escapeHtml(text: any): string {
@@ -151,6 +157,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url);
     const busqueda = searchParams.get('busqueda');
+    const empresa = searchParams.get('empresa') || '';
 
     if (!busqueda || busqueda.trim() === '') {
       return NextResponse.json(
@@ -174,10 +181,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Buscar todos los financiamientos donde el cliente es cliente principal o cliente2
-    const financiamientos = await Financiamiento.find({
+    // Buscar los financiamientos donde el cliente es cliente principal o cliente2
+    // Si se indica una empresa, filtrar solo los de esa empresa
+    const clienteQuery: any = {
       $or: [{ cliente: cliente._id }, { cliente2: cliente._id }],
-    })
+    };
+    if (empresa) {
+      clienteQuery.empresa = empresa;
+    }
+
+    const financiamientos = await Financiamiento.find(clienteQuery)
       .populate('cliente', 'NOMBRE TELEFONO cedula DIRECCION correo profesion')
       .populate('cliente2', 'NOMBRE TELEFONO cedula DIRECCION correo profesion')
       .populate('vehiculo', 'Marca Modelo Matricula Año Color')
@@ -436,6 +449,21 @@ function generateEstadoCuentaReportHTML(
       ? `<div style="font-size: 7px; margin-top: 3px;">Montos vencidos | USD: ${fmt(resumen.montosPorMoneda.USD.montoVencido, 'USD')} | UYU: ${fmt(resumen.montosPorMoneda.UYU.montoVencido, 'UYU')}</div>`
       : '';
 
+  // Empresas del reporte (contexto de Operaciones: filtrado por empresa)
+  const empresasInfo = Array.from(
+    new Set(
+      financiamientos
+        .map(f =>
+          typeof f.empresa === 'object' && f.empresa ? f.empresa.nombre : ''
+        )
+        .filter(Boolean)
+    )
+  );
+  const empresaReporteHtml =
+    empresasInfo.length > 0
+      ? `<p style="font-size:11px;color:#333;margin-top:4px;"><strong>Empresa:</strong> ${escapeHtml(empresasInfo.join(', '))}</p>`
+      : '';
+
   const html = `
 <!DOCTYPE html>
 <html lang="es">
@@ -625,6 +653,7 @@ function generateEstadoCuentaReportHTML(
   <div class="header">
     <h1>ESTADO DE CUENTA</h1>
     <p class="fecha">Generado el ${fechaActual}</p>
+    ${empresaReporteHtml}
   </div>
 
   <!-- Información del Cliente -->
@@ -742,7 +771,8 @@ function generateEstadoCuentaReportHTML(
       <tr>
         <th style="width: 3%;">#</th>
         <th style="width: 8%;">Fin.</th>
-        <th style="width: 12%;">Vehículo</th>
+        <th style="width: 10%;">Vehículo</th>
+        <th style="width: 10%;">Empresa</th>
         <th style="width: 6%;" class="text-center">Cuota</th>
         <th style="width: 10%;" class="text-center">Vencimiento</th>
         <th style="width: 10%;" class="text-right">Valor</th>
@@ -769,12 +799,17 @@ function generateEstadoCuentaReportHTML(
               : cuota.estado === 'vencida'
                 ? '#ffebee'
                 : 'transparent';
+          const empresaInfo =
+            typeof cuota.empresa === 'object' && cuota.empresa
+              ? cuota.empresa.nombre
+              : 'N/A';
 
           return `
         <tr style="background-color: ${bgColor};">
           <td class="text-center">${index + 1}</td>
           <td style="font-size: 6px;">${cuota.financiamientoNumero || 'N/A'}</td>
           <td style="font-size: 6px;">${escapeHtml(vehiculoInfo)}</td>
+          <td style="font-size: 6px;">${escapeHtml(empresaInfo)}</td>
           <td class="text-center">#${cuota.numeroCuota}${cuota.esExtra ? ' (E)' : ''}</td>
           <td class="text-center">${formatDate(cuota.fechaVencimiento)}</td>
           <td class="text-right">${fmt(cuota.valorCuota, cuota.moneda)}</td>

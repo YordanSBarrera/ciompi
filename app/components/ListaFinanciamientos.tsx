@@ -54,7 +54,7 @@ import {
   turquesa,
 } from '@/lib/color';
 import { useRouter } from 'next/navigation';
-import {  isAdmin } from '@/lib/utils';
+import { isAdmin } from '@/lib/utils';
 import { formatMoney, normalizarMoneda } from '@/lib/moneda';
 
 interface PaginationData {
@@ -78,6 +78,7 @@ interface ListaFinanciamientosProps {
   onPageChange?: (page: number) => void;
   onSearchChange?: (search: string) => void;
   initialSearch?: string;
+  VerBarraDeBusqueda?: boolean;
 }
 
 interface MenuState {
@@ -96,6 +97,7 @@ export default function ListaFinanciamientos({
   onPageChange,
   onSearchChange,
   initialSearch = '',
+  VerBarraDeBusqueda = true,
 }: ListaFinanciamientosProps) {
   const [filter, setFilter] = React.useState(initialSearch);
   const [menuState, setMenuState] = React.useState<MenuState>({
@@ -187,9 +189,11 @@ export default function ListaFinanciamientos({
   // Función para obtener el nombre del financiamiento para mostrar en el diálogo
   const getFinanciamientoNombre = (fin: FinanciamientoType): string => {
     const clienteNombre =
-      typeof fin.cliente === 'object' ? fin.cliente.NOMBRE : 's/n';
+      typeof fin.cliente === 'object' && fin.cliente
+        ? fin.cliente.NOMBRE
+        : 's/n';
     const vehiculoInfo =
-      typeof fin.vehiculo === 'object'
+      typeof fin.vehiculo === 'object' && fin.vehiculo
         ? `${fin.vehiculo.Marca} ${fin.vehiculo.Modelo}`
         : 's/v';
     return `${clienteNombre} - ${vehiculoInfo}`;
@@ -298,43 +302,44 @@ export default function ListaFinanciamientos({
           )}
         </Box>
       </Box>
-
       {/* Barra de búsqueda */}
-      <TextField
-        placeholder="Buscar por cliente, cédula, teléfono, vehículo, empresa o estado..."
-        value={filter}
-        onChange={e => handleFilterChange(e.target.value)}
-        disabled={loading}
-        sx={{
-          maxWidth: 500,
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 2,
-            backgroundColor: 'rgba(255,255,255,0.8)',
-            transition: 'all 0.2s ease-in-out',
-            '&:hover': {
-              backgroundColor: 'rgba(255,255,255,1)',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-              '& fieldset': {
-                borderColor: azulClaro,
+      {VerBarraDeBusqueda && (
+        <TextField
+          placeholder="Buscar por cliente, cédula, teléfono, vehículo, empresa o estado..."
+          value={filter}
+          onChange={e => handleFilterChange(e.target.value)}
+          disabled={loading}
+          sx={{
+            maxWidth: 500,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 2,
+              backgroundColor: 'rgba(255,255,255,0.8)',
+              transition: 'all 0.2s ease-in-out',
+              '&:hover': {
+                backgroundColor: 'rgba(255,255,255,1)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                '& fieldset': {
+                  borderColor: azulClaro,
+                },
+              },
+              '&.Mui-focused': {
+                backgroundColor: 'rgba(255,255,255,1)',
+                boxShadow: `0 0 0 2px ${azulBase}20`,
+                '& fieldset': {
+                  borderColor: azulBase,
+                },
               },
             },
-            '&.Mui-focused': {
-              backgroundColor: 'rgba(255,255,255,1)',
-              boxShadow: `0 0 0 2px ${azulBase}20`,
-              '& fieldset': {
-                borderColor: azulBase,
-              },
-            },
-          },
-        }}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchIcon sx={{ color: azulBase }} />
-            </InputAdornment>
-          ),
-        }}
-      />
+          }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ color: azulBase }} />
+              </InputAdornment>
+            ),
+          }}
+        />
+      )}
 
       <TableContainer
         component={Paper}
@@ -517,7 +522,7 @@ export default function ListaFinanciamientos({
                 <TableCell>
                   <Box>
                     <Typography variant="body2" fontWeight={600}>
-                      {typeof fin.cliente === 'object'
+                      {typeof fin.cliente === 'object' && fin.cliente
                         ? (fin.cliente.NOMBRE ?? 's/n')
                         : '-'}
                     </Typography>
@@ -536,12 +541,12 @@ export default function ListaFinanciamientos({
                 </TableCell>
                 <TableCell>
                   <Typography variant="body2" fontWeight={600}>
-                    {typeof fin.vehiculo === 'object'
-                      ? `${fin.vehiculo.Marca?? 'no encontrado'} ${fin.vehiculo.Modelo?? 'no encontrado '}`
+                    {typeof fin.vehiculo === 'object' && fin.vehiculo
+                      ? `${fin.vehiculo.Marca ?? 'no encontrado'} ${fin.vehiculo.Modelo ?? 'no encontrado'}`
                       : '-'}
                   </Typography>
                   <Typography variant="caption" color={grisTexto}>
-                    {typeof fin.vehiculo === 'object'
+                    {typeof fin.vehiculo === 'object' && fin.vehiculo
                       ? fin.vehiculo.Matricula
                       : ''}
                   </Typography>
@@ -707,9 +712,7 @@ export default function ListaFinanciamientos({
                           </MenuItem>
                           {onImprimir && (
                             <MenuItem
-                              onClick={() =>
-                                handleClickImprimir(fin._id || '')
-                              }
+                              onClick={() => handleClickImprimir(fin._id || '')}
                             >
                               <PrintIcon
                                 sx={{ fontSize: 18, mr: 1, color: azulOscuro }}

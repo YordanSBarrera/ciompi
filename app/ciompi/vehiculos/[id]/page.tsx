@@ -561,16 +561,14 @@ export default function VehiculoDetallePage({
             </Box>
 
             <Box sx={{ display: 'flex', gap: 2 }}>
-              {isAdmin() && (
-                <Button
-                  onClick={() => setFormularioOpen(true)}
-                  variant="contained"
-                  color="primary"
-                  size="large"
-                >
-                  Editar Vehículo
-                </Button>
-              )}
+              <Button
+                onClick={() => setFormularioOpen(true)}
+                variant="contained"
+                color="primary"
+                size="large"
+              >
+                Editar Vehículo
+              </Button>
 
               <Button
                 component={Link}

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { grisClaro, grisMedio } from '@/lib/color';
 import { Usuario } from '@/lib/types';
-import { getAuthHeaders, isAdmin } from '@/lib/utils';
+import { getAuthHeaders, getCurrentUserId, isAdmin } from '@/lib/utils';
 import AuthGuard from '@/app/components/AuthGuard';
 import {
   Alert,
@@ -481,7 +481,7 @@ export default function UsuarioDetallesPage() {
               )}
             </Box>
             <Box sx={{ display: 'flex', gap: 2 }}>
-              {isAdmin() && (
+              {(isAdmin() || usuarioId === getCurrentUserId()) && (
                 <Button
                   component={Link}
                   href={`/ciompi/usuario/${usuarioId}/editar`}

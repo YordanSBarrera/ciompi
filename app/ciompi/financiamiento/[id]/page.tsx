@@ -5,6 +5,8 @@ import { isAdmin } from '@/lib/utils';
 import { formatMoney, normalizarMoneda } from '@/lib/moneda';
 import AuthGuard from '@/app/components/AuthGuard';
 import PagoCuotaModal from '@/app/components/PagoCuotaModal';
+import { useEliminarFinanciamiento } from '@/app/hook/useEliminarFinanciamiento';
+import ModalConfirmarEliminar from './ModalConfirmarEliminacion';
 import {
   Alert,
   Box,
@@ -30,6 +32,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Snackbar,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -39,7 +42,7 @@ import {
 } from '@mui/icons-material';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 
 type FieldDataProps = {
   fieldName: string;
@@ -60,6 +63,7 @@ const FieldData = ({ fieldName, fieldValue }: FieldDataProps) => {
 
 export default function FinanciamientoDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const id = params.id as string;
 
   const [financiamiento, setFinanciamiento] =
@@ -71,6 +75,22 @@ export default function FinanciamientoDetailPage() {
   const [pagoDetalleOpen, setPagoDetalleOpen] = useState(false);
   const [pagoSeleccionado, setPagoSeleccionado] =
     useState<PagoCuotaType | null>(null);
+
+  // Hook para eliminar financiamiento
+  const {
+    confirmDialog,
+    loading: deleting,
+    snackbar,
+    handleClickEliminar,
+    handleConfirmEliminar,
+    handleCancelEliminar,
+    handleCloseSnackbar,
+  } = useEliminarFinanciamiento({
+    onFinanciamientoEliminado: () => {
+      // Redirigir a la lista de financiamientos después de eliminar
+      router.push('/ciompi/financiamiento');
+    },
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -626,7 +646,8 @@ export default function FinanciamientoDetailPage() {
 
               <Card sx={{ bgcolor: 'background.paper' }}>
                 <CardContent>
-                  {typeof financiamiento.vehiculo === 'object' ? (
+                  {typeof financiamiento.vehiculo === 'object' &&
+                  financiamiento.vehiculo ? (
                     <>
                       <FieldData
                         fieldName="Marca"
@@ -1349,14 +1370,22 @@ export default function FinanciamientoDetailPage() {
             }}
           >
             <Box>
-              <Button
-                component={Link}
-                href="/ciompi/financiamiento"
-                variant="outlined"
-                size="large"
-              >
-                Volver al Listado
-              </Button>
+              {isAdmin() && (
+                <Button
+                  onClick={() =>
+                    handleClickEliminar(
+                      financiamiento._id || '',
+                      `#${financiamiento._id?.slice(-8)}`
+                    )
+                  }
+                  variant="contained"
+                  color="error"
+                  size="large"
+                  disabled={deleting}
+                >
+                  {deleting ? 'Eliminando...' : 'Eliminar Financiamiento'}
+                </Button>
+              )}
             </Box>
             <Box sx={{ display: 'flex', gap: 2 }}>
               {isAdmin() && (
@@ -1384,6 +1413,14 @@ export default function FinanciamientoDetailPage() {
                 }}
               >
                 Imprimir Detalles
+              </Button>
+              <Button
+                component={Link}
+                href="/ciompi/financiamiento"
+                variant="outlined"
+                size="large"
+              >
+                Volver al Listado
               </Button>
             </Box>
           </Box>
@@ -1537,6 +1574,31 @@ export default function FinanciamientoDetailPage() {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Diálogo de confirmación de eliminación */}
+        <ModalConfirmarEliminar
+          open={confirmDialog.open}
+          onClose={handleCancelEliminar}
+          financiamientoNombre={confirmDialog.financiamientoNombre}
+          deleting={deleting}
+          onConfirmEliminar={handleConfirmEliminar}
+        />
+
+        {/* Snackbar para notificaciones */}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert
+            onClose={handleCloseSnackbar}
+            severity={snackbar.severity}
+            sx={{ width: '100%' }}
+          >
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
       </Container>
     </AuthGuard>
   );

@@ -54,7 +54,7 @@ import {
 } from '@/lib/color';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { useRouter } from 'next/navigation';
-import { isAdmin } from '@/lib/utils';
+import { getCurrentUserId, isAdmin } from '@/lib/utils';
 import { UsuarioRoles } from '@/lib/const';
 
 interface ListaUsuariosProps {
@@ -94,6 +94,7 @@ export default function ListaUsuarios({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const esAdministrativo = isAdmin();
+  const currentUserId = getCurrentUserId();
   const emptyData = '-';
 
   // Helper function to truncate text
@@ -593,7 +594,7 @@ export default function ListaUsuarios({
                         />
                         Ver Detalles
                       </MenuItem>
-                      {esAdministrativo && (
+                      {esAdministrativo ? (
                         <>
                           <MenuItem
                             onClick={() => handleClickEditar(usuario._id!)}
@@ -618,12 +619,19 @@ export default function ListaUsuarios({
                                 color: 'error.main',
                               }}
                             />
-                            <Typography variant="body2" color="error.main">
-                              Eliminar
-                            </Typography>
+                            Eliminar
                           </MenuItem>
                         </>
-                      )}
+                      ) : usuario._id === currentUserId ? (
+                        <MenuItem
+                          onClick={() => handleClickEditar(usuario._id!)}
+                        >
+                          <EditIcon
+                            sx={{ fontSize: 18, mr: 1, color: azulBase }}
+                          />
+                          Editar
+                        </MenuItem>
+                      ) : null}
                     </Menu>
                   </Stack>
                 </TableCell>
