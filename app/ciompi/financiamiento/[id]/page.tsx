@@ -1387,16 +1387,6 @@ export default function FinanciamientoDetailPage() {
                 </Button>
               )}
             </Box>
-            <Box>
-              <Button
-                component={Link}
-                href="/ciompi/financiamiento"
-                variant="outlined"
-                size="large"
-              >
-                Volver al Listado
-              </Button>
-            </Box>
             <Box sx={{ display: 'flex', gap: 2 }}>
               {isAdmin() && (
                 <Button
@@ -1423,6 +1413,14 @@ export default function FinanciamientoDetailPage() {
                 }}
               >
                 Imprimir Detalles
+              </Button>
+              <Button
+                component={Link}
+                href="/ciompi/financiamiento"
+                variant="outlined"
+                size="large"
+              >
+                Volver al Listado
               </Button>
             </Box>
           </Box>
