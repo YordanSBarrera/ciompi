@@ -68,6 +68,17 @@ interface FormularioVehiculoProps {
   title: string;
 }
 
+const matriculaValida = (matricula: string): boolean => {
+  const valor = matricula.toUpperCase();
+  // Formato alfanumérico con guiones (ej. ABC-1234, ABC1234)
+  const formatoAlfanumerico = /^[A-Z0-9-]{3,10}$/;
+  // Formato nueva matrícula: 3 letras, espacio y 4 dígitos (ej. SDF 9834)
+  const formatoLetrasNumeros = /^[A-Z]{3} \d{4}$/;
+  return (
+    formatoAlfanumerico.test(valor) || formatoLetrasNumeros.test(valor)
+  );
+};
+
 export default function FormularioVehiculo({
   open,
   onClose,
@@ -172,12 +183,9 @@ export default function FormularioVehiculo({
     // Validación de matrícula
     if (!formData.Matricula.trim()) {
       newErrors.Matricula = 'La matrícula es requerida';
-    } else {
-      const matriculaRegex = /^[A-Z0-9-]{3,10}$/;
-      if (!matriculaRegex.test(formData.Matricula.trim())) {
-        newErrors.Matricula =
-          'La matrícula debe tener entre 3 y 10 caracteres alfanuméricos y guiones';
-      }
+    } else if (!matriculaValida(formData.Matricula.trim())) {
+      newErrors.Matricula =
+        'Formato inválido. Use letras, números y guiones (3-10 caracteres) o el formato de 3 letras, espacio y 4 dígitos (ej. SDF 9834)';
     }
 
     // Validación de año
@@ -231,12 +239,11 @@ export default function FormularioVehiculo({
 
     // Validación en tiempo real para algunos campos
     if (field === 'Matricula' && value) {
-      const matriculaRegex = /^[A-Z0-9-]{3,10}$/;
-      if (!matriculaRegex.test(value.trim())) {
+      if (!matriculaValida(value.trim())) {
         setErrors(prev => ({
           ...prev,
           Matricula:
-            'Formato inválido. Use letras, números y guiones (3-10 caracteres)',
+            'Formato inválido. Use letras, números y guiones (3-10 caracteres) o el formato de 3 letras, espacio y 4 dígitos (ej. SDF 9834)',
         }));
       }
     }

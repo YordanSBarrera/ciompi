@@ -1,10 +1,19 @@
 'use client';
 import { grisClaro, grisMedio } from '@/lib/color';
-import { FinanciamientoType, PagoCuotaType } from '@/lib/types';
-import { isAdmin } from '@/lib/utils';
+import {
+  FinanciamientoType,
+  PagoCuotaType,
+  ClienteType,
+  ClienteFormType,
+  VehiculoType,
+  VehiculoFormType,
+} from '@/lib/types';
+import { isAdmin, getAuthHeaders } from '@/lib/utils';
 import { formatMoney, normalizarMoneda } from '@/lib/moneda';
 import AuthGuard from '@/app/components/AuthGuard';
 import PagoCuotaModal from '@/app/components/PagoCuotaModal';
+import ModalEditarCliente from '@/app/components/ModalEditarCliente';
+import FormularioVehiculo from '@/app/components/FormularioVehiculo';
 import { useEliminarFinanciamiento } from '@/app/hook/useEliminarFinanciamiento';
 import ModalConfirmarEliminar from './ModalConfirmarEliminacion';
 import {
@@ -75,6 +84,8 @@ export default function FinanciamientoDetailPage() {
   const [pagoDetalleOpen, setPagoDetalleOpen] = useState(false);
   const [pagoSeleccionado, setPagoSeleccionado] =
     useState<PagoCuotaType | null>(null);
+  const [clienteModalOpen, setClienteModalOpen] = useState(false);
+  const [vehiculoModalOpen, setVehiculoModalOpen] = useState(false);
 
   // Hook para eliminar financiamiento
   const {
@@ -327,38 +338,122 @@ export default function FinanciamientoDetailPage() {
     }
   };
 
+  const recargarDatos = async () => {
+    // Recargar financiamiento y pagos después de cambios
+    const [financiamientoResponse, pagosResponse] = await Promise.all([
+      fetch(`/api/financiamiento/${id}`),
+      fetch(`/api/pagos-cuotas/financiamiento/${id}`),
+    ]);
+
+    const [financiamientoData, pagosData] = await Promise.all([
+      financiamientoResponse.json(),
+      pagosResponse.json(),
+    ]);
+
+    setFinanciamiento(financiamientoData);
+    // Ordenar pagos: primero normales por número, luego extras por número o fecha
+    const pagosOrdenados = [...pagosData].sort((a, b) => {
+      // Primero separar por tipo: normales primero
+      if (a.esExtra !== b.esExtra) {
+        return a.esExtra ? 1 : -1;
+      }
+      // Si ambos son del mismo tipo, ordenar por número de cuota
+      if (a.numeroCuota && b.numeroCuota) {
+        return a.numeroCuota - b.numeroCuota;
+      }
+      // Si no tienen número, ordenar por fecha
+      return (
+        new Date(a.fechaPago).getTime() - new Date(b.fechaPago).getTime()
+      );
+    });
+    setPagos(pagosOrdenados);
+  };
+
   const handlePagoRegistrado = async () => {
-    // Recargar los datos después de registrar un pago
     try {
-      const [financiamientoResponse, pagosResponse] = await Promise.all([
-        fetch(`/api/financiamiento/${id}`),
-        fetch(`/api/pagos-cuotas/financiamiento/${id}`),
-      ]);
-
-      const [financiamientoData, pagosData] = await Promise.all([
-        financiamientoResponse.json(),
-        pagosResponse.json(),
-      ]);
-
-      setFinanciamiento(financiamientoData);
-      // Ordenar pagos: primero normales por número, luego extras por número o fecha
-      const pagosOrdenados = [...pagosData].sort((a, b) => {
-        // Primero separar por tipo: normales primero
-        if (a.esExtra !== b.esExtra) {
-          return a.esExtra ? 1 : -1;
-        }
-        // Si ambos son del mismo tipo, ordenar por número de cuota
-        if (a.numeroCuota && b.numeroCuota) {
-          return a.numeroCuota - b.numeroCuota;
-        }
-        // Si no tienen número, ordenar por fecha
-        return (
-          new Date(a.fechaPago).getTime() - new Date(b.fechaPago).getTime()
-        );
-      });
-      setPagos(pagosOrdenados);
+      await recargarDatos();
     } catch (err) {
       console.error('Error recargando datos:', err);
+    }
+  };
+
+  const handleGuardarCliente = async (clienteData: ClienteFormType) => {
+    const cliente =
+      typeof financiamiento?.cliente === 'object'
+        ? financiamiento.cliente
+        : null;
+    if (!cliente?._id) {
+      return { success: false, error: 'Cliente no encontrado' };
+    }
+
+    try {
+      const response = await fetch(`/api/clientes/${cliente._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(clienteData),
+      });
+
+      if (response.ok) {
+        await recargarDatos();
+        return { success: true };
+      }
+
+      const errorData = await response.json();
+      return {
+        success: false,
+        error:
+          errorData.message ||
+          errorData.error ||
+          'Error al actualizar cliente',
+      };
+    } catch (err) {
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : 'Error de conexión',
+      };
+    }
+  };
+
+  const handleGuardarVehiculo = async (vehiculoData: VehiculoFormType) => {
+    const vehiculo =
+      typeof financiamiento?.vehiculo === 'object' && financiamiento.vehiculo
+        ? financiamiento.vehiculo
+        : null;
+    if (!vehiculo?._id) {
+      return { success: false, error: 'Vehículo no encontrado' };
+    }
+
+    try {
+      const response = await fetch(`/api/vehiculos/${vehiculo._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(vehiculoData),
+      });
+
+      if (response.ok) {
+        await recargarDatos();
+        return { success: true };
+      }
+
+      const errorData = await response.json();
+      return {
+        success: false,
+        error:
+          errorData.message ||
+          errorData.error ||
+          'Error al actualizar vehículo',
+      };
+    } catch (err) {
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : 'Error de conexión',
+      };
     }
   };
 
@@ -556,6 +651,22 @@ export default function FinanciamientoDetailPage() {
                         : 'No especificada'
                     }
                   />
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      mt: 2,
+                    }}
+                  >
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<EditIcon />}
+                      onClick={() => setClienteModalOpen(true)}
+                    >
+                      Editar Cliente
+                    </Button>
+                  </Box>
                 </CardContent>
               </Card>
             </Grid>
@@ -706,6 +817,22 @@ export default function FinanciamientoDetailPage() {
                             : 'No especificado'
                         }
                       />
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'flex-end',
+                          mt: 2,
+                        }}
+                      >
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          startIcon={<EditIcon />}
+                          onClick={() => setVehiculoModalOpen(true)}
+                        >
+                          Editar Vehículo
+                        </Button>
+                      </Box>
                     </>
                   ) : (
                     <Typography variant="body1" color="textSecondary">
@@ -1439,6 +1566,32 @@ export default function FinanciamientoDetailPage() {
           pagos={pagos}
           cuotasFuturas={financiamiento.cuotasFuturas || []}
           onPagoRegistrado={handlePagoRegistrado}
+        />
+
+        {/* Modal para editar cliente */}
+        <ModalEditarCliente
+          open={clienteModalOpen}
+          onClose={() => setClienteModalOpen(false)}
+          cliente={
+            typeof financiamiento.cliente === 'object'
+              ? (financiamiento.cliente as ClienteType)
+              : null
+          }
+          onSave={handleGuardarCliente}
+        />
+
+        {/* Modal para editar vehículo */}
+        <FormularioVehiculo
+          open={vehiculoModalOpen}
+          onClose={() => setVehiculoModalOpen(false)}
+          onSave={handleGuardarVehiculo}
+          vehiculo={
+            typeof financiamiento.vehiculo === 'object' &&
+            financiamiento.vehiculo
+              ? (financiamiento.vehiculo as VehiculoType)
+              : null
+          }
+          title="Editar Vehículo"
         />
 
         {/* Modal para ver detalles del pago */}
