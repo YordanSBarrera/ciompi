@@ -3,7 +3,11 @@ import PagoCuota from '@/models/pagoCuota';
 import Financiamiento from '@/models/financiamiento';
 import Usuario from '@/models/Usuario';
 import { NextResponse, NextRequest } from 'next/server';
-import { getUserIdFromToken, parseLocalDate, requireAdminAuth } from '@/lib/server-utils';
+import {
+  getUserIdFromToken,
+  parseLocalDate,
+  requireAdminAuth,
+} from '@/lib/server-utils';
 
 // Forzar registro de modelos para populate (evita MissingSchemaError)
 void Usuario;
@@ -60,7 +64,7 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB();
     const body = await request.json();
-    
+
     // Obtener el usuario logueado
     const userId = getUserIdFromToken(request);
     if (!userId) {
@@ -105,8 +109,67 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Permitir múltiples pagos de la misma cuota (pagos parciales)
-    // No verificamos duplicados, ya que una cuota puede pagarse en múltiples pagos
+    // Permitir múltiples pagos de la misma cuota (pagos parciales),
+    // pero nunca sobrepagar una cuota ya pagada ni el financiamiento.
+    const pagosExistentes = await PagoCuota.find({
+      financiamiento: body.financiamiento,
+      estadoPago: 'confirmado',
+    });
+
+    const montoPagadoExistente = pagosExistentes.reduce(
+      (sum, pago) => sum + pago.montoPago,
+      0
+    );
+
+    if (body.numeroCuota && Number(body.numeroCuota) > 0) {
+      const numeroCuota = Number(body.numeroCuota);
+      const valorCuotaEsperado = obtenerValorCuotaEsperado(
+        financiamiento,
+        numeroCuota
+      );
+      const totalPagadoCuota = pagosExistentes
+        .filter(pago => pago.numeroCuota === numeroCuota)
+        .reduce((sum, pago) => sum + pago.montoPago, 0);
+      const saldoCuota = valorCuotaEsperado - totalPagadoCuota;
+
+      if (saldoCuota <= 0) {
+        return NextResponse.json(
+          {
+            error: `La cuota #${numeroCuota} ya está completamente pagada`,
+          },
+          { status: 400 }
+        );
+      }
+
+      if (Number(body.montoPago) > saldoCuota) {
+        return NextResponse.json(
+          {
+            error: `El monto del pago (${body.montoPago}) excede el saldo pendiente de la cuota #${numeroCuota} (${saldoCuota})`,
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    const saldoTotalExistente =
+      financiamiento.montoTotal - montoPagadoExistente;
+    if (saldoTotalExistente <= 0) {
+      return NextResponse.json(
+        {
+          error: 'El financiamiento ya está completamente pagado',
+        },
+        { status: 400 }
+      );
+    }
+
+    if (Number(body.montoPago) > saldoTotalExistente) {
+      return NextResponse.json(
+        {
+          error: `El monto del pago (${body.montoPago}) excede el saldo pendiente del financiamiento (${saldoTotalExistente})`,
+        },
+        { status: 400 }
+      );
+    }
 
     // Crear nuevo pago (usando parseLocalDate para evitar desfase de timezone)
     const nuevoPago = new PagoCuota({
@@ -114,7 +177,12 @@ export async function POST(request: NextRequest) {
       fechaPago: parseLocalDate(body.fechaPago), // Convertir fecha correctamente
       // Para pagos extra, guardamos el número de cuota si se proporciona (cuotasTotal + numeroCuotaExtra)
       // Para pagos normales, guardamos el número de cuota normalmente
-      numeroCuota: body.esExtra && body.numeroCuota ? body.numeroCuota : (body.esExtra ? undefined : body.numeroCuota),
+      numeroCuota:
+        body.esExtra && body.numeroCuota
+          ? body.numeroCuota
+          : body.esExtra
+            ? undefined
+            : body.numeroCuota,
       esExtra: !!body.esExtra,
       estadoPago: 'confirmado',
       usuarioRegistro: userId, // Registrar el usuario que cobró la cuota
@@ -127,7 +195,7 @@ export async function POST(request: NextRequest) {
       financiamiento: body.financiamiento,
       estadoPago: 'confirmado',
     });
-    
+
     const montoPagado = todosLosPagos.reduce(
       (sum, pago) => sum + pago.montoPago,
       0
@@ -147,7 +215,8 @@ export async function POST(request: NextRequest) {
       });
 
     // Calcular total de cuotas incluyendo extras
-    const cuotasTotales = financiamiento.cuotas + (financiamiento.cuotasExtras || 0);
+    const cuotasTotales =
+      financiamiento.cuotas + (financiamiento.cuotasExtras || 0);
 
     // Contar cuántas cuotas están completamente pagadas (incluyendo extras,
     // usando el monto correcto de cada cuota desde cuotasFuturas)
@@ -242,7 +311,7 @@ export async function DELETE(request: NextRequest) {
         financiamiento: pago.financiamiento,
         estadoPago: 'confirmado',
       });
-      
+
       const montoPagado = todosLosPagos.reduce(
         (sum, p) => sum + p.montoPago,
         0
@@ -261,7 +330,8 @@ export async function DELETE(request: NextRequest) {
         });
 
       // Calcular total de cuotas incluyendo extras
-      const cuotasTotales = financiamiento.cuotas + (financiamiento.cuotasExtras || 0);
+      const cuotasTotales =
+        financiamiento.cuotas + (financiamiento.cuotasExtras || 0);
 
       // Contar cuántas cuotas están completamente pagadas (incluyendo extras,
       // usando el monto correcto de cada cuota desde cuotasFuturas)
@@ -274,7 +344,10 @@ export async function DELETE(request: NextRequest) {
       }
 
       const cuotasPendientes = Math.max(0, cuotasTotales - cuotasPagadas);
-      const saldoPendiente = Math.max(0, financiamiento.montoTotal - montoPagado);
+      const saldoPendiente = Math.max(
+        0,
+        financiamiento.montoTotal - montoPagado
+      );
 
       let estadoFinanciamiento = 'activo';
       if (
