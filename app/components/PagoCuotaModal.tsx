@@ -25,6 +25,18 @@ import {
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 
+interface PagoEditarType {
+  _id?: string;
+  numeroCuota?: number;
+  montoPago: number;
+  fechaPago?: Date | string;
+  metodoPago?: string;
+  numeroComprobante?: string;
+  banco?: string;
+  observaciones?: string;
+  esExtra?: boolean;
+}
+
 interface PagoCuotaModalProps {
   open: boolean;
   onClose: () => void;
@@ -34,6 +46,7 @@ interface PagoCuotaModalProps {
   cuotasTotal: number;
   cuotasExtras?: number;
   pagos?: Array<{
+    _id?: string;
     numeroCuota?: number;
     montoPago: number;
     esExtra?: boolean;
@@ -47,6 +60,8 @@ interface PagoCuotaModalProps {
   onPagoRegistrado: () => void;
   /** Moneda del financiamiento (histórico sin campo → USD). */
   moneda?: MonedaFinanciamiento;
+  /** Pago que se está editando. Si se indica, el modal abre en modo edición. */
+  pagoEditar?: PagoEditarType | null;
 }
 
 export default function PagoCuotaModal({
@@ -61,6 +76,7 @@ export default function PagoCuotaModal({
   cuotasFuturas = [],
   onPagoRegistrado,
   moneda = 'USD',
+  pagoEditar = null,
 }: PagoCuotaModalProps) {
   const [formData, setFormData] = useState<PagoCuotaFormType>({
     financiamiento: financiamientoId,
@@ -78,6 +94,8 @@ export default function PagoCuotaModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const modoEdicion = pagoEditar != null && !!pagoEditar._id;
+
   // Obtener el valor de una cuota específica
   const obtenerValorCuota = (
     numeroCuota: number,
@@ -94,7 +112,12 @@ export default function PagoCuotaModal({
     return valorCuota;
   };
 
-  // Calcular el saldo pendiente de la cuota seleccionada
+  // Calcular el saldo pendiente de la cuota seleccionada.
+  // En modo edición se excluye el pago que se está editando, para saber
+  // cuánto se puede pagar/mover sin sobrepasar el valor de la cuota.
+  const esPagoEditado = (p: { _id?: string }): boolean =>
+    modoEdicion && !!pagoEditar?._id && !!p._id && p._id === pagoEditar._id;
+
   const calcularSaldoPendiente = (
     numeroCuota: number,
     esExtra: boolean = false
@@ -104,7 +127,8 @@ export default function PagoCuotaModal({
       p =>
         p.estadoPago === 'confirmado' &&
         p.esExtra === esExtra &&
-        p.numeroCuota === numeroCuota
+        p.numeroCuota === numeroCuota &&
+        !esPagoEditado(p)
     );
     const totalPagado = pagosConfirmados.reduce(
       (sum, p) => sum + p.montoPago,
@@ -114,6 +138,7 @@ export default function PagoCuotaModal({
   };
 
   // Cuotas normales con saldo pendiente (disponibles para pagar).
+  // En modo edición se mantiene visible la cuota actual del pago.
   const cuotasNormalesDisponibles = (): number[] => {
     const disponibles: number[] = [];
     for (let n = 1; n <= cuotasTotal; n++) {
@@ -121,10 +146,21 @@ export default function PagoCuotaModal({
         disponibles.push(n);
       }
     }
-    return disponibles;
+    if (
+      modoEdicion &&
+      pagoEditar?.esExtra === false &&
+      pagoEditar.numeroCuota &&
+      pagoEditar.numeroCuota >= 1 &&
+      pagoEditar.numeroCuota <= cuotasTotal &&
+      !disponibles.includes(pagoEditar.numeroCuota)
+    ) {
+      disponibles.push(pagoEditar.numeroCuota);
+    }
+    return disponibles.sort((a, b) => a - b);
   };
 
   // Cuotas extras con saldo pendiente (disponibles para pagar).
+  // En modo edición se mantiene visible la cuota extra actual del pago.
   const cuotasExtrasDisponibles = (): number[] => {
     const disponibles: number[] = [];
     for (let n = 1; n <= cuotasExtras; n++) {
@@ -133,7 +169,18 @@ export default function PagoCuotaModal({
         disponibles.push(n);
       }
     }
-    return disponibles;
+    if (
+      modoEdicion &&
+      pagoEditar?.esExtra === true &&
+      pagoEditar.numeroCuota &&
+      pagoEditar.numeroCuota > cuotasTotal
+    ) {
+      const indiceActual = pagoEditar.numeroCuota - cuotasTotal;
+      if (indiceActual >= 1 && !disponibles.includes(indiceActual)) {
+        disponibles.push(indiceActual);
+      }
+    }
+    return disponibles.sort((a, b) => a - b);
   };
 
   // Primera cuota normal no completamente pagada.
@@ -151,6 +198,40 @@ export default function PagoCuotaModal({
 
   useEffect(() => {
     if (open) {
+      // Modo edición: pre-cargar los datos del pago existente
+      if (modoEdicion && pagoEditar) {
+        const fechaEditar = pagoEditar.fechaPago
+          ? new Date(pagoEditar.fechaPago).toISOString().split('T')[0]
+          : new Date().toISOString().split('T')[0];
+
+        setFormData({
+          financiamiento: financiamientoId,
+          numeroCuota:
+            pagoEditar.numeroCuota && pagoEditar.numeroCuota >= 1
+              ? pagoEditar.numeroCuota
+              : 1,
+          montoPago: Math.floor(pagoEditar.montoPago),
+          fechaPago: fechaEditar,
+          metodoPago: (pagoEditar.metodoPago ||
+            'efectivo') as PagoCuotaFormType['metodoPago'],
+          observaciones: pagoEditar.observaciones || '',
+          numeroComprobante: pagoEditar.numeroComprobante || '',
+          banco: pagoEditar.banco || '',
+          esExtra: !!pagoEditar.esExtra,
+        });
+
+        if (pagoEditar.esExtra) {
+          const indiceExtra = (pagoEditar.numeroCuota || 0) - cuotasTotal;
+          setNumeroCuotaExtra(indiceExtra >= 1 ? indiceExtra : 1);
+          setTipoPago('extra');
+        } else {
+          setNumeroCuotaExtra(1);
+          setTipoPago('normal');
+        }
+        setError(null);
+        return;
+      }
+
       const normales = cuotasNormalesDisponibles();
       const extras = cuotasExtrasDisponibles();
 
@@ -215,6 +296,8 @@ export default function PagoCuotaModal({
     cuotasFuturas,
     cuotasTotal,
     cuotasExtras,
+    modoEdicion,
+    pagoEditar,
   ]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -351,18 +434,28 @@ export default function PagoCuotaModal({
 
       const authHeaders = getAuthHeaders();
 
-      const response = await fetch('/api/pagos-cuotas', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...authHeaders,
-        },
-        body: JSON.stringify(dataToSend),
-      });
+      const response = await fetch(
+        modoEdicion
+          ? `/api/pagos-cuotas?id=${pagoEditar?._id}`
+          : '/api/pagos-cuotas',
+        {
+          method: modoEdicion ? 'PUT' : 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...authHeaders,
+          },
+          body: JSON.stringify(dataToSend),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al registrar el pago');
+        throw new Error(
+          errorData.error ||
+            (modoEdicion
+              ? 'Error al actualizar el pago'
+              : 'Error al registrar el pago')
+        );
       }
 
       onPagoRegistrado();
@@ -388,7 +481,7 @@ export default function PagoCuotaModal({
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>
         <Typography variant="h5" component="h2">
-          Registrar Pago
+          {modoEdicion ? 'Editar Pago' : 'Registrar Pago'}
         </Typography>
         <Typography variant="body2" color="textSecondary">
           {tipoPago === 'normal'
@@ -680,7 +773,13 @@ export default function PagoCuotaModal({
             disabled={loading || !puedePagar}
             sx={{ minWidth: 120 }}
           >
-            {loading ? <CircularProgress size={24} /> : 'Registrar Pago'}
+            {loading ? (
+              <CircularProgress size={24} />
+            ) : modoEdicion ? (
+              'Guardar Cambios'
+            ) : (
+              'Registrar Pago'
+            )}
           </Button>
         </DialogActions>
       </form>

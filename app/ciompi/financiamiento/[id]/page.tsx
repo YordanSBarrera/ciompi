@@ -48,6 +48,7 @@ import {
   Visibility as VisibilityIcon,
   Print as PrintIcon,
   Edit as EditIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
@@ -84,6 +85,13 @@ export default function FinanciamientoDetailPage() {
   const [pagoDetalleOpen, setPagoDetalleOpen] = useState(false);
   const [pagoSeleccionado, setPagoSeleccionado] =
     useState<PagoCuotaType | null>(null);
+  const [pagoEditar, setPagoEditar] = useState<PagoCuotaType | null>(null);
+  const [pagoEliminar, setPagoEliminar] = useState<PagoCuotaType | null>(null);
+  const [snackbarPago, setSnackbarPago] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error';
+  }>({ open: false, message: '', severity: 'success' });
   const [clienteModalOpen, setClienteModalOpen] = useState(false);
   const [cliente2ModalOpen, setCliente2ModalOpen] = useState(false);
   const [vehiculoModalOpen, setVehiculoModalOpen] = useState(false);
@@ -203,7 +211,7 @@ export default function FinanciamientoDetailPage() {
       financiamiento.cuotasFuturas.forEach(cuota => {
         const fechaVencimiento = new Date(cuota.fechaVencimiento);
         const esExtra = cuota.numeroCuota > financiamiento.cuotas;
-        
+
         // Calcular pagos para esta cuota específica
         let montoPagado = 0;
         if (esExtra) {
@@ -220,7 +228,7 @@ export default function FinanciamientoDetailPage() {
           // Para cuotas normales, usar el cálculo existente
           montoPagado = pagosPorCuota[cuota.numeroCuota] || 0;
         }
-        
+
         const pagada = montoPagado >= cuota.valorCuota;
         const montoPendiente = Math.max(0, cuota.valorCuota - montoPagado);
 
@@ -267,13 +275,15 @@ export default function FinanciamientoDetailPage() {
       const cuotasExtrasExistentes = todasLasCuotas.filter(
         c => c.esExtra
       ).length;
-      
+
       // Si faltan cuotas extras, generarlas
       if (cuotasExtrasExistentes < financiamiento.cuotasExtras) {
         // Obtener la fecha de la última cuota normal
         const fechaUltima =
           todasLasCuotas.length > 0
-            ? new Date(todasLasCuotas[todasLasCuotas.length - 1].fechaVencimiento)
+            ? new Date(
+                todasLasCuotas[todasLasCuotas.length - 1].fechaVencimiento
+              )
             : financiamiento.cuotasFuturas &&
                 financiamiento.cuotasFuturas.length > 0
               ? new Date(
@@ -284,12 +294,14 @@ export default function FinanciamientoDetailPage() {
               : new Date(financiamiento.fechaUltimaCuota);
 
         // Obtener el número de cuota más alto para las extras
-        const maxNumeroCuota = todasLasCuotas.length > 0
-          ? Math.max(...todasLasCuotas.map(c => c.numeroCuota))
-          : financiamiento.cuotas;
+        const maxNumeroCuota =
+          todasLasCuotas.length > 0
+            ? Math.max(...todasLasCuotas.map(c => c.numeroCuota))
+            : financiamiento.cuotas;
 
         // Generar solo las cuotas extras faltantes
-        const cuotasExtrasFaltantes = financiamiento.cuotasExtras - cuotasExtrasExistentes;
+        const cuotasExtrasFaltantes =
+          financiamiento.cuotasExtras - cuotasExtrasExistentes;
         for (let i = 1; i <= cuotasExtrasFaltantes; i++) {
           const fechaVencimiento = new Date(fechaUltima);
           fechaVencimiento.setMonth(fechaVencimiento.getMonth() + i);
@@ -363,9 +375,7 @@ export default function FinanciamientoDetailPage() {
         return a.numeroCuota - b.numeroCuota;
       }
       // Si no tienen número, ordenar por fecha
-      return (
-        new Date(a.fechaPago).getTime() - new Date(b.fechaPago).getTime()
-      );
+      return new Date(a.fechaPago).getTime() - new Date(b.fechaPago).getTime();
     });
     setPagos(pagosOrdenados);
   };
@@ -405,9 +415,7 @@ export default function FinanciamientoDetailPage() {
       return {
         success: false,
         error:
-          errorData.message ||
-          errorData.error ||
-          'Error al actualizar cliente',
+          errorData.message || errorData.error || 'Error al actualizar cliente',
       };
     } catch (err) {
       return {
@@ -476,6 +484,48 @@ export default function FinanciamientoDetailPage() {
   const handleVerDetallePago = (pago: PagoCuotaType) => {
     setPagoSeleccionado(pago);
     setPagoDetalleOpen(true);
+  };
+
+  const handleEditarPago = (pago: PagoCuotaType) => {
+    setPagoDetalleOpen(false);
+    setPagoSeleccionado(null);
+    setPagoEditar(pago);
+    setPagoModalOpen(true);
+  };
+
+  const handleEliminarPago = (pago: PagoCuotaType) => {
+    setPagoEliminar(pago);
+  };
+
+  const handleConfirmarEliminarPago = async () => {
+    if (!pagoEliminar?._id) return;
+
+    try {
+      const response = await fetch(`/api/pagos-cuotas?id=${pagoEliminar._id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Error al eliminar el pago');
+      }
+
+      setPagoEliminar(null);
+      setSnackbarPago({
+        open: true,
+        message: 'Pago eliminado correctamente',
+        severity: 'success',
+      });
+      await recargarDatos();
+    } catch (err) {
+      setSnackbarPago({
+        open: true,
+        message:
+          err instanceof Error ? err.message : 'Error al eliminar el pago',
+        severity: 'error',
+      });
+    }
   };
 
   if (loading) {
@@ -576,7 +626,9 @@ export default function FinanciamientoDetailPage() {
               />
               <Chip
                 label={financiamiento.estadoFinanciamiento}
-                color={getEstadoColor(financiamiento.estadoFinanciamiento) as any}
+                color={
+                  getEstadoColor(financiamiento.estadoFinanciamiento) as any
+                }
                 variant="filled"
                 sx={{ fontSize: '1rem', padding: '8px 16px' }}
               />
@@ -1272,7 +1324,10 @@ export default function FinanciamientoDetailPage() {
                 <Button
                   variant="contained"
                   startIcon={<AddIcon />}
-                  onClick={() => setPagoModalOpen(true)}
+                  onClick={() => {
+                    setPagoEditar(null);
+                    setPagoModalOpen(true);
+                  }}
                   disabled={
                     financiamiento.estadoFinanciamiento === 'finalizado'
                   }
@@ -1376,6 +1431,26 @@ export default function FinanciamientoDetailPage() {
                                 >
                                   <VisibilityIcon fontSize="small" />
                                 </IconButton>
+                                {isAdmin() && (
+                                  <>
+                                    <IconButton
+                                      size="small"
+                                      color="primary"
+                                      onClick={() => handleEditarPago(pago)}
+                                      title="Editar pago"
+                                    >
+                                      <EditIcon fontSize="small" />
+                                    </IconButton>
+                                    <IconButton
+                                      size="small"
+                                      color="error"
+                                      onClick={() => handleEliminarPago(pago)}
+                                      title="Eliminar pago"
+                                    >
+                                      <DeleteIcon fontSize="small" />
+                                    </IconButton>
+                                  </>
+                                )}
                               </TableCell>
                             </TableRow>
                           ))}
@@ -1588,7 +1663,10 @@ export default function FinanciamientoDetailPage() {
         {/* Modal para registrar pagos */}
         <PagoCuotaModal
           open={pagoModalOpen}
-          onClose={() => setPagoModalOpen(false)}
+          onClose={() => {
+            setPagoModalOpen(false);
+            setPagoEditar(null);
+          }}
           financiamientoId={financiamiento._id || ''}
           moneda={monedaContrato}
           valorCuota={financiamiento.valorCuota}
@@ -1598,6 +1676,7 @@ export default function FinanciamientoDetailPage() {
           pagos={pagos}
           cuotasFuturas={financiamiento.cuotasFuturas || []}
           onPagoRegistrado={handlePagoRegistrado}
+          pagoEditar={pagoEditar}
         />
 
         {/* Modal para editar cliente */}
@@ -1772,6 +1851,36 @@ export default function FinanciamientoDetailPage() {
           </DialogActions>
         </Dialog>
 
+        {/* Diálogo de confirmación de eliminación de pago */}
+        <Dialog
+          open={!!pagoEliminar}
+          onClose={() => setPagoEliminar(null)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Eliminar Pago</DialogTitle>
+          <DialogContent>
+            <Typography>
+              ¿Está seguro de que desea eliminar este pago
+              {pagoEliminar?.esExtra
+                ? ` (Cuota Extra #${pagoEliminar.numeroCuota})`
+                : ` (Cuota #${pagoEliminar?.numeroCuota})`}{' '}
+              por {formatCurrency(pagoEliminar?.montoPago || 0)}? Esta acción
+              recalculará el estado del financiamiento.
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setPagoEliminar(null)}>Cancelar</Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={handleConfirmarEliminarPago}
+            >
+              Eliminar
+            </Button>
+          </DialogActions>
+        </Dialog>
+
         {/* Diálogo de confirmación de eliminación */}
         <ModalConfirmarEliminar
           open={confirmDialog.open}
@@ -1794,6 +1903,21 @@ export default function FinanciamientoDetailPage() {
             sx={{ width: '100%' }}
           >
             {snackbar.message}
+          </Alert>
+        </Snackbar>
+
+        <Snackbar
+          open={snackbarPago.open}
+          autoHideDuration={6000}
+          onClose={() => setSnackbarPago(prev => ({ ...prev, open: false }))}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert
+            onClose={() => setSnackbarPago(prev => ({ ...prev, open: false }))}
+            severity={snackbarPago.severity}
+            sx={{ width: '100%' }}
+          >
+            {snackbarPago.message}
           </Alert>
         </Snackbar>
       </Container>
