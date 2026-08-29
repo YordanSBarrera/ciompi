@@ -29,6 +29,7 @@ import {
   Collapse,
   Zoom,
   Grow,
+  Tooltip,
 } from '@mui/material';
 import {
   DirectionsCar as CarIcon,
@@ -147,9 +148,6 @@ export default function FormularioVehiculo({
           const data = await response.json();
           const activo = data.financiamientoActivo ?? null;
           setFinanciamientoActivo(activo);
-          if (activo) {
-            setFormData(prev => ({ ...prev, disponible: false }));
-          }
         }
       } catch {
         setFinanciamientoActivo(null);
@@ -221,15 +219,6 @@ export default function FormularioVehiculo({
   };
 
   const handleInputChange = (field: keyof VehiculoFormType, value: any) => {
-    if (field === 'disponible' && value === true && financiamientoActivo) {
-      setSnackbar({
-        open: true,
-        message: `No se puede marcar como disponible: está asociado al financiamiento ${financiamientoActivo._id}`,
-        severity: 'warning',
-      });
-      return;
-    }
-
     setFormData(prev => ({ ...prev, [field]: value }));
 
     // Limpiar error del campo cuando el usuario empieza a escribir
@@ -1167,59 +1156,58 @@ export default function FormularioVehiculo({
 
                       {/* Disponible */}
                       <Grid size={{ xs: 12, sm: 6 }}>
-                        <FormControl
-                          fullWidth
-                          sx={{
-                            '& .MuiOutlinedInput-root': {
-                              borderRadius: 2,
-                              backgroundColor: 'rgba(255,255,255,0.8)',
-                              transition: 'all 0.2s ease-in-out',
-                              '&:hover': {
-                                backgroundColor: 'rgba(255,255,255,1)',
-                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                              },
-                              '&.Mui-focused': {
-                                backgroundColor: 'rgba(255,255,255,1)',
-                                boxShadow: `0 0 0 2px ${verde}20`,
-                              },
-                            },
-                          }}
+                        <Tooltip
+                          title={
+                            financiamientoActivo
+                              ? `Este vehículo está asociado a un financiamiento${financiamientoActivo.clienteNombre ? ` del cliente ${financiamientoActivo.clienteNombre}` : ''} (estado: ${financiamientoActivo.estadoFinanciamiento}).`
+                              : ''
+                          }
+                          arrow
+                          placement="top"
                         >
-                          <InputLabel sx={{ fontWeight: 600 }}>
-                            Disponible
-                          </InputLabel>
-                          <Select
-                            value={
-                              formData.disponible !== false ? 'si' : 'no'
-                            }
-                            onChange={e =>
-                              handleInputChange(
-                                'disponible',
-                                e.target.value === 'si'
-                              )
-                            }
-                            label="Disponible"
-                            disabled={!!financiamientoActivo}
-                            startAdornment={
-                              <InputAdornment position="start">
-                                <CheckIcon sx={{ color: verde }} />
-                              </InputAdornment>
-                            }
+                          <FormControl
+                            fullWidth
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                borderRadius: 2,
+                                backgroundColor: 'rgba(255,255,255,0.8)',
+                                transition: 'all 0.2s ease-in-out',
+                                '&:hover': {
+                                  backgroundColor: 'rgba(255,255,255,1)',
+                                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                                },
+                                '&.Mui-focused': {
+                                  backgroundColor: 'rgba(255,255,255,1)',
+                                  boxShadow: `0 0 0 2px ${verde}20`,
+                                },
+                              },
+                            }}
                           >
-                            <MenuItem value="si">Sí</MenuItem>
-                            <MenuItem value="no">No</MenuItem>
-                          </Select>
-                        </FormControl>
-                        {financiamientoActivo && (
-                          <Alert severity="warning" sx={{ mt: 1 }}>
-                            Este vehículo está asociado a un financiamiento
-                            {financiamientoActivo.clienteNombre
-                              ? ` del cliente ${financiamientoActivo.clienteNombre}`
-                              : ''}{' '}
-                            (estado: {financiamientoActivo.estadoFinanciamiento}
-                            ). No puede marcarse como disponible.
-                          </Alert>
-                        )}
+                            <InputLabel sx={{ fontWeight: 600 }}>
+                              Disponible
+                            </InputLabel>
+                            <Select
+                              value={
+                                formData.disponible !== false ? 'si' : 'no'
+                              }
+                              onChange={e =>
+                                handleInputChange(
+                                  'disponible',
+                                  e.target.value === 'si'
+                                )
+                              }
+                              label="Disponible"
+                              startAdornment={
+                                <InputAdornment position="start">
+                                  <CheckIcon sx={{ color: verde }} />
+                                </InputAdornment>
+                              }
+                            >
+                              <MenuItem value="si">Sí</MenuItem>
+                              <MenuItem value="no">No</MenuItem>
+                            </Select>
+                          </FormControl>
+                        </Tooltip>
                       </Grid>
 
                       {/* Descripción */}

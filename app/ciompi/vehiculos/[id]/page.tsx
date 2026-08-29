@@ -398,22 +398,6 @@ export default function VehiculoDetallePage({
                   </Grid>
                 )}
               </Grid>
-              {financiamientoActivo && (
-                <Alert severity="warning" sx={{ mb: 3 }}>
-                  Este vehículo está asociado a un{' '}
-                  <Link
-                    href={`/ciompi/financiamiento/${financiamientoActivo._id}`}
-                    style={{ fontWeight: 600 }}
-                  >
-                    financiamiento activo
-                  </Link>
-                  {financiamientoActivo.clienteNombre
-                    ? ` del cliente ${financiamientoActivo.clienteNombre}`
-                    : ''}{' '}
-                  (estado: {financiamientoActivo.estadoFinanciamiento}). Por eso
-                  no puede estar disponible.
-                </Alert>
-              )}
             </Grid>
 
             {/* Información del Sistema */}
