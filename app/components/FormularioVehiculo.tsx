@@ -30,6 +30,7 @@ import {
   Zoom,
   Grow,
   Tooltip,
+  SlideProps,
 } from '@mui/material';
 import {
   DirectionsCar as CarIcon,
@@ -69,6 +70,9 @@ interface FormularioVehiculoProps {
   title: string;
 }
 
+// Errores del formulario: todos los campos admiten un mensaje de texto
+type VehiculoErrorForm = Partial<Record<keyof VehiculoFormType, string>>;
+
 const matriculaValida = (matricula: string): boolean => {
   const valor = matricula.toUpperCase();
   // Formato alfanumérico con guiones (ej. ABC-1234, ABC1234)
@@ -98,7 +102,7 @@ export default function FormularioVehiculo({
     disponible: true,
   });
 
-  const [errors, setErrors] = useState<Partial<VehiculoFormType>>({});
+  const [errors, setErrors] = useState<VehiculoErrorForm>({});
   const [loading, setLoading] = useState(false);
   const [financiamientoActivo, setFinanciamientoActivo] =
     useState<FinanciamientoActivoResumen | null>(null);
@@ -158,7 +162,7 @@ export default function FormularioVehiculo({
   }, [open, vehiculo?._id]);
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<VehiculoFormType> = {};
+    const newErrors: VehiculoErrorForm = {};
 
     // Validación de marca
     if (!formData.Marca.trim()) {
@@ -191,16 +195,16 @@ export default function FormularioVehiculo({
       const currentYear = new Date().getFullYear();
       if (formData.Año < 1900 || formData.Año > currentYear + 1) {
         newErrors.Año =
-          `El año debe estar entre 1900 y ${currentYear + 1}` as any;
+          `El año debe estar entre 1900 y ${currentYear + 1}`;
       }
     }
 
     // Validación de padrón
     if (formData.Padron !== undefined && formData.Padron !== null) {
       if (formData.Padron < 0) {
-        newErrors.Padron = 'El padrón debe ser un número positivo' as any;
+        newErrors.Padron = 'El padrón debe ser un número positivo';
       } else if (formData.Padron > 9999999999) {
-        newErrors.Padron = 'El padrón no puede exceder 9,999,999,999' as any;
+        newErrors.Padron = 'El padrón no puede exceder 9,999,999,999';
       }
     }
 
@@ -218,7 +222,10 @@ export default function FormularioVehiculo({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleInputChange = (field: keyof VehiculoFormType, value: any) => {
+  const handleInputChange = (
+    field: keyof VehiculoFormType,
+    value: VehiculoFormType[keyof VehiculoFormType]
+  ) => {
     setFormData(prev => ({ ...prev, [field]: value }));
 
     // Limpiar error del campo cuando el usuario empieza a escribir
@@ -227,7 +234,7 @@ export default function FormularioVehiculo({
     }
 
     // Validación en tiempo real para algunos campos
-    if (field === 'Matricula' && value) {
+    if (field === 'Matricula' && typeof value === 'string' && value) {
       if (!matriculaValida(value.trim())) {
         setErrors(prev => ({
           ...prev,
@@ -237,26 +244,26 @@ export default function FormularioVehiculo({
       }
     }
 
-    if (field === 'Año' && value) {
+    if (field === 'Año' && typeof value === 'number' && value) {
       const currentYear = new Date().getFullYear();
       if (value < 1900 || value > currentYear + 1) {
         setErrors(prev => ({
           ...prev,
-          Año: `El año debe estar entre 1900 y ${currentYear + 1}` as any,
+          Año: `El año debe estar entre 1900 y ${currentYear + 1}`,
         }));
       }
     }
 
-    if (field === 'Padron' && value !== undefined && value !== null) {
+    if (field === 'Padron' && typeof value === 'number') {
       if (value < 0) {
         setErrors(prev => ({
           ...prev,
-          Padron: 'El padrón debe ser un número positivo' as any,
+          Padron: 'El padrón debe ser un número positivo',
         }));
       } else if (value > 9999999999) {
         setErrors(prev => ({
           ...prev,
-          Padron: 'El padrón no puede exceder 9,999,999,999' as any,
+          Padron: 'El padrón no puede exceder 9,999,999,999',
         }));
       }
     }
@@ -1424,7 +1431,7 @@ export default function FormularioVehiculo({
         onClose={handleSnackbarClose}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         TransitionComponent={Slide}
-        TransitionProps={{ direction: 'up' } as any}
+TransitionProps={{ direction: 'up' } as SlideProps}
         sx={{
           '& .MuiSnackbarContent-root': {
             borderRadius: 2,

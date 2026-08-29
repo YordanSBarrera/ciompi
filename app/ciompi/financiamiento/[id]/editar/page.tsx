@@ -927,8 +927,8 @@ export default function EditarFinanciamientoPage() {
                     {vehiculos
                       .filter(
                         vehiculo =>
-                          !vehiculo.financiamientoActivo ||
-                          vehiculo.financiamientoActivo._id === id
+                          vehiculo.disponible !== false ||
+                          vehiculo.financiamientoActivo?._id === id
                       )
                       .map(vehiculo => (
                         <MenuItem key={vehiculo._id} value={vehiculo._id}>

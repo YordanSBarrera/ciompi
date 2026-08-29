@@ -4,7 +4,6 @@ import { grisClaro, grisMedio, azulBase } from '@/lib/color';
 import {
   VehiculoDetalleType,
   VehiculoFormType,
-  FinanciamientoActivoResumen,
 } from '@/lib/types';
 import { getAuthHeaders, isAdmin } from '@/lib/utils';
 import AuthGuard from '@/app/components/AuthGuard';
@@ -49,8 +48,6 @@ export default function VehiculoDetallePage({
   params,
 }: VehiculoDetallePageProps) {
   const [vehiculo, setVehiculo] = useState<VehiculoDetalleType | null>(null);
-  const [financiamientoActivo, setFinanciamientoActivo] =
-    useState<FinanciamientoActivoResumen | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [confirmDialog, setConfirmDialog] = useState({
@@ -72,7 +69,6 @@ export default function VehiculoDetallePage({
         setError(null);
         const datosVehiculo = await cargarVehiculo(id);
         setVehiculo(datosVehiculo);
-        setFinanciamientoActivo(datosVehiculo.financiamientoActivo ?? null);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error desconocido');
       } finally {
@@ -101,7 +97,6 @@ export default function VehiculoDetallePage({
       if (response.ok) {
         const updatedVehiculo: VehiculoDetalleType = await response.json();
         setVehiculo(updatedVehiculo);
-        setFinanciamientoActivo(updatedVehiculo.financiamientoActivo ?? null);
         setSnackbar({
           open: true,
           message: 'Vehículo actualizado exitosamente',
@@ -206,7 +201,7 @@ export default function VehiculoDetallePage({
     );
   }
 
-  const estaDisponible = !financiamientoActivo && vehiculo.disponible !== false;
+  const estaDisponible = vehiculo.disponible !== false;
 
   return (
     <AuthGuard>
