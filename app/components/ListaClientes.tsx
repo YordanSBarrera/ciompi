@@ -30,6 +30,9 @@ import {
   useMediaQuery,
   Pagination,
   CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
 } from '@mui/material';
 import {
   Visibility as ViewIcon,
@@ -37,6 +40,7 @@ import {
   Search as SearchIcon,
   Delete as DeleteIcon,
   Add as AddIcon,
+  Sort as SortIcon,
 } from '@mui/icons-material';
 import { ClienteType } from '@/lib/types';
 import { formatCedula, isAdmin } from '@/lib/utils';
@@ -71,6 +75,8 @@ interface ListaClientesProps {
   onAgregarCliente?: () => void;
   onPageChange?: (page: number) => void;
   onSearchChange?: (search: string) => void;
+  sortOrder?: string;
+  onSortChange?: (orden: string) => void;
   initialSearch?: string;
 }
 
@@ -87,6 +93,8 @@ export default function ListaClientes({
   onAgregarCliente,
   onPageChange,
   onSearchChange,
+  sortOrder = 'creacion_desc',
+  onSortChange,
   initialSearch = '',
 }: ListaClientesProps) {
   const [filter, setFilter] = React.useState(initialSearch);
@@ -94,14 +102,14 @@ export default function ListaClientes({
     anchorEl: null,
     clienteId: null,
   });
-  
+
   // Debounce para la búsqueda
   const searchTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
-  
+
   React.useEffect(() => {
     setFilter(initialSearch);
   }, [initialSearch]);
-  
+
   // Hook personalizado para eliminar cliente
   const {
     confirmDialog,
@@ -166,12 +174,12 @@ export default function ListaClientes({
   // Manejar cambio en el filtro de búsqueda
   const handleFilterChange = (value: string) => {
     setFilter(value);
-    
+
     // Limpiar timeout anterior
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
     }
-    
+
     // Debounce: esperar 500ms antes de buscar
     searchTimeoutRef.current = setTimeout(() => {
       if (onSearchChange) {
@@ -179,7 +187,7 @@ export default function ListaClientes({
       }
     }, 500);
   };
-  
+
   // Limpiar timeout al desmontar
   React.useEffect(() => {
     return () => {
@@ -188,7 +196,7 @@ export default function ListaClientes({
       }
     };
   }, []);
-  
+
   // Si hay paginación, los datos ya vienen filtrados del servidor
   const filteredClientes = clientes;
 
@@ -267,42 +275,95 @@ export default function ListaClientes({
         </Box>
       </Box>
 
-      {/* Barra de búsqueda */}
-      <TextField
-        placeholder="Buscar por nombre, código, dirección, teléfono, correo, profesión o cédula..."
-        value={filter}
-        onChange={e => handleFilterChange(e.target.value)}
-        disabled={loading}
+      {/* Barra de búsqueda y ordenamiento */}
+      <Box
         sx={{
-          maxWidth: 500,
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 2,
-            backgroundColor: 'rgba(255,255,255,0.8)',
-            transition: 'all 0.2s ease-in-out',
-            '&:hover': {
-              backgroundColor: 'rgba(255,255,255,1)',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-              '& fieldset': {
-                borderColor: azulClaro,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 2,
+          flexWrap: 'wrap',
+        }}
+      >
+        <TextField
+          placeholder="Buscar por nombre, código, dirección, teléfono, correo, profesión o cédula..."
+          value={filter}
+          onChange={e => handleFilterChange(e.target.value)}
+          disabled={loading}
+          sx={{
+            maxWidth: 500,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 2,
+              backgroundColor: 'rgba(255,255,255,0.8)',
+              transition: 'all 0.2s ease-in-out',
+              '&:hover': {
+                backgroundColor: 'rgba(255,255,255,1)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                '& fieldset': {
+                  borderColor: azulClaro,
+                },
+              },
+              '&.Mui-focused': {
+                backgroundColor: 'rgba(255,255,255,1)',
+                boxShadow: `0 0 0 2px ${azulBase}20`,
+                '& fieldset': {
+                  borderColor: azulBase,
+                },
               },
             },
-            '&.Mui-focused': {
-              backgroundColor: 'rgba(255,255,255,1)',
-              boxShadow: `0 0 0 2px ${azulBase}20`,
-              '& fieldset': {
-                borderColor: azulBase,
+          }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ color: azulBase }} />
+              </InputAdornment>
+            ),
+          }}
+        />
+
+        <FormControl
+          size="small"
+          disabled={loading}
+          sx={{
+            minWidth: 200,
+            maxWidth: 280,
+          }}
+        >
+          <InputLabel id="ordenar-por-label">Ordenar por</InputLabel>
+          <Select
+            labelId="ordenar-por-label"
+            id="ordenar-por-select"
+            value={sortOrder}
+            onChange={e => onSortChange?.(e.target.value)}
+            label="Ordenar por"
+            sx={{
+              borderRadius: 2,
+              backgroundColor: 'rgba(255,255,255,0.8)',
+              '&:hover': {
+                backgroundColor: 'rgba(255,255,255,1)',
+                '& fieldset': {
+                  borderColor: azulClaro,
+                },
               },
-            },
-          },
-        }}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchIcon sx={{ color: azulBase }} />
-            </InputAdornment>
-          ),
-        }}
-      />
+              '&.Mui-focused': {
+                backgroundColor: 'rgba(255,255,255,1)',
+                '& fieldset': {
+                  borderColor: azulBase,
+                },
+              },
+            }}
+          >
+            <MenuItem value="creacion_desc">
+              Creación (más recientes primero)
+            </MenuItem>
+            <MenuItem value="creacion_asc">
+              Creación (más antiguos primero)
+            </MenuItem>
+            <MenuItem value="cliente_asc">Nombre (A - Z)</MenuItem>
+            <MenuItem value="cliente_desc">Nombre (Z - A)</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
 
       {/* Tabla de clientes */}
       <TableContainer

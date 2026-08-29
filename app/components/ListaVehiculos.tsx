@@ -29,6 +29,9 @@ import {
   CircularProgress,
   MenuItem,
   Menu,
+  FormControl,
+  InputLabel,
+  Select,
 } from '@mui/material';
 import {
   Visibility as ViewIcon,
@@ -38,6 +41,7 @@ import {
   Add as AddIcon,
   DirectionsCar as CarIcon,
   Person as PersonIcon,
+  Sort as SortIcon,
 } from '@mui/icons-material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { useRouter } from 'next/navigation';
@@ -78,6 +82,12 @@ interface MenuState {
   vehiculoId: string | null;
 }
 
+type SortVehiculos =
+  | 'creacion_desc'
+  | 'creacion_asc'
+  | 'marca_asc'
+  | 'marca_desc';
+
 export default function ListaVehiculos({
   vehiculos,
   loading,
@@ -89,6 +99,7 @@ export default function ListaVehiculos({
   onDeleteVehiculo,
 }: ListaVehiculosProps) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortOrder, setSortOrder] = useState<SortVehiculos>('creacion_desc');
   const [menuState, setMenuState] = useState<MenuState>({
     anchorEl: null,
     vehiculoId: null,
@@ -119,6 +130,47 @@ export default function ListaVehiculos({
 
     return matchesSearch;
   });
+
+  const obtenerNombreVehiculo = (vehiculo: VehiculoType): string =>
+    `${vehiculo.Marca} ${vehiculo.Modelo}`.trim().toLowerCase();
+
+  const ordenarVehiculos = (
+    lista: VehiculoType[],
+    orden: SortVehiculos
+  ): VehiculoType[] => {
+    const copia = [...lista];
+    switch (orden) {
+      case 'marca_asc':
+        return copia.sort(
+          (a, b) =>
+            obtenerNombreVehiculo(a).localeCompare(obtenerNombreVehiculo(b)) ||
+            new Date(b.createdAt || 0).getTime() -
+              new Date(a.createdAt || 0).getTime()
+        );
+      case 'marca_desc':
+        return copia.sort(
+          (a, b) =>
+            obtenerNombreVehiculo(b).localeCompare(obtenerNombreVehiculo(a)) ||
+            new Date(b.createdAt || 0).getTime() -
+              new Date(a.createdAt || 0).getTime()
+        );
+      case 'creacion_asc':
+        return copia.sort(
+          (a, b) =>
+            new Date(a.createdAt || 0).getTime() -
+            new Date(b.createdAt || 0).getTime()
+        );
+      case 'creacion_desc':
+      default:
+        return copia.sort(
+          (a, b) =>
+            new Date(b.createdAt || 0).getTime() -
+            new Date(a.createdAt || 0).getTime()
+        );
+    }
+  };
+
+  const vehiculosOrdenados = ordenarVehiculos(filteredVehiculos, sortOrder);
 
   const handleDeleteClick = (vehiculo: VehiculoType) => {
     setDeleteDialog({ open: true, vehiculo });
@@ -247,7 +299,7 @@ export default function ListaVehiculos({
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Chip
-            label={`${filteredVehiculos.length} vehículos`}
+            label={`${vehiculosOrdenados.length} vehículos`}
             variant="outlined"
             sx={{
               borderColor: azulBase,
@@ -289,41 +341,93 @@ export default function ListaVehiculos({
         </Box>
       </Box>
 
-      {/* Búsqueda mejorada */}
-      <TextField
-        placeholder="Buscar por marca, modelo, matrícula, color o descripción..."
-        value={searchTerm}
-        onChange={e => setSearchTerm(e.target.value)}
+      {/* Búsqueda y ordenamiento */}
+      <Box
         sx={{
-          maxWidth: 500,
-          '& .MuiOutlinedInput-root': {
-            borderRadius: 2,
-            backgroundColor: 'rgba(255,255,255,0.8)',
-            transition: 'all 0.2s ease-in-out',
-            '&:hover': {
-              backgroundColor: 'rgba(255,255,255,1)',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-              '& fieldset': {
-                borderColor: azulClaro,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: 2,
+          flexWrap: 'wrap',
+        }}
+      >
+        <TextField
+          placeholder="Buscar por marca, modelo, matrícula, color o descripción..."
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          sx={{
+            maxWidth: 500,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 2,
+              backgroundColor: 'rgba(255,255,255,0.8)',
+              transition: 'all 0.2s ease-in-out',
+              '&:hover': {
+                backgroundColor: 'rgba(255,255,255,1)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                '& fieldset': {
+                  borderColor: azulClaro,
+                },
+              },
+              '&.Mui-focused': {
+                backgroundColor: 'rgba(255,255,255,1)',
+                boxShadow: `0 0 0 2px ${azulBase}20`,
+                '& fieldset': {
+                  borderColor: azulBase,
+                },
               },
             },
-            '&.Mui-focused': {
-              backgroundColor: 'rgba(255,255,255,1)',
-              boxShadow: `0 0 0 2px ${azulBase}20`,
-              '& fieldset': {
-                borderColor: azulBase,
+          }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon sx={{ color: azulBase }} />
+              </InputAdornment>
+            ),
+          }}
+        />
+
+        <FormControl
+          size="small"
+          sx={{
+            minWidth: 200,
+            maxWidth: 280,
+          }}
+        >
+          <InputLabel id="ordenar-por-label">Ordenar por</InputLabel>
+          <Select
+            labelId="ordenar-por-label"
+            id="ordenar-por-select"
+            value={sortOrder}
+            onChange={e => setSortOrder(e.target.value as SortVehiculos)}
+            label="Ordenar por"
+            sx={{
+              borderRadius: 2,
+              backgroundColor: 'rgba(255,255,255,0.8)',
+              '&:hover': {
+                backgroundColor: 'rgba(255,255,255,1)',
+                '& fieldset': {
+                  borderColor: azulClaro,
+                },
               },
-            },
-          },
-        }}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchIcon sx={{ color: azulBase }} />
-            </InputAdornment>
-          ),
-        }}
-      />
+              '&.Mui-focused': {
+                backgroundColor: 'rgba(255,255,255,1)',
+                '& fieldset': {
+                  borderColor: azulBase,
+                },
+              },
+            }}
+          >
+            <MenuItem value="creacion_desc">
+              Creación (más recientes primero)
+            </MenuItem>
+            <MenuItem value="creacion_asc">
+              Creación (más antiguos primero)
+            </MenuItem>
+            <MenuItem value="marca_asc">Marca (A - Z)</MenuItem>
+            <MenuItem value="marca_desc">Marca (Z - A)</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
 
       <TableContainer
         component={Paper}
@@ -460,7 +564,7 @@ export default function ListaVehiculos({
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredVehiculos.length === 0 ? (
+            {vehiculosOrdenados.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={9} align="center" sx={{ py: 4 }}>
                   <Typography color="textSecondary">
@@ -471,7 +575,7 @@ export default function ListaVehiculos({
                 </TableCell>
               </TableRow>
             ) : (
-              filteredVehiculos.map((vehiculo, index) => (
+              vehiculosOrdenados.map((vehiculo, index) => (
                 <TableRow
                   key={vehiculo._id}
                   sx={{
@@ -616,9 +720,7 @@ export default function ListaVehiculos({
                             height: 8,
                             borderRadius: '50%',
                             backgroundColor:
-                              vehiculo.disponible !== false
-                                ? verde
-                                : rojo,
+                              vehiculo.disponible !== false ? verde : rojo,
                             boxShadow: `0 0 0 3px ${
                               vehiculo.disponible !== false
                                 ? verdeClaro
@@ -637,10 +739,7 @@ export default function ListaVehiculos({
                           vehiculo.disponible !== false
                             ? verdeClaro
                             : rojoClaro,
-                        color:
-                          vehiculo.disponible !== false
-                            ? verde
-                            : rojo,
+                        color: vehiculo.disponible !== false ? verde : rojo,
                         fontWeight: 600,
                         fontSize: '0.75rem',
                         border: `1px solid ${
@@ -726,7 +825,9 @@ export default function ListaVehiculos({
                           Editar
                         </MenuItem>
                         {esAdministrativo && (
-                          <MenuItem onClick={() => handleClickEliminar(vehiculo)}>
+                          <MenuItem
+                            onClick={() => handleClickEliminar(vehiculo)}
+                          >
                             <DeleteIcon
                               sx={{
                                 fontSize: 18,
@@ -748,7 +849,7 @@ export default function ListaVehiculos({
           </TableBody>
         </Table>
 
-        {filteredVehiculos.length === 0 && (
+        {vehiculosOrdenados.length === 0 && (
           <Box sx={{ p: 4, textAlign: 'center' }}>
             <Typography variant="h6" color={grisTexto}>
               {searchTerm
@@ -768,7 +869,7 @@ export default function ListaVehiculos({
         }}
       >
         <Typography variant="caption" color={grisTexto}>
-          Mostrando {filteredVehiculos.length} de {vehiculos.length} vehículos
+          Mostrando {vehiculosOrdenados.length} de {vehiculos.length} vehículos
         </Typography>
 
         {searchTerm && (
