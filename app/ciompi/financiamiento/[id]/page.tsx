@@ -85,6 +85,7 @@ export default function FinanciamientoDetailPage() {
   const [pagoSeleccionado, setPagoSeleccionado] =
     useState<PagoCuotaType | null>(null);
   const [clienteModalOpen, setClienteModalOpen] = useState(false);
+  const [cliente2ModalOpen, setCliente2ModalOpen] = useState(false);
   const [vehiculoModalOpen, setVehiculoModalOpen] = useState(false);
 
   // Hook para eliminar financiamiento
@@ -377,11 +378,10 @@ export default function FinanciamientoDetailPage() {
     }
   };
 
-  const handleGuardarCliente = async (clienteData: ClienteFormType) => {
-    const cliente =
-      typeof financiamiento?.cliente === 'object'
-        ? financiamiento.cliente
-        : null;
+  const guardarCliente = async (
+    cliente: ClienteType | null,
+    clienteData: ClienteFormType
+  ) => {
     if (!cliente?._id) {
       return { success: false, error: 'Cliente no encontrado' };
     }
@@ -416,6 +416,22 @@ export default function FinanciamientoDetailPage() {
       };
     }
   };
+
+  const handleGuardarCliente = (clienteData: ClienteFormType) =>
+    guardarCliente(
+      typeof financiamiento?.cliente === 'object'
+        ? (financiamiento.cliente as ClienteType)
+        : null,
+      clienteData
+    );
+
+  const handleGuardarCliente2 = (clienteData: ClienteFormType) =>
+    guardarCliente(
+      typeof financiamiento?.cliente2 === 'object'
+        ? (financiamiento.cliente2 as ClienteType)
+        : null,
+      clienteData
+    );
 
   const handleGuardarVehiculo = async (vehiculoData: VehiculoFormType) => {
     const vehiculo =
@@ -740,6 +756,22 @@ export default function FinanciamientoDetailPage() {
                           financiamiento.cliente2.DIRECCION || 'No especificada'
                         }
                       />
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'flex-end',
+                          mt: 2,
+                        }}
+                      >
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          startIcon={<EditIcon />}
+                          onClick={() => setCliente2ModalOpen(true)}
+                        >
+                          Editar Cliente
+                        </Button>
+                      </Box>
                     </CardContent>
                   </Card>
                 </Grid>
@@ -1578,6 +1610,18 @@ export default function FinanciamientoDetailPage() {
               : null
           }
           onSave={handleGuardarCliente}
+        />
+
+        {/* Modal para editar segundo cliente */}
+        <ModalEditarCliente
+          open={cliente2ModalOpen}
+          onClose={() => setCliente2ModalOpen(false)}
+          cliente={
+            typeof financiamiento.cliente2 === 'object'
+              ? (financiamiento.cliente2 as ClienteType)
+              : null
+          }
+          onSave={handleGuardarCliente2}
         />
 
         {/* Modal para editar vehículo */}
