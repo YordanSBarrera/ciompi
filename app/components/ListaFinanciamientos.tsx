@@ -29,6 +29,9 @@ import {
   Snackbar,
   Pagination,
   CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
 } from '@mui/material';
 import {
   Visibility as ViewIcon,
@@ -37,6 +40,7 @@ import {
   Print as PrintIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
+  Sort as SortIcon,
 } from '@mui/icons-material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { Menu, MenuItem } from '@mui/material';
@@ -77,6 +81,8 @@ interface ListaFinanciamientosProps {
   onImprimir?: (id: string) => void;
   onPageChange?: (page: number) => void;
   onSearchChange?: (search: string) => void;
+  sortOrder?: string;
+  onSortChange?: (orden: string) => void;
   initialSearch?: string;
   VerBarraDeBusqueda?: boolean;
 }
@@ -96,6 +102,8 @@ export default function ListaFinanciamientos({
   onImprimir,
   onPageChange,
   onSearchChange,
+  sortOrder = 'creacion_desc',
+  onSortChange,
   initialSearch = '',
   VerBarraDeBusqueda = true,
 }: ListaFinanciamientosProps) {
@@ -302,43 +310,96 @@ export default function ListaFinanciamientos({
           )}
         </Box>
       </Box>
-      {/* Barra de búsqueda */}
+      {/* Barra de búsqueda y ordenamiento */}
       {VerBarraDeBusqueda && (
-        <TextField
-          placeholder="Buscar por cliente, cédula, teléfono, vehículo, empresa o estado..."
-          value={filter}
-          onChange={e => handleFilterChange(e.target.value)}
-          disabled={loading}
+        <Box
           sx={{
-            maxWidth: 500,
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 2,
-              backgroundColor: 'rgba(255,255,255,0.8)',
-              transition: 'all 0.2s ease-in-out',
-              '&:hover': {
-                backgroundColor: 'rgba(255,255,255,1)',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                '& fieldset': {
-                  borderColor: azulClaro,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 2,
+            flexWrap: 'wrap',
+          }}
+        >
+          <TextField
+            placeholder="Buscar por cliente, cédula, teléfono, vehículo, empresa o estado..."
+            value={filter}
+            onChange={e => handleFilterChange(e.target.value)}
+            disabled={loading}
+            sx={{
+              maxWidth: 500,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 2,
+                backgroundColor: 'rgba(255,255,255,0.8)',
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                  backgroundColor: 'rgba(255,255,255,1)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                  '& fieldset': {
+                    borderColor: azulClaro,
+                  },
+                },
+                '&.Mui-focused': {
+                  backgroundColor: 'rgba(255,255,255,1)',
+                  boxShadow: `0 0 0 2px ${azulBase}20`,
+                  '& fieldset': {
+                    borderColor: azulBase,
+                  },
                 },
               },
-              '&.Mui-focused': {
-                backgroundColor: 'rgba(255,255,255,1)',
-                boxShadow: `0 0 0 2px ${azulBase}20`,
-                '& fieldset': {
-                  borderColor: azulBase,
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon sx={{ color: azulBase }} />
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          <FormControl
+            size="small"
+            disabled={loading}
+            sx={{
+              minWidth: 200,
+              maxWidth: 280,
+            }}
+          >
+            <InputLabel id="ordenar-por-label">Ordenar por</InputLabel>
+            <Select
+              labelId="ordenar-por-label"
+              id="ordenar-por-select"
+              value={sortOrder}
+              onChange={e => onSortChange?.(e.target.value)}
+              label="Ordenar por"
+              sx={{
+                borderRadius: 2,
+                backgroundColor: 'rgba(255,255,255,0.8)',
+                '&:hover': {
+                  backgroundColor: 'rgba(255,255,255,1)',
+                  '& fieldset': {
+                    borderColor: azulClaro,
+                  },
                 },
-              },
-            },
-          }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon sx={{ color: azulBase }} />
-              </InputAdornment>
-            ),
-          }}
-        />
+                '&.Mui-focused': {
+                  backgroundColor: 'rgba(255,255,255,1)',
+                  '& fieldset': {
+                    borderColor: azulBase,
+                  },
+                },
+              }}
+            >
+              <MenuItem value="creacion_desc">
+                Creación (más recientes primero)
+              </MenuItem>
+              <MenuItem value="creacion_asc">
+                Creación (más antiguos primero)
+              </MenuItem>
+              <MenuItem value="cliente_asc">Cliente (A - Z)</MenuItem>
+              <MenuItem value="cliente_desc">Cliente (Z - A)</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
       )}
 
       <TableContainer

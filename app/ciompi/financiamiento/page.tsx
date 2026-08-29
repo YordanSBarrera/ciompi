@@ -19,6 +19,12 @@ interface FinanciamientosResponse {
   pagination: PaginationData;
 }
 
+type SortOrden =
+  | 'creacion_desc'
+  | 'creacion_asc'
+  | 'cliente_asc'
+  | 'cliente_desc';
+
 export default function FinanciamientoPage() {
   const router = useRouter();
   const [todosLosFinanciamientos, setTodosLosFinanciamientos] = useState<
@@ -36,6 +42,7 @@ export default function FinanciamientoPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  const [sortOrder, setSortOrder] = useState<SortOrden>('creacion_desc');
 
   // Cargar todos los financiamientos una sola vez
   const cargarTodosLosFinanciamientos = async () => {
@@ -58,8 +65,8 @@ export default function FinanciamientoPage() {
 
       if (result.success) {
         setTodosLosFinanciamientos(result.data);
-        // Aplicar filtrado y paginación local
-        aplicarFiltroYPaginacion(result.data, '', 1);
+        // Aplicar filtrado, ordenamiento y paginación local
+        aplicarFiltroYPaginacion(result.data, '', 1, sortOrder);
       } else {
         throw new Error('Error en la respuesta del servidor');
       }
@@ -71,11 +78,58 @@ export default function FinanciamientoPage() {
     }
   };
 
-  // Filtrar y paginar localmente
+  // Obtener el nombre del cliente principal para ordenar
+  const obtenerNombreCliente = (financiamiento: FinanciamientoType): string => {
+    const nombre =
+      typeof financiamiento.cliente === 'object' && financiamiento.cliente
+        ? financiamiento.cliente.NOMBRE
+        : '';
+    return (nombre || '').trim().toLowerCase();
+  };
+
+  // Ordenar financiamientos según el criterio seleccionado
+  const ordenarFinanciamientos = (
+    lista: FinanciamientoType[],
+    orden: SortOrden
+  ): FinanciamientoType[] => {
+    const copia = [...lista];
+    switch (orden) {
+      case 'cliente_asc':
+        return copia.sort(
+          (a, b) =>
+            obtenerNombreCliente(a).localeCompare(obtenerNombreCliente(b)) ||
+            new Date(b.createdAt || 0).getTime() -
+              new Date(a.createdAt || 0).getTime()
+        );
+      case 'cliente_desc':
+        return copia.sort(
+          (a, b) =>
+            obtenerNombreCliente(b).localeCompare(obtenerNombreCliente(a)) ||
+            new Date(b.createdAt || 0).getTime() -
+              new Date(a.createdAt || 0).getTime()
+        );
+      case 'creacion_asc':
+        return copia.sort(
+          (a, b) =>
+            new Date(a.createdAt || 0).getTime() -
+            new Date(b.createdAt || 0).getTime()
+        );
+      case 'creacion_desc':
+      default:
+        return copia.sort(
+          (a, b) =>
+            new Date(b.createdAt || 0).getTime() -
+            new Date(a.createdAt || 0).getTime()
+        );
+    }
+  };
+
+  // Filtrar, ordenar y paginar localmente
   const aplicarFiltroYPaginacion = (
     todosFinanciamientos: FinanciamientoType[],
     searchTerm: string,
-    page: number
+    page: number,
+    orden: SortOrden
   ) => {
     const searchLower = searchTerm.toLowerCase().trim();
 
@@ -152,11 +206,17 @@ export default function FinanciamientoPage() {
         })
       : todosFinanciamientos;
 
+    // Ordenar financiamientos según el criterio seleccionado
+    const financiamientosOrdenados = ordenarFinanciamientos(
+      financiamientosFiltrados,
+      orden
+    );
+
     // Calcular paginación local
-    const total = financiamientosFiltrados.length;
+    const total = financiamientosOrdenados.length;
     const pages = Math.ceil(total / pagination.limit);
     const skip = (page - 1) * pagination.limit;
-    const financiamientosPaginados = financiamientosFiltrados.slice(
+    const financiamientosPaginados = financiamientosOrdenados.slice(
       skip,
       skip + pagination.limit
     );
@@ -186,12 +246,23 @@ export default function FinanciamientoPage() {
   };
 
   const handlePageChange = (newPage: number) => {
-    aplicarFiltroYPaginacion(todosLosFinanciamientos, search, newPage);
+    aplicarFiltroYPaginacion(
+      todosLosFinanciamientos,
+      search,
+      newPage,
+      sortOrder
+    );
   };
 
   const handleSearchChange = (searchTerm: string) => {
     setSearch(searchTerm);
-    aplicarFiltroYPaginacion(todosLosFinanciamientos, searchTerm, 1);
+    aplicarFiltroYPaginacion(todosLosFinanciamientos, searchTerm, 1, sortOrder);
+  };
+
+  const handleSortChange = (orden: string) => {
+    const nuevoOrden = orden as SortOrden;
+    setSortOrder(nuevoOrden);
+    aplicarFiltroYPaginacion(todosLosFinanciamientos, search, 1, nuevoOrden);
   };
 
   return (
@@ -212,6 +283,8 @@ export default function FinanciamientoPage() {
           onPageChange={handlePageChange}
           onSearchChange={handleSearchChange}
           initialSearch={search}
+          sortOrder={sortOrder}
+          onSortChange={handleSortChange}
         />
       )}
     </AuthGuard>
