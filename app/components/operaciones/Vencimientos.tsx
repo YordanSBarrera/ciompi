@@ -17,7 +17,10 @@ import {
   TableRow,
   TextField,
   Grid,
-  
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
   IconButton,
   Tooltip,
   Pagination,
@@ -27,6 +30,7 @@ import {
   Print as PrintIcon,
   Visibility as VisibilityIcon,
   CalendarToday as CalendarIcon,
+  Business as BusinessIcon,
 } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import { FinanciamientoType } from '@/lib/types';
@@ -39,6 +43,7 @@ import {
   grisTexto,
 } from '@/lib/color';
 import { formatMoney, normalizarMoneda } from '@/lib/moneda';
+import { useEmpresas } from '@/app/hook/useEmpresas';
 
 interface CuotaPorVencer {
   numeroCuota: number;
@@ -50,11 +55,6 @@ interface FinanciamientoConVencimientos extends FinanciamientoType {
   cuotasPorVencer: CuotaPorVencer[];
   totalCuotasPorVencer: number;
   montoTotalPorVencer: number;
-}
-
-interface VencimientosProps {
-  empresaId: string;
-  empresaNombre?: string;
 }
 
 // Función para obtener vencimientos
@@ -83,11 +83,10 @@ async function obtenerVencimientos(
   }
 }
 
-export default function Vencimientos({
-  empresaId,
-  empresaNombre,
-}: VencimientosProps) {
+export default function Vencimientos() {
+  const { empresas, loading: loadingEmpresas } = useEmpresas();
   const router = useRouter();
+  const [empresaId, setEmpresaId] = useState<string>('');
   const [fechaInicio, setFechaInicio] = useState<string>('');
   const [fechaFin, setFechaFin] = useState<string>('');
   const [vencimientos, setVencimientos] = useState<
@@ -189,13 +188,38 @@ export default function Vencimientos({
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 2,
             mb: 3,
           }}
         >
           <Typography variant="h6" component="h2">
             Cuotas por Vencer
           </Typography>
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
+            <FormControl size="small" sx={{ minWidth: 220 }}>
+              <InputLabel>Empresa</InputLabel>
+              <Select
+                value={empresaId}
+                onChange={e => setEmpresaId(e.target.value)}
+                label="Empresa"
+                disabled={loadingEmpresas}
+                startAdornment={
+                  <BusinessIcon sx={{ mr: 1, color: 'action.active' }} />
+                }
+              >
+                <MenuItem value="">
+                  <em>Seleccionar empresa</em>
+                </MenuItem>
+                {empresas
+                  .filter(e => e.estado === 'activa')
+                  .map(empresa => (
+                    <MenuItem key={empresa._id} value={empresa._id}>
+                      {empresa.nombre}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
             <Chip
               icon={<CalendarIcon />}
               label={`${vencimientos.length} financiamientos`}

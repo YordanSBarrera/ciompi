@@ -40,12 +40,7 @@ async function buscarFinanciamientosPorCliente(
   }
 }
 
-interface BuscarClientesProps {
-  empresaId: string;
-  empresaNombre?: string;
-}
-
-export default function BuscarClientes({ empresaId }: BuscarClientesProps) {
+export default function BuscarClientes() {
   const [financiamientos, setFinanciamientos] = useState<FinanciamientoType[]>(
     []
   );
@@ -66,7 +61,7 @@ export default function BuscarClientes({ empresaId }: BuscarClientesProps) {
       setHasSearched(true);
       const resultados = await buscarFinanciamientosPorCliente(
         nombreCliente.trim(),
-        empresaId
+        ''
       );
       setFinanciamientos(resultados);
 

@@ -115,12 +115,7 @@ async function obtenerEstadoCuenta(
   }
 }
 
-interface EstadoDeCuentaPageProps {
-  empresaId: string;
-  empresaNombre?: string;
-}
-
-const EstadoDeCuentaPage = ({ empresaId }: EstadoDeCuentaPageProps) => {
+const EstadoDeCuentaPage = () => {
   const [busquedaEstadoCuenta, setBusquedaEstadoCuenta] = useState('');
   const [loadingEstadoCuenta, setLoadingEstadoCuenta] = useState(false);
 
@@ -139,7 +134,7 @@ const EstadoDeCuentaPage = ({ empresaId }: EstadoDeCuentaPageProps) => {
       setHasSearchedEstadoCuenta(true);
       const resultado = await obtenerEstadoCuenta(
         busquedaEstadoCuenta.trim(),
-        empresaId
+        ''
       );
       setEstadoCuenta(resultado);
     } catch (err) {
@@ -658,9 +653,6 @@ const EstadoDeCuentaPage = ({ empresaId }: EstadoDeCuentaPageProps) => {
                     const params = new URLSearchParams({
                       busqueda: busquedaEstadoCuenta,
                     });
-                    if (empresaId) {
-                      params.set('empresa', empresaId);
-                    }
                     window.open(
                       `/api/reports/estado-cuenta?${params.toString()}`,
                       '_blank'

@@ -8,14 +8,19 @@ import {
   Button,
   Typography,
   Paper,
-  Chip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import {
   Search as SearchIcon,
   Print as PrintIcon,
+  Business as BusinessIcon,
 } from '@mui/icons-material';
 import { FinanciamientoType } from '@/lib/types';
 import ListaFinanciamientos from '../ListaFinanciamientos';
+import { useEmpresas } from '@/app/hook/useEmpresas';
 
 // Función para obtener financiamientos con cuotas atrasadas
 async function obtenerFinanciamientosAtrasados(
@@ -41,14 +46,9 @@ async function obtenerFinanciamientosAtrasados(
   }
 }
 
-interface FinanciamientosAtrasadosProps {
-  empresaId: string;
-  empresaNombre?: string;
-}
-
-export default function FinanciamientosAtrasados({
-  empresaId,
-}: FinanciamientosAtrasadosProps) {
+export default function FinanciamientosAtrasados() {
+  const { empresas, loading: loadingEmpresas } = useEmpresas();
+  const [empresaId, setEmpresaId] = useState<string>('');
   const [financiamientosAtrasados, setFinanciamientosAtrasados] = useState<
     (FinanciamientoType & {
       cuotasAtrasadas?: number;
@@ -58,22 +58,88 @@ export default function FinanciamientosAtrasados({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [sortOrder, setSortOrder] = useState<string>('creacion_desc');
   const pageSize = 20;
+
+  const obtenerNombreCliente = (
+    fin: FinanciamientoType & {
+      cuotasAtrasadas?: number;
+      montoAtrasado?: number;
+    }
+  ): string => {
+    const nombre =
+      typeof fin.cliente === 'object' && fin.cliente
+        ? fin.cliente.NOMBRE
+        : '';
+    return (nombre || '').trim().toLowerCase();
+  };
+
+  const ordenarFinanciamientos = (
+    lista: (FinanciamientoType & {
+      cuotasAtrasadas?: number;
+      montoAtrasado?: number;
+    })[],
+    orden: string
+  ): (FinanciamientoType & {
+    cuotasAtrasadas?: number;
+    montoAtrasado?: number;
+  })[] => {
+    const copia = [...lista];
+    switch (orden) {
+      case 'cliente_asc':
+        return copia.sort(
+          (a, b) =>
+            obtenerNombreCliente(a).localeCompare(obtenerNombreCliente(b)) ||
+            new Date(b.createdAt || 0).getTime() -
+              new Date(a.createdAt || 0).getTime()
+        );
+      case 'cliente_desc':
+        return copia.sort(
+          (a, b) =>
+            obtenerNombreCliente(b).localeCompare(obtenerNombreCliente(a)) ||
+            new Date(b.createdAt || 0).getTime() -
+              new Date(a.createdAt || 0).getTime()
+        );
+      case 'creacion_asc':
+        return copia.sort(
+          (a, b) =>
+            new Date(a.createdAt || 0).getTime() -
+            new Date(b.createdAt || 0).getTime()
+        );
+      case 'creacion_desc':
+      default:
+        return copia.sort(
+          (a, b) =>
+            new Date(b.createdAt || 0).getTime() -
+            new Date(a.createdAt || 0).getTime()
+        );
+    }
+  };
+
+  const financiamientosOrdenados = ordenarFinanciamientos(
+    financiamientosAtrasados,
+    sortOrder
+  );
 
   const pagination = {
     page,
     limit: pageSize,
-    total: financiamientosAtrasados.length,
-    pages: Math.ceil(financiamientosAtrasados.length / pageSize),
+    total: financiamientosOrdenados.length,
+    pages: Math.ceil(financiamientosOrdenados.length / pageSize),
   };
 
-  const financiamientosPaginados = financiamientosAtrasados.slice(
+  const financiamientosPaginados = financiamientosOrdenados.slice(
     (page - 1) * pageSize,
     page * pageSize
   );
 
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
+  };
+
+  const handleSortChange = (orden: string) => {
+    setSortOrder(orden);
+    setPage(1);
   };
 
   const handleCargarAtrasados = async () => {
@@ -107,7 +173,9 @@ export default function FinanciamientosAtrasados({
   };
 
   useEffect(() => {
-    handleCargarAtrasados();
+    if (empresaId) {
+      handleCargarAtrasados();
+    }
   }, [empresaId]);
 
   return (
@@ -119,13 +187,38 @@ export default function FinanciamientosAtrasados({
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 2,
             mb: 2,
           }}
         >
           <Typography variant="h6" component="h2">
             Financiamientos con Cuotas Atrasadas
           </Typography>
-          <Box sx={{ display: 'flex', gap: 2 }}>
+          <FormControl size="small" sx={{ minWidth: 220 }}>
+            <InputLabel>Empresa</InputLabel>
+            <Select
+              value={empresaId}
+              onChange={e => setEmpresaId(e.target.value)}
+              label="Empresa"
+              disabled={loadingEmpresas}
+              startAdornment={
+                <BusinessIcon sx={{ mr: 1, color: 'action.active' }} />
+              }
+            >
+              <MenuItem value="">
+                <em>Seleccionar empresa</em>
+              </MenuItem>
+              {empresas
+                .filter(e => e.estado === 'activa')
+                .map(empresa => (
+                  <MenuItem key={empresa._id} value={empresa._id}>
+                    {empresa.nombre}
+                  </MenuItem>
+                ))}
+            </Select>
+          </FormControl>
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
             <Button
               variant="outlined"
               onClick={handleCargarAtrasados}
@@ -170,7 +263,9 @@ export default function FinanciamientosAtrasados({
       {!loading && financiamientosAtrasados.length === 0 && !error && (
         <Paper elevation={1} sx={{ p: 4, textAlign: 'center' }}>
           <Typography variant="body1" color="textSecondary">
-            No hay financiamientos con cuotas atrasadas
+            {empresaId
+              ? 'No hay financiamientos con cuotas atrasadas'
+              : 'Seleccione una empresa para ver los financiamientos con cuotas atrasadas'}
           </Typography>
         </Paper>
       )}
@@ -188,6 +283,8 @@ export default function FinanciamientosAtrasados({
             onFinanciamientoEliminado={handleCargarAtrasados}
             mostrarAtrasos={true}
             onImprimir={handleImprimirFinanciamientoAtrasado}
+            sortOrder={sortOrder}
+            onSortChange={handleSortChange}
           />
         </Box>
       )}

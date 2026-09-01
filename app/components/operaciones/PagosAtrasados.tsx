@@ -18,14 +18,20 @@ import {
   TableHead,
   TableRow,
   Pagination,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import {
   Search as SearchIcon,
   Print as PrintIcon,
   Visibility as VisibilityIcon,
+  Business as BusinessIcon,
 } from '@mui/icons-material';
 import Link from 'next/link';
 import { formatMoney, normalizarMoneda } from '@/lib/moneda';
+import { useEmpresas } from '@/app/hook/useEmpresas';
 
 // Interfaz para cuotas atrasadas
 interface CuotaAtrasada {
@@ -60,14 +66,9 @@ async function obtenerCuotasAtrasadas(empresaId: string): Promise<CuotaAtrasada[
   }
 }
 
-interface PagosAtrasadosProps {
-  empresaId: string;
-  empresaNombre?: string;
-}
-
-export default function PagosAtrasados({
-  empresaId,
-}: PagosAtrasadosProps) {
+export default function PagosAtrasados() {
+  const { empresas, loading: loadingEmpresas } = useEmpresas();
+  const [empresaId, setEmpresaId] = useState<string>('');
   const [cuotasAtrasadas, setCuotasAtrasadas] = useState<CuotaAtrasada[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -106,7 +107,9 @@ export default function PagosAtrasados({
   };
 
   useEffect(() => {
-    handleCargarCuotasAtrasadas();
+    if (empresaId) {
+      handleCargarCuotasAtrasadas();
+    }
   }, [empresaId]);
 
   const handleImprimir = () => {
@@ -129,13 +132,38 @@ export default function PagosAtrasados({
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 2,
             mb: 2,
           }}
         >
           <Typography variant="h6" component="h2">
             Cuotas Atrasadas
           </Typography>
-          <Box sx={{ display: 'flex', gap: 2 }}>
+          <FormControl size="small" sx={{ minWidth: 220 }}>
+            <InputLabel>Empresa</InputLabel>
+            <Select
+              value={empresaId}
+              onChange={e => setEmpresaId(e.target.value)}
+              label="Empresa"
+              disabled={loadingEmpresas}
+              startAdornment={
+                <BusinessIcon sx={{ mr: 1, color: 'action.active' }} />
+              }
+            >
+              <MenuItem value="">
+                <em>Seleccionar empresa</em>
+              </MenuItem>
+              {empresas
+                .filter(e => e.estado === 'activa')
+                .map(empresa => (
+                  <MenuItem key={empresa._id} value={empresa._id}>
+                    {empresa.nombre}
+                  </MenuItem>
+                ))}
+            </Select>
+          </FormControl>
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
             <Button
               variant="outlined"
               onClick={handleCargarCuotasAtrasadas}
@@ -180,7 +208,9 @@ export default function PagosAtrasados({
       {!loading && cuotasAtrasadas.length === 0 && !error && (
         <Paper elevation={1} sx={{ p: 4, textAlign: 'center' }}>
           <Typography variant="body1" color="textSecondary">
-            No hay cuotas atrasadas
+            {empresaId
+              ? 'No hay cuotas atrasadas'
+              : 'Seleccione una empresa para ver las cuotas atrasadas'}
           </Typography>
         </Paper>
       )}
