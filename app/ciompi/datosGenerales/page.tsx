@@ -36,6 +36,7 @@ import {
   Assessment as AssessmentIcon,
   Print as PrintIcon,
   WarningAmber as WarningIcon,
+  Build as BuildIcon,
 } from '@mui/icons-material';
 import {
   azulBase,
@@ -334,6 +335,40 @@ export default function DatosGeneralesPage() {
   const vigPctUyu = pctCobrado(vig.UYU.montoRecaudado, vig.UYU.montoTotal);
   const histPctUsd = pctCobrado(hist.USD.montoRecaudado, hist.USD.montoTotal);
   const histPctUyu = pctCobrado(hist.UYU.montoRecaudado, hist.UYU.montoTotal);
+
+  // FLAG DE MANTENIMIENTO TEMPORAL
+  // Mientras esté en true, el cliente verá la pantalla de mantenimiento
+  // y NO el contenido real de Datos Generales.
+  const EN_MANTENIMIENTO = true;
+
+  if (EN_MANTENIMIENTO) {
+    return (
+      <AuthGuard>
+        <Container maxWidth="sm" sx={{ mt: 10, mb: 4, textAlign: 'center' }}>
+          <Paper
+            elevation={2}
+            sx={{
+              p: 5,
+              borderRadius: 3,
+              background: `linear-gradient(135deg, ${naranja} 0%, ${azulBase} 100%)`,
+              color: 'white',
+            }}
+          >
+            <BuildIcon sx={{ fontSize: 72, mb: 2 }} />
+            <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 700 }}>
+              Página en mantenimiento
+            </Typography>
+            <Typography variant="body1" sx={{ opacity: 0.95, mb: 1 }}>
+              Estamos trabajando en esta sección.
+            </Typography>
+            <Typography variant="body2" sx={{ opacity: 0.85 }}>
+              Disculpe las molestias. Vuelva a intentarlo más tarde.
+            </Typography>
+          </Paper>
+        </Container>
+      </AuthGuard>
+    );
+  }
 
   return (
     <AuthGuard>
