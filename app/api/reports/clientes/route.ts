@@ -69,7 +69,7 @@ function generateClientesReportHTML(clientes: any[]): string {
     
     body {
       font-family: Arial, sans-serif;
-      font-size: 10px;
+      font-size: 11px;
       color: #333;
       background: white;
       padding: 20px;
@@ -103,14 +103,14 @@ function generateClientesReportHTML(clientes: any[]): string {
     
     .info-box p {
       margin: 5px 0;
-      font-size: 11px;
+      font-size: 12px;
     }
     
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 10px;
-      font-size: 9px;
+      font-size: 10px;
     }
     
     thead {
@@ -123,11 +123,13 @@ function generateClientesReportHTML(clientes: any[]): string {
       text-align: left;
       font-weight: 600;
       border: 1px solid #1565c0;
+      font-size: 10px;
     }
     
     td {
-      padding: 6px;
+      padding: 7px 6px;
       border: 1px solid #ddd;
+      font-size: 10px;
     }
     
     tbody tr:nth-child(even) {
@@ -151,7 +153,7 @@ function generateClientesReportHTML(clientes: any[]): string {
       padding-top: 15px;
       border-top: 2px solid #ddd;
       text-align: center;
-      font-size: 9px;
+      font-size: 10px;
       color: #666;
     }
     
@@ -177,12 +179,12 @@ function generateClientesReportHTML(clientes: any[]): string {
   <table>
     <thead>
       <tr>
-        <th style="width: 5%;">#</th>
-        <th style="width: 25%;">Nombre</th>
-        <th style="width: 15%;">Cédula</th>
-        <th style="width: 20%;">Teléfono</th>
-        <th style="width: 20%;">Dirección</th>
-        <th style="width: 10%;">Correo</th>
+        <th style="width: 4%;">#</th>
+        <th style="width: 22%;">Nombre</th>
+        <th style="width: 14%;">Cédula</th>
+        <th style="width: 18%;">Teléfono</th>
+        <th style="width: 18%;">Dirección</th>
+        <th style="width: 14%;">Correo</th>
         <th style="width: 10%;">Profesión</th>
       </tr>
     </thead>

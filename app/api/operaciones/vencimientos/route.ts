@@ -11,6 +11,33 @@ void Cliente;
 void Vehiculo;
 void Empresa;
 
+// Tipos locales para los documentos "lean" (mongoose infiere tipado débil)
+type CuotaFutura = {
+  numeroCuota: number;
+  fechaVencimiento: Date;
+  valorCuota: number;
+  estadoCuota?: string;
+};
+
+type FinanciamientoVencimiento = {
+  _id: { toString(): string } | string;
+  cuotasFuturas?: CuotaFutura[];
+  cuotas: number;
+  valorCuota: number;
+  fechaPrimeraCuota: Date;
+};
+
+type PagoCuotaVencimiento = {
+  financiamiento: { toString(): string } | string;
+  numeroCuota: number;
+};
+
+type ResultadoVencimiento = FinanciamientoVencimiento & {
+  cuotasPorVencer: CuotaFutura[];
+  totalCuotasPorVencer: number;
+  montoTotalPorVencer: number;
+};
+
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
@@ -38,7 +65,7 @@ export async function GET(request: NextRequest) {
     fechaFinDate.setHours(23, 59, 59, 999);
 
     // Buscar financiamientos de la empresa especificada
-    const financiamientos = await Financiamiento.find({
+    const financiamientos = (await Financiamiento.find({
       empresa: empresaId,
       estadoFinanciamiento: { $in: ['activo', 'en_mora'] }, // Solo activos o en mora
     })
@@ -46,40 +73,40 @@ export async function GET(request: NextRequest) {
       .populate('cliente2', 'NOMBRE TELEFONO cedula correo DIRECCION profesion')
       .populate('vehiculo', 'Marca Modelo Matricula Padron Año Color Descripcion disponible')
       .populate('empresa', 'nombre descripcion telefono')
-      .lean();
+      .lean()) as unknown as FinanciamientoVencimiento[];
 
     // Obtener todos los pagos para verificar cuotas pagadas
-    const pagos = await PagoCuota.find({
-      financiamiento: { $in: financiamientos.map((f: any) => f._id) },
+    const pagos = (await PagoCuota.find({
+      financiamiento: { $in: financiamientos.map(f => f._id) },
       confirmado: true,
-    }).lean();
+    }).lean()) as unknown as PagoCuotaVencimiento[];
 
     // Crear un mapa de pagos por financiamiento
-    const pagosPorFinanciamiento = new Map();
-    pagos.forEach((pago: any) => {
+    const pagosPorFinanciamiento = new Map<string, PagoCuotaVencimiento[]>();
+    pagos.forEach(pago => {
       const finId = pago.financiamiento.toString();
-      if (!pagosPorFinanciamiento.has(finId)) {
-        pagosPorFinanciamiento.set(finId, []);
+      const listaFin = pagosPorFinanciamiento.get(finId);
+      if (listaFin) {
+        listaFin.push(pago);
+      } else {
+        pagosPorFinanciamiento.set(finId, [pago]);
       }
-      pagosPorFinanciamiento.get(finId).push(pago);
     });
 
     // Procesar cada financiamiento para encontrar cuotas por vencer
-    const resultados: any[] = [];
+    const resultados: ResultadoVencimiento[] = [];
 
-    for (const financiamiento of financiamientos as any[]) {
+    for (const financiamiento of financiamientos) {
       const finId = financiamiento._id.toString();
       const pagosFin = pagosPorFinanciamiento.get(finId) || [];
 
       // Obtener números de cuotas pagadas
-      const cuotasPagadas = new Set(
-        pagosFin.map((p: any) => p.numeroCuota)
-      );
+      const cuotasPagadas = new Set(pagosFin.map(pago => pago.numeroCuota));
 
       // Si tiene cuotasFuturas, buscar las que están en el rango
       if (financiamiento.cuotasFuturas && Array.isArray(financiamiento.cuotasFuturas)) {
         const cuotasPorVencer = financiamiento.cuotasFuturas.filter(
-          (cuota: any) => {
+          (cuota: CuotaFutura) => {
             const fechaVencimiento = new Date(cuota.fechaVencimiento);
             
             // Verificar que esté en el rango de fechas
@@ -101,7 +128,7 @@ export async function GET(request: NextRequest) {
             cuotasPorVencer,
             totalCuotasPorVencer: cuotasPorVencer.length,
             montoTotalPorVencer: cuotasPorVencer.reduce(
-              (sum: number, cuota: any) => sum + (cuota.valorCuota || 0),
+              (sum: number, cuota: CuotaFutura) => sum + (cuota.valorCuota || 0),
               0
             ),
           });
@@ -110,7 +137,7 @@ export async function GET(request: NextRequest) {
         // Si no tiene cuotasFuturas, calcular basándose en fechaPrimeraCuota y valorCuota
         // Esto es un fallback para financiamientos antiguos
         const fechaPrimeraCuota = new Date(financiamiento.fechaPrimeraCuota);
-        const cuotasPorVencer: any[] = [];
+        const cuotasPorVencer: CuotaFutura[] = [];
 
         // Calcular cuotas que deberían vencer en el rango
         for (let i = 0; i < financiamiento.cuotas; i++) {
@@ -139,7 +166,7 @@ export async function GET(request: NextRequest) {
             cuotasPorVencer,
             totalCuotasPorVencer: cuotasPorVencer.length,
             montoTotalPorVencer: cuotasPorVencer.reduce(
-              (sum: number, cuota: any) => sum + (cuota.valorCuota || 0),
+              (sum: number, cuota: CuotaFutura) => sum + (cuota.valorCuota || 0),
               0
             ),
           });

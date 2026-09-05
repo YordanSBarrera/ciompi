@@ -269,7 +269,7 @@ function generateCuotasAtrasadasReportHTML(
     
     body {
       font-family: Arial, sans-serif;
-      font-size: 9px;
+      font-size: 11px;
       color: #333;
       background: white;
       padding: 15px;
@@ -289,7 +289,7 @@ function generateCuotasAtrasadasReportHTML(
     }
     
     .header .fecha {
-      font-size: 11px;
+      font-size: 12px;
       color: #666;
     }
     
@@ -308,14 +308,14 @@ function generateCuotasAtrasadasReportHTML(
     }
     
     .summary-box h3 {
-      font-size: 9px;
+      font-size: 10px;
       color: #666;
       margin-bottom: 5px;
       text-transform: uppercase;
     }
     
     .summary-box .value {
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 600;
       color: #333;
     }
@@ -324,7 +324,7 @@ function generateCuotasAtrasadasReportHTML(
       width: 100%;
       border-collapse: collapse;
       margin-top: 10px;
-      font-size: 8px;
+      font-size: 10px;
     }
     
     thead {
@@ -333,17 +333,17 @@ function generateCuotasAtrasadasReportHTML(
     }
     
     th {
-      padding: 6px 4px;
+      padding: 6px 5px;
       text-align: left;
       font-weight: 600;
       border: 1px solid #d32f2f;
-      font-size: 8px;
+      font-size: 10px;
     }
     
     td {
-      padding: 5px 4px;
+      padding: 6px 5px;
       border: 1px solid #ddd;
-      font-size: 8px;
+      font-size: 10px;
     }
     
     tbody tr:nth-child(even) {
@@ -373,7 +373,7 @@ function generateCuotasAtrasadasReportHTML(
       padding-top: 10px;
       border-top: 2px solid #ddd;
       text-align: center;
-      font-size: 8px;
+      font-size: 10px;
       color: #666;
     }
     
@@ -404,9 +404,9 @@ function generateCuotasAtrasadasReportHTML(
       <h3>Total Cuotas Atrasadas</h3>
       <div class="value">${totalCuotas}</div>
     </div>
-    <div class="summary-box">
+      <div class="summary-box">
       <h3>Monto Total Atrasado</h3>
-      <div class="value" style="font-size:11px;line-height:1.35;">
+      <div class="value" style="font-size:13px;line-height:1.35;">
         <div>USD: ${formatMoney(totalMontoUsd, 'USD')}</div>
         <div>UYU: ${formatMoney(totalMontoUyu, 'UYU')}</div>
       </div>
@@ -416,14 +416,14 @@ function generateCuotasAtrasadasReportHTML(
   <table>
     <thead>
       <tr>
-        <th style="width: 3%;">#</th>
-        <th style="width: 15%;">Cliente</th>
-        <th style="width: 15%;">Vehículo</th>
-        <th style="width: 5%;" class="text-center">Cuota</th>
-        <th style="width: 12%;" class="text-center">Fecha Vencimiento</th>
-        <th style="width: 8%;" class="text-center">Días Atraso</th>
-        <th style="width: 12%;" class="text-right">Valor Cuota</th>
-        <th style="width: 10%;">Empresa</th>
+        <th style="width: 4%;">#</th>
+        <th style="width: 18%;">Cliente</th>
+        <th style="width: 16%;">Vehículo</th>
+        <th style="width: 8%;" class="text-center">Cuota</th>
+        <th style="width: 14%;" class="text-center">Fecha Vencimiento</th>
+        <th style="width: 10%;" class="text-center">Días Atraso</th>
+        <th style="width: 16%;" class="text-right">Valor Cuota</th>
+        <th style="width: 14%;">Empresa</th>
       </tr>
     </thead>
     <tbody>

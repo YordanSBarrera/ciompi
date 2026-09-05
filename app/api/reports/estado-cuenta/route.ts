@@ -446,7 +446,7 @@ function generateEstadoCuentaReportHTML(
 
   const lineaMontosVencidos =
     resumen.montoVencido > 0
-      ? `<div style="font-size: 7px; margin-top: 3px;">Montos vencidos | USD: ${fmt(resumen.montosPorMoneda.USD.montoVencido, 'USD')} | UYU: ${fmt(resumen.montosPorMoneda.UYU.montoVencido, 'UYU')}</div>`
+       ? `<div style="font-size: 10px; margin-top: 3px;">Montos vencidos | USD: ${fmt(resumen.montosPorMoneda.USD.montoVencido, 'USD')} | UYU: ${fmt(resumen.montosPorMoneda.UYU.montoVencido, 'UYU')}</div>`
       : '';
 
   // Empresas del reporte (contexto de Operaciones: filtrado por empresa)
@@ -496,7 +496,7 @@ function generateEstadoCuentaReportHTML(
     
     body {
       font-family: Arial, sans-serif;
-      font-size: 8px;
+      font-size: 11px;
       color: #333;
       background: white;
       padding: 15px;
@@ -516,7 +516,7 @@ function generateEstadoCuentaReportHTML(
     }
     
     .header .fecha {
-      font-size: 11px;
+      font-size: 12px;
       color: #666;
     }
     
@@ -529,13 +529,13 @@ function generateEstadoCuentaReportHTML(
     }
     
     .cliente-info h2 {
-      font-size: 14px;
+      font-size: 16px;
       color: #1e88e5;
       margin-bottom: 8px;
     }
     
     .cliente-info p {
-      font-size: 9px;
+      font-size: 11px;
       margin: 3px 0;
       color: #666;
     }
@@ -571,14 +571,14 @@ function generateEstadoCuentaReportHTML(
     }
     
     .summary-box h3 {
-      font-size: 8px;
+      font-size: 10px;
       color: #666;
       margin-bottom: 5px;
       text-transform: uppercase;
     }
     
     .summary-box .value {
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 600;
       color: #333;
     }
@@ -587,7 +587,7 @@ function generateEstadoCuentaReportHTML(
       width: 100%;
       border-collapse: collapse;
       margin-top: 10px;
-      font-size: 7px;
+      font-size: 10px;
     }
     
     thead {
@@ -596,17 +596,17 @@ function generateEstadoCuentaReportHTML(
     }
     
     th {
-      padding: 6px 4px;
+      padding: 6px 5px;
       text-align: left;
       font-weight: 600;
       border: 1px solid #1565c0;
-      font-size: 7px;
+      font-size: 10px;
     }
     
     td {
-      padding: 5px 4px;
+      padding: 6px 5px;
       border: 1px solid #ddd;
-      font-size: 7px;
+      font-size: 10px;
     }
     
     tbody tr:nth-child(even) {
@@ -623,9 +623,9 @@ function generateEstadoCuentaReportHTML(
     
     .estado-badge {
       display: inline-block;
-      padding: 2px 6px;
+      padding: 2px 7px;
       border-radius: 3px;
-      font-size: 7px;
+      font-size: 10px;
       font-weight: 600;
       text-transform: uppercase;
     }
@@ -635,12 +635,12 @@ function generateEstadoCuentaReportHTML(
       padding-top: 10px;
       border-top: 2px solid #ddd;
       text-align: center;
-      font-size: 8px;
+      font-size: 10px;
       color: #666;
     }
     
     .section-title {
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 600;
       color: #1e88e5;
       margin: 15px 0 10px 0;
@@ -716,13 +716,13 @@ function generateEstadoCuentaReportHTML(
       <tr>
         <th style="width: 3%;">#</th>
         <th style="width: 15%;">Vehículo</th>
-        <th style="width: 12%;">Empresa</th>
-        <th style="width: 10%;">Estado</th>
-        <th style="width: 12%;" class="text-right">Monto Total</th>
-        <th style="width: 12%;" class="text-right">Pagado</th>
-        <th style="width: 12%;" class="text-right">Pendiente</th>
-        <th style="width: 10%;" class="text-center">Cuotas</th>
-        <th style="width: 8%;" class="text-center">Progreso</th>
+        <th style="width: 13%;">Empresa</th>
+        <th style="width: 11%;">Estado</th>
+        <th style="width: 14%;" class="text-right">Monto Total</th>
+        <th style="width: 14%;" class="text-right">Pagado</th>
+        <th style="width: 14%;" class="text-right">Pendiente</th>
+        <th style="width: 9%;" class="text-center">Cuotas</th>
+        <th style="width: 7%;" class="text-center">Progreso</th>
       </tr>
     </thead>
     <tbody>
@@ -770,14 +770,14 @@ function generateEstadoCuentaReportHTML(
     <thead>
       <tr>
         <th style="width: 3%;">#</th>
-        <th style="width: 8%;">Fin.</th>
-        <th style="width: 10%;">Vehículo</th>
-        <th style="width: 10%;">Empresa</th>
-        <th style="width: 6%;" class="text-center">Cuota</th>
-        <th style="width: 10%;" class="text-center">Vencimiento</th>
-        <th style="width: 10%;" class="text-right">Valor</th>
-        <th style="width: 10%;" class="text-right">Pagado</th>
-        <th style="width: 10%;" class="text-right">Pendiente</th>
+        <th style="width: 7%;">Fin.</th>
+        <th style="width: 12%;">Vehículo</th>
+        <th style="width: 12%;">Empresa</th>
+        <th style="width: 7%;" class="text-center">Cuota</th>
+        <th style="width: 13%;" class="text-center">Vencimiento</th>
+        <th style="width: 11%;" class="text-right">Valor</th>
+        <th style="width: 11%;" class="text-right">Pagado</th>
+        <th style="width: 11%;" class="text-right">Pendiente</th>
         <th style="width: 10%;" class="text-center">Estado</th>
       </tr>
     </thead>
@@ -807,9 +807,9 @@ function generateEstadoCuentaReportHTML(
           return `
         <tr style="background-color: ${bgColor};">
           <td class="text-center">${index + 1}</td>
-          <td style="font-size: 6px;">${cuota.financiamientoNumero || 'N/A'}</td>
-          <td style="font-size: 6px;">${escapeHtml(vehiculoInfo)}</td>
-          <td style="font-size: 6px;">${escapeHtml(empresaInfo)}</td>
+          <td style="font-size: 10px;">${cuota.financiamientoNumero || 'N/A'}</td>
+          <td style="font-size: 10px;">${escapeHtml(vehiculoInfo)}</td>
+          <td style="font-size: 10px;">${escapeHtml(empresaInfo)}</td>
           <td class="text-center">#${cuota.numeroCuota}${cuota.esExtra ? ' (E)' : ''}</td>
           <td class="text-center">${formatDate(cuota.fechaVencimiento)}</td>
           <td class="text-right">${fmt(cuota.valorCuota, cuota.moneda)}</td>

@@ -290,7 +290,7 @@ function generateClienteDetailReportHTML(cliente: any, financiamientos: any[]): 
       width: 100%;
       border-collapse: collapse;
       margin-top: 15px;
-      font-size: 9px;
+      font-size: 10px;
       background: white;
     }
     
@@ -304,13 +304,13 @@ function generateClienteDetailReportHTML(cliente: any, financiamientos: any[]): 
       text-align: left;
       font-weight: 600;
       border: 1px solid #1565c0;
-      font-size: 9px;
+      font-size: 10px;
     }
     
     td {
       padding: 8px;
       border: 1px solid #ddd;
-      font-size: 9px;
+      font-size: 10px;
     }
     
     tbody tr:nth-child(even) {
@@ -329,7 +329,7 @@ function generateClienteDetailReportHTML(cliente: any, financiamientos: any[]): 
       display: inline-block;
       padding: 3px 8px;
       border-radius: 3px;
-      font-size: 8px;
+      font-size: 10px;
       font-weight: 600;
       text-transform: uppercase;
     }
@@ -339,7 +339,7 @@ function generateClienteDetailReportHTML(cliente: any, financiamientos: any[]): 
       padding-top: 15px;
       border-top: 2px solid #ddd;
       text-align: center;
-      font-size: 9px;
+      font-size: 10px;
       color: #666;
     }
     
@@ -429,16 +429,16 @@ function generateClienteDetailReportHTML(cliente: any, financiamientos: any[]): 
     <table>
       <thead>
         <tr>
-          <th style="width: 3%;">#</th>
-          <th style="width: 15%;">Vehículo</th>
-          <th style="width: 8%;">Matrícula</th>
-          <th style="width: 8%;" class="text-right">Costo</th>
-          <th style="width: 5%;" class="text-center">Cuotas</th>
-          <th style="width: 6%;" class="text-center">Cuotas Pag.</th>
-          <th style="width: 8%;" class="text-right">Valor Cuota</th>
-          <th style="width: 8%;" class="text-right">Monto Total</th>
-          <th style="width: 8%;" class="text-right">Saldo Pend.</th>
-          <th style="width: 7%;" class="text-center">Estado</th>
+          <th style="width: 4%;">#</th>
+          <th style="width: 18%;">Vehículo</th>
+          <th style="width: 10%;">Matrícula</th>
+          <th style="width: 9%;" class="text-right">Costo</th>
+          <th style="width: 7%;" class="text-center">Cuotas</th>
+          <th style="width: 8%;" class="text-center">Cuotas Pag.</th>
+          <th style="width: 9%;" class="text-right">Valor Cuota</th>
+          <th style="width: 9%;" class="text-right">Monto Total</th>
+          <th style="width: 9%;" class="text-right">Saldo Pend.</th>
+          <th style="width: 9%;" class="text-center">Estado</th>
           <th style="width: 8%;" class="text-center">Fecha Venta</th>
         </tr>
       </thead>
@@ -522,7 +522,7 @@ function generateClienteDetailReportHTML(cliente: any, financiamientos: any[]): 
       </div>
       <div class="info-item" style="grid-column: 1 / -1;">
         <div class="info-label">ID de Base de Datos</div>
-        <div class="info-value monospace" style="font-size: 9px;">${cliente._id}</div>
+        <div class="info-value monospace" style="font-size: 10px;">${cliente._id}</div>
       </div>
     </div>
   </div>

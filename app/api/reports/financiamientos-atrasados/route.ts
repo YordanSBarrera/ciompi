@@ -210,7 +210,7 @@ function generateFinanciamientosAtrasadosReportHTML(
     
     body {
       font-family: Arial, sans-serif;
-      font-size: 9px;
+      font-size: 11px;
       color: #333;
       background: white;
       padding: 15px;
@@ -230,7 +230,7 @@ function generateFinanciamientosAtrasadosReportHTML(
     }
     
     .header .fecha {
-      font-size: 11px;
+      font-size: 12px;
       color: #666;
     }
     
@@ -257,14 +257,14 @@ function generateFinanciamientosAtrasadosReportHTML(
     }
     
     .summary-box h3 {
-      font-size: 9px;
+      font-size: 10px;
       color: #666;
       margin-bottom: 5px;
       text-transform: uppercase;
     }
     
     .summary-box .value {
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 600;
       color: #333;
     }
@@ -273,7 +273,7 @@ function generateFinanciamientosAtrasadosReportHTML(
       width: 100%;
       border-collapse: collapse;
       margin-top: 10px;
-      font-size: 8px;
+      font-size: 10px;
     }
     
     thead {
@@ -282,17 +282,17 @@ function generateFinanciamientosAtrasadosReportHTML(
     }
     
     th {
-      padding: 6px 4px;
+      padding: 6px 5px;
       text-align: left;
       font-weight: 600;
       border: 1px solid #f57c00;
-      font-size: 8px;
+      font-size: 10px;
     }
     
     td {
-      padding: 5px 4px;
+      padding: 6px 5px;
       border: 1px solid #ddd;
-      font-size: 8px;
+      font-size: 10px;
     }
     
     tbody tr:nth-child(even) {
@@ -311,7 +311,7 @@ function generateFinanciamientosAtrasadosReportHTML(
       display: inline-block;
       padding: 2px 6px;
       border-radius: 3px;
-      font-size: 7px;
+      font-size: 10px;
       font-weight: 600;
       text-transform: uppercase;
       background: #ff980020;
@@ -333,7 +333,7 @@ function generateFinanciamientosAtrasadosReportHTML(
       padding-top: 10px;
       border-top: 2px solid #ddd;
       text-align: center;
-      font-size: 8px;
+      font-size: 10px;
       color: #666;
     }
     
@@ -365,9 +365,9 @@ function generateFinanciamientosAtrasadosReportHTML(
       <h3>Total Cuotas Atrasadas</h3>
       <div class="value">${totalCuotasAtrasadas}</div>
     </div>
-    <div class="summary-box error">
+      <div class="summary-box error">
       <h3>Total Monto Atrasado</h3>
-      <div class="value" style="font-size:11px;line-height:1.35;">
+      <div class="value" style="font-size:13px;line-height:1.35;">
         <div>USD: ${formatMoney(totalMontoUsd, 'USD')}</div>
         <div>UYU: ${formatMoney(totalMontoUyu, 'UYU')}</div>
       </div>
@@ -382,17 +382,17 @@ function generateFinanciamientosAtrasadosReportHTML(
     <thead>
       <tr>
         <th style="width: 3%;">#</th>
-        <th style="width: 15%;">Cliente</th>
-        <th style="width: 12%;">Vehículo</th>
+        <th style="width: 13%;">Cliente</th>
+        <th style="width: 11%;">Vehículo</th>
         <th style="width: 8%;">Matrícula</th>
-        <th style="width: 8%;" class="text-right">Costo</th>
+        <th style="width: 7%;" class="text-right">Costo</th>
         <th style="width: 5%;" class="text-center">Cuotas Tot.</th>
-        <th style="width: 6%;" class="text-center">Cuotas Pag.</th>
+        <th style="width: 5%;" class="text-center">Cuotas Pag.</th>
         <th style="width: 7%;" class="text-center">Cuotas Atr.</th>
         <th style="width: 8%;" class="text-right">Valor Cuota</th>
         <th style="width: 9%;" class="text-right">Monto Atrasado</th>
         <th style="width: 8%;" class="text-right">Saldo Pend.</th>
-        <th style="width: 7%;" class="text-center">Estado</th>
+        <th style="width: 8%;" class="text-center">Estado</th>
         <th style="width: 8%;" class="text-center">Fecha Venta</th>
       </tr>
     </thead>

@@ -12,6 +12,68 @@ import { CuotaEstado, MonedaTipo } from '@/lib/const';
 void Vehiculo;
 void Empresa;
 
+interface VehiculoPopulado {
+  _id?: unknown;
+  Marca?: string;
+  Modelo?: string;
+  Matricula?: string;
+  Año?: number;
+  Color?: string;
+}
+
+interface EmpresaPopulada {
+  _id?: unknown;
+  nombre?: string;
+  descripcion?: string;
+  telefono?: string;
+}
+
+interface ClientePopulado {
+  _id: unknown;
+  NOMBRE?: string;
+  TELEFONO?: string;
+  cedula?: string;
+  DIRECCION?: string;
+  correo?: string;
+  profesion?: string;
+}
+
+// Estructura accesada de los documentos "lean" de financiamiento
+type CuotaFuturaFinanciamiento = {
+  numeroCuota: number;
+  fechaVencimiento: Date;
+  valorCuota: number;
+};
+
+interface FinanciamientoEstadoCuenta {
+  _id?: { toString(): string };
+  cuotas: number;
+  cuotasExtras?: number;
+  cuotasFuturas?: CuotaFuturaFinanciamiento[];
+  valorCuota: number;
+  fechaPrimeraCuota: Date;
+  fechaUltimaCuota: Date;
+  cuotasPagadas?: number;
+  moneda?: string;
+  estadoFinanciamiento: string;
+  fechaVenta: Date;
+  montoTotal: number;
+  montoPagado?: number;
+  saldoPendiente?: number;
+  vehiculo?: VehiculoPopulado;
+  empresa?: EmpresaPopulada;
+  cliente?: ClientePopulado;
+  cliente2?: ClientePopulado;
+}
+
+// Estructura accesada de los pagos
+type PagoEstadoCuenta = {
+  numeroCuota?: number;
+  esExtra?: boolean;
+  estadoPago?: string;
+  montoPago: number;
+};
+
 interface CuotaDetalle {
   numeroCuota: number;
   fechaVencimiento: Date;
@@ -22,8 +84,8 @@ interface CuotaDetalle {
   esExtra: boolean;
   financiamientoId: string;
   financiamientoNumero?: string;
-  vehiculo: any;
-  empresa: any;
+  vehiculo?: VehiculoPopulado;
+  empresa?: EmpresaPopulada;
   estado: CuotaEstado;
   diasAtraso?: number;
   moneda: MonedaTipo;
@@ -31,9 +93,9 @@ interface CuotaDetalle {
 
 interface ResumenFinanciamiento {
   financiamientoId: string;
-  numeroFinanciamiento: string;
-  vehiculo: any;
-  empresa: any;
+  numeroFinanciamiento?: string;
+  vehiculo?: VehiculoPopulado;
+  empresa?: EmpresaPopulada;
   estadoFinanciamiento: string;
   fechaVenta: Date;
   montoTotal: number;
@@ -48,7 +110,7 @@ interface ResumenFinanciamiento {
 }
 
 interface EstadoCuenta {
-  cliente: any;
+  cliente: ClientePopulado;
   financiamientos: ResumenFinanciamiento[];
   cuotas: CuotaDetalle[];
   resumen: {
@@ -75,8 +137,8 @@ interface EstadoCuenta {
 
 // Función para generar todas las cuotas de un financiamiento
 function generarTodasLasCuotas(
-  financiamiento: any,
-  pagos: any[]
+  financiamiento: FinanciamientoEstadoCuenta,
+  pagos: PagoEstadoCuenta[]
 ): Array<{
   numeroCuota: number;
   fechaVencimiento: Date;
@@ -113,7 +175,7 @@ function generarTodasLasCuotas(
 
   // Si hay cuotasFuturas definidas, usarlas
   if (financiamiento.cuotasFuturas && financiamiento.cuotasFuturas.length > 0) {
-    financiamiento.cuotasFuturas.forEach((cuota: any) => {
+    financiamiento.cuotasFuturas.forEach((cuota: CuotaFuturaFinanciamiento) => {
       const fechaVencimiento = new Date(cuota.fechaVencimiento);
       const montoPagado = pagosPorCuota[cuota.numeroCuota] || 0;
       const pagada = montoPagado >= cuota.valorCuota;
@@ -181,7 +243,7 @@ function generarTodasLasCuotas(
             pago.numeroCuota === numeroCuotaExtra &&
             pago.estadoPago === 'confirmado'
         )
-        .reduce((sum: number, pago: any) => sum + pago.montoPago, 0);
+        .reduce((sum: number, pago: PagoEstadoCuenta) => sum + pago.montoPago, 0);
       const montoPendienteExtra = Math.max(
         0,
         financiamiento.valorCuota - montoPagadoExtra
@@ -234,19 +296,22 @@ export async function GET(request: NextRequest) {
 
     // Buscar los financiamientos donde el cliente es cliente principal o cliente2
     // Si se indica una empresa, filtrar solo los de esa empresa
-    const clienteQuery: any = {
+    const clienteQuery: {
+      $or: Array<{ cliente?: unknown; cliente2?: unknown }>;
+      empresa?: unknown;
+    } = {
       $or: [{ cliente: cliente._id }, { cliente2: cliente._id }],
     };
     if (empresa) {
       clienteQuery.empresa = empresa;
     }
 
-    const financiamientos = await Financiamiento.find(clienteQuery)
+    const financiamientos = (await Financiamiento.find(clienteQuery)
       .populate('cliente', 'NOMBRE TELEFONO cedula DIRECCION correo profesion')
       .populate('cliente2', 'NOMBRE TELEFONO cedula DIRECCION correo profesion')
       .populate('vehiculo', 'Marca Modelo Matricula Año Color')
       .populate('empresa', 'nombre descripcion telefono')
-      .sort({ fechaVenta: -1 });
+      .sort({ fechaVenta: -1 })) as unknown as FinanciamientoEstadoCuenta[];
 
     if (financiamientos.length === 0) {
       return NextResponse.json({
@@ -289,9 +354,9 @@ export async function GET(request: NextRequest) {
 
     for (const financiamiento of financiamientos) {
       // Obtener pagos de este financiamiento
-      const pagos = await PagoCuota.find({
+      const pagos = (await PagoCuota.find({
         financiamiento: financiamiento._id,
-      }).select('numeroCuota esExtra montoPago estadoPago fechaPago');
+      }).select('numeroCuota esExtra montoPago estadoPago fechaPago')) as unknown as PagoEstadoCuenta[];
 
       // Generar todas las cuotas
       const cuotas = generarTodasLasCuotas(financiamiento, pagos);

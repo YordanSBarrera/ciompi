@@ -232,7 +232,7 @@ function generateVencimientosReportHTML(
     
     body {
       font-family: Arial, sans-serif;
-      font-size: 9px;
+      font-size: 11px;
       color: #333;
       background: white;
       padding: 15px;
@@ -259,7 +259,7 @@ function generateVencimientosReportHTML(
     }
     
     .header .fecha {
-      font-size: 10px;
+      font-size: 11px;
       color: #999;
     }
     
@@ -278,7 +278,7 @@ function generateVencimientosReportHTML(
     }
     
     .filtro-label {
-      font-size: 8px;
+      font-size: 10px;
       color: #666;
       text-transform: uppercase;
       font-weight: 600;
@@ -286,7 +286,7 @@ function generateVencimientosReportHTML(
     }
     
     .filtro-value {
-      font-size: 10px;
+      font-size: 12px;
       color: #333;
       font-weight: 500;
     }
@@ -315,7 +315,7 @@ function generateVencimientosReportHTML(
     }
     
     .summary-box h3 {
-      font-size: 9px;
+      font-size: 10px;
       color: #666;
       margin-bottom: 5px;
       text-transform: uppercase;
@@ -323,7 +323,7 @@ function generateVencimientosReportHTML(
     }
     
     .summary-box .value {
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 600;
       color: #333;
     }
@@ -332,7 +332,7 @@ function generateVencimientosReportHTML(
       width: 100%;
       border-collapse: collapse;
       margin-top: 10px;
-      font-size: 8px;
+      font-size: 10px;
     }
     
     thead {
@@ -341,17 +341,17 @@ function generateVencimientosReportHTML(
     }
     
     th {
-      padding: 6px 4px;
+      padding: 6px 5px;
       text-align: left;
       font-weight: 600;
       border: 1px solid #1565c0;
-      font-size: 8px;
+      font-size: 10px;
     }
     
     td {
-      padding: 5px 4px;
+      padding: 6px 5px;
       border: 1px solid #ddd;
-      font-size: 8px;
+      font-size: 10px;
     }
     
     tbody tr:nth-child(even) {
@@ -371,7 +371,7 @@ function generateVencimientosReportHTML(
       padding-top: 10px;
       border-top: 2px solid #ddd;
       text-align: center;
-      font-size: 8px;
+      font-size: 10px;
       color: #666;
     }
     
@@ -379,7 +379,7 @@ function generateVencimientosReportHTML(
       text-align: center;
       padding: 40px;
       color: #999;
-      font-size: 12px;
+      font-size: 13px;
     }
   </style>
 </head>

@@ -127,18 +127,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar que el vehículo no esté sujeto a otro financiamiento activo
+    // Verificar que el vehículo exista y esté marcado como disponible
     if (body.vehiculo && typeof body.vehiculo === 'string') {
-      const financiamientoActivo = await Financiamiento.findOne({
-        vehiculo: body.vehiculo,
-        estadoFinanciamiento: { $in: ['activo', 'en_mora'] },
-      });
-      if (financiamientoActivo) {
+      const vehiculoSeleccionado = await Vehiculo.findById(body.vehiculo);
+      if (!vehiculoSeleccionado) {
+        return NextResponse.json(
+          { error: 'El vehículo seleccionado no existe' },
+          { status: 404 }
+        );
+      }
+      // Vehículos antiguos que no tienen el campo "disponible" se consideran disponibles
+      if (vehiculoSeleccionado.disponible === false) {
         return NextResponse.json(
           {
             error:
-              'El vehículo seleccionado ya está asociado a un financiamiento activo y no puede financiarse nuevamente',
-            financiamientoId: financiamientoActivo._id,
+              'El vehículo seleccionado está marcado como no disponible. Cámbielo a "Disponible: Sí" para poder financiarlo.',
           },
           { status: 409 }
         );

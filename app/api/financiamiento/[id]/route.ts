@@ -16,6 +16,49 @@ void Vehiculo;
 void Empresa;
 void Usuario;
 
+// Tipos locales para los datos de actualización de financiamiento
+type DatosModoSimple = {
+  estadoFinanciamiento?: string;
+  observaciones?: string;
+  cuotasPagadas?: number;
+  montoPagado?: number;
+  saldoPendiente?: number;
+  cuotasPendientes?: number;
+  usuarioModificacion?: string;
+};
+
+type CuotaFuturaActualizada = {
+  numeroCuota: number;
+  fechaVencimiento: string;
+  valorCuota: number;
+};
+
+type DatosFinanciamiento = {
+  cliente: string;
+  cliente2?: string;
+  vehiculo?: string;
+  empresa: unknown;
+  moneda: string;
+  costoVehiculo: number;
+  valorBase?: number;
+  costosDocumentacion: number;
+  gastosExtras: number;
+  cuotasExtras: number;
+  cuotas: number;
+  valorCuota: number;
+  interesTotal: number;
+  montoTotal: number;
+  fechaPrimeraCuota: Date;
+  fechaUltimaCuota: Date;
+  fechaVenta: Date;
+  observaciones?: string;
+  usuarioModificacion: string;
+  cuotasFuturas?: CuotaFuturaActualizada[];
+  cuotasPendientes?: number;
+  saldoPendiente?: number;
+  estadoFinanciamiento?: string;
+};
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -44,10 +87,10 @@ export async function GET(
     }
 
     return NextResponse.json(financiamiento);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error obteniendo financiamiento:', error);
     return NextResponse.json(
-      { error: error.message || 'Error interno del servidor' },
+      { error: error instanceof Error ? error.message : 'Error interno del servidor' },
       { status: 500 }
     );
   }
@@ -81,7 +124,7 @@ export async function PUT(
 
     // Si viene un modo simple (solo actualizar campos básicos), usar la lógica anterior
     if (body.modoSimple === true) {
-      const camposPermitidos = [
+      const camposPermitidos: (keyof DatosModoSimple)[] = [
         'estadoFinanciamiento',
         'observaciones',
         'cuotasPagadas',
@@ -90,7 +133,7 @@ export async function PUT(
         'cuotasPendientes',
       ];
 
-      const datosActualizados: any = {};
+      const datosActualizados: DatosModoSimple = {};
       for (const campo of camposPermitidos) {
         if (body[campo] !== undefined) {
           datosActualizados[campo] = body[campo];
@@ -307,7 +350,7 @@ export async function PUT(
     }
 
     // Preparar datos actualizados
-    const datosActualizados: any = {
+    const datosActualizados: DatosFinanciamiento = {
       cliente: clienteId,
       cliente2: cliente2Id || undefined,
       vehiculo: vehiculoNuevo,
@@ -342,11 +385,13 @@ export async function PUT(
 
     // Actualizar cuotasFuturas si vienen (usando parseLocalDate para evitar desfase)
     if (body.cuotasFuturas) {
-      datosActualizados.cuotasFuturas = body.cuotasFuturas.map((cf: any) => ({
+      datosActualizados.cuotasFuturas = body.cuotasFuturas.map(
+      (cf: CuotaFuturaActualizada) => ({
         numeroCuota: cf.numeroCuota,
         fechaVencimiento: parseLocalDate(cf.fechaVencimiento),
         valorCuota: cf.valorCuota,
-      }));
+      })
+    );
     }
 
     // Recalcular cuotasPendientes y saldoPendiente incluyendo cuotas extras
@@ -457,10 +502,10 @@ export async function PUT(
     }
 
     return NextResponse.json(financiamientoActualizado);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error actualizando financiamiento:', error);
     return NextResponse.json(
-      { error: error.message || 'Error interno del servidor' },
+      { error: error instanceof Error ? error.message : 'Error interno del servidor' },
       { status: 500 }
     );
   }
@@ -502,10 +547,10 @@ export async function DELETE(
     return NextResponse.json({
       message: 'Financiamiento eliminado correctamente',
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error eliminando financiamiento:', error);
     return NextResponse.json(
-      { error: error.message || 'Error interno del servidor' },
+      { error: error instanceof Error ? error.message : 'Error interno del servidor' },
       { status: 500 }
     );
   }

@@ -1,10 +1,19 @@
 'use client';
 import { grisClaro, grisMedio } from '@/lib/color';
-import { FinanciamientoType, PagoCuotaType } from '@/lib/types';
-import { isAdmin } from '@/lib/utils';
+import {
+  FinanciamientoType,
+  PagoCuotaType,
+  ClienteType,
+  ClienteFormType,
+  VehiculoType,
+  VehiculoFormType,
+} from '@/lib/types';
+import { isAdmin, getAuthHeaders } from '@/lib/utils';
 import { formatMoney, normalizarMoneda } from '@/lib/moneda';
 import AuthGuard from '@/app/components/AuthGuard';
 import PagoCuotaModal from '@/app/components/PagoCuotaModal';
+import ModalEditarCliente from '@/app/components/ModalEditarCliente';
+import FormularioVehiculo from '@/app/components/FormularioVehiculo';
 import { useEliminarFinanciamiento } from '@/app/hook/useEliminarFinanciamiento';
 import ModalConfirmarEliminar from './ModalConfirmarEliminacion';
 import {
@@ -39,6 +48,7 @@ import {
   Visibility as VisibilityIcon,
   Print as PrintIcon,
   Edit as EditIcon,
+  Delete as DeleteIcon,
 } from '@mui/icons-material';
 import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
@@ -75,6 +85,16 @@ export default function FinanciamientoDetailPage() {
   const [pagoDetalleOpen, setPagoDetalleOpen] = useState(false);
   const [pagoSeleccionado, setPagoSeleccionado] =
     useState<PagoCuotaType | null>(null);
+  const [pagoEditar, setPagoEditar] = useState<PagoCuotaType | null>(null);
+  const [pagoEliminar, setPagoEliminar] = useState<PagoCuotaType | null>(null);
+  const [snackbarPago, setSnackbarPago] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error';
+  }>({ open: false, message: '', severity: 'success' });
+  const [clienteModalOpen, setClienteModalOpen] = useState(false);
+  const [cliente2ModalOpen, setCliente2ModalOpen] = useState(false);
+  const [vehiculoModalOpen, setVehiculoModalOpen] = useState(false);
 
   // Hook para eliminar financiamiento
   const {
@@ -191,7 +211,7 @@ export default function FinanciamientoDetailPage() {
       financiamiento.cuotasFuturas.forEach(cuota => {
         const fechaVencimiento = new Date(cuota.fechaVencimiento);
         const esExtra = cuota.numeroCuota > financiamiento.cuotas;
-        
+
         // Calcular pagos para esta cuota específica
         let montoPagado = 0;
         if (esExtra) {
@@ -208,7 +228,7 @@ export default function FinanciamientoDetailPage() {
           // Para cuotas normales, usar el cálculo existente
           montoPagado = pagosPorCuota[cuota.numeroCuota] || 0;
         }
-        
+
         const pagada = montoPagado >= cuota.valorCuota;
         const montoPendiente = Math.max(0, cuota.valorCuota - montoPagado);
 
@@ -255,13 +275,15 @@ export default function FinanciamientoDetailPage() {
       const cuotasExtrasExistentes = todasLasCuotas.filter(
         c => c.esExtra
       ).length;
-      
+
       // Si faltan cuotas extras, generarlas
       if (cuotasExtrasExistentes < financiamiento.cuotasExtras) {
         // Obtener la fecha de la última cuota normal
         const fechaUltima =
           todasLasCuotas.length > 0
-            ? new Date(todasLasCuotas[todasLasCuotas.length - 1].fechaVencimiento)
+            ? new Date(
+                todasLasCuotas[todasLasCuotas.length - 1].fechaVencimiento
+              )
             : financiamiento.cuotasFuturas &&
                 financiamiento.cuotasFuturas.length > 0
               ? new Date(
@@ -272,12 +294,14 @@ export default function FinanciamientoDetailPage() {
               : new Date(financiamiento.fechaUltimaCuota);
 
         // Obtener el número de cuota más alto para las extras
-        const maxNumeroCuota = todasLasCuotas.length > 0
-          ? Math.max(...todasLasCuotas.map(c => c.numeroCuota))
-          : financiamiento.cuotas;
+        const maxNumeroCuota =
+          todasLasCuotas.length > 0
+            ? Math.max(...todasLasCuotas.map(c => c.numeroCuota))
+            : financiamiento.cuotas;
 
         // Generar solo las cuotas extras faltantes
-        const cuotasExtrasFaltantes = financiamiento.cuotasExtras - cuotasExtrasExistentes;
+        const cuotasExtrasFaltantes =
+          financiamiento.cuotasExtras - cuotasExtrasExistentes;
         for (let i = 1; i <= cuotasExtrasFaltantes; i++) {
           const fechaVencimiento = new Date(fechaUltima);
           fechaVencimiento.setMonth(fechaVencimiento.getMonth() + i);
@@ -327,44 +351,181 @@ export default function FinanciamientoDetailPage() {
     }
   };
 
+  const recargarDatos = async () => {
+    // Recargar financiamiento y pagos después de cambios
+    const [financiamientoResponse, pagosResponse] = await Promise.all([
+      fetch(`/api/financiamiento/${id}`),
+      fetch(`/api/pagos-cuotas/financiamiento/${id}`),
+    ]);
+
+    const [financiamientoData, pagosData] = await Promise.all([
+      financiamientoResponse.json(),
+      pagosResponse.json(),
+    ]);
+
+    setFinanciamiento(financiamientoData);
+    // Ordenar pagos: primero normales por número, luego extras por número o fecha
+    const pagosOrdenados = [...pagosData].sort((a, b) => {
+      // Primero separar por tipo: normales primero
+      if (a.esExtra !== b.esExtra) {
+        return a.esExtra ? 1 : -1;
+      }
+      // Si ambos son del mismo tipo, ordenar por número de cuota
+      if (a.numeroCuota && b.numeroCuota) {
+        return a.numeroCuota - b.numeroCuota;
+      }
+      // Si no tienen número, ordenar por fecha
+      return new Date(a.fechaPago).getTime() - new Date(b.fechaPago).getTime();
+    });
+    setPagos(pagosOrdenados);
+  };
+
   const handlePagoRegistrado = async () => {
-    // Recargar los datos después de registrar un pago
     try {
-      const [financiamientoResponse, pagosResponse] = await Promise.all([
-        fetch(`/api/financiamiento/${id}`),
-        fetch(`/api/pagos-cuotas/financiamiento/${id}`),
-      ]);
-
-      const [financiamientoData, pagosData] = await Promise.all([
-        financiamientoResponse.json(),
-        pagosResponse.json(),
-      ]);
-
-      setFinanciamiento(financiamientoData);
-      // Ordenar pagos: primero normales por número, luego extras por número o fecha
-      const pagosOrdenados = [...pagosData].sort((a, b) => {
-        // Primero separar por tipo: normales primero
-        if (a.esExtra !== b.esExtra) {
-          return a.esExtra ? 1 : -1;
-        }
-        // Si ambos son del mismo tipo, ordenar por número de cuota
-        if (a.numeroCuota && b.numeroCuota) {
-          return a.numeroCuota - b.numeroCuota;
-        }
-        // Si no tienen número, ordenar por fecha
-        return (
-          new Date(a.fechaPago).getTime() - new Date(b.fechaPago).getTime()
-        );
-      });
-      setPagos(pagosOrdenados);
+      await recargarDatos();
     } catch (err) {
       console.error('Error recargando datos:', err);
+    }
+  };
+
+  const guardarCliente = async (
+    cliente: ClienteType | null,
+    clienteData: ClienteFormType
+  ) => {
+    if (!cliente?._id) {
+      return { success: false, error: 'Cliente no encontrado' };
+    }
+
+    try {
+      const response = await fetch(`/api/clientes/${cliente._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(clienteData),
+      });
+
+      if (response.ok) {
+        await recargarDatos();
+        return { success: true };
+      }
+
+      const errorData = await response.json();
+      return {
+        success: false,
+        error:
+          errorData.message || errorData.error || 'Error al actualizar cliente',
+      };
+    } catch (err) {
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : 'Error de conexión',
+      };
+    }
+  };
+
+  const handleGuardarCliente = (clienteData: ClienteFormType) =>
+    guardarCliente(
+      typeof financiamiento?.cliente === 'object'
+        ? (financiamiento.cliente as ClienteType)
+        : null,
+      clienteData
+    );
+
+  const handleGuardarCliente2 = (clienteData: ClienteFormType) =>
+    guardarCliente(
+      typeof financiamiento?.cliente2 === 'object'
+        ? (financiamiento.cliente2 as ClienteType)
+        : null,
+      clienteData
+    );
+
+  const handleGuardarVehiculo = async (vehiculoData: VehiculoFormType) => {
+    const vehiculo =
+      typeof financiamiento?.vehiculo === 'object' && financiamiento.vehiculo
+        ? financiamiento.vehiculo
+        : null;
+    if (!vehiculo?._id) {
+      return { success: false, error: 'Vehículo no encontrado' };
+    }
+
+    try {
+      const response = await fetch(`/api/vehiculos/${vehiculo._id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...getAuthHeaders(),
+        },
+        body: JSON.stringify(vehiculoData),
+      });
+
+      if (response.ok) {
+        await recargarDatos();
+        return { success: true };
+      }
+
+      const errorData = await response.json();
+      return {
+        success: false,
+        error:
+          errorData.message ||
+          errorData.error ||
+          'Error al actualizar vehículo',
+      };
+    } catch (err) {
+      return {
+        success: false,
+        error: err instanceof Error ? err.message : 'Error de conexión',
+      };
     }
   };
 
   const handleVerDetallePago = (pago: PagoCuotaType) => {
     setPagoSeleccionado(pago);
     setPagoDetalleOpen(true);
+  };
+
+  const handleEditarPago = (pago: PagoCuotaType) => {
+    setPagoDetalleOpen(false);
+    setPagoSeleccionado(null);
+    setPagoEditar(pago);
+    setPagoModalOpen(true);
+  };
+
+  const handleEliminarPago = (pago: PagoCuotaType) => {
+    setPagoEliminar(pago);
+  };
+
+  const handleConfirmarEliminarPago = async () => {
+    if (!pagoEliminar?._id) return;
+
+    try {
+      const response = await fetch(`/api/pagos-cuotas?id=${pagoEliminar._id}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Error al eliminar el pago');
+      }
+
+      setPagoEliminar(null);
+      setSnackbarPago({
+        open: true,
+        message: 'Pago eliminado correctamente',
+        severity: 'success',
+      });
+      await recargarDatos();
+    } catch (err) {
+      setSnackbarPago({
+        open: true,
+        message:
+          err instanceof Error ? err.message : 'Error al eliminar el pago',
+        severity: 'error',
+      });
+    }
   };
 
   if (loading) {
@@ -465,7 +626,9 @@ export default function FinanciamientoDetailPage() {
               />
               <Chip
                 label={financiamiento.estadoFinanciamiento}
-                color={getEstadoColor(financiamiento.estadoFinanciamiento) as any}
+                color={
+                  getEstadoColor(financiamiento.estadoFinanciamiento) as any
+                }
                 variant="filled"
                 sx={{ fontSize: '1rem', padding: '8px 16px' }}
               />
@@ -556,6 +719,22 @@ export default function FinanciamientoDetailPage() {
                         : 'No especificada'
                     }
                   />
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      mt: 2,
+                    }}
+                  >
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      startIcon={<EditIcon />}
+                      onClick={() => setClienteModalOpen(true)}
+                    >
+                      Editar Cliente
+                    </Button>
+                  </Box>
                 </CardContent>
               </Card>
             </Grid>
@@ -629,6 +808,22 @@ export default function FinanciamientoDetailPage() {
                           financiamiento.cliente2.DIRECCION || 'No especificada'
                         }
                       />
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'flex-end',
+                          mt: 2,
+                        }}
+                      >
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          startIcon={<EditIcon />}
+                          onClick={() => setCliente2ModalOpen(true)}
+                        >
+                          Editar Cliente
+                        </Button>
+                      </Box>
                     </CardContent>
                   </Card>
                 </Grid>
@@ -706,6 +901,22 @@ export default function FinanciamientoDetailPage() {
                             : 'No especificado'
                         }
                       />
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'flex-end',
+                          mt: 2,
+                        }}
+                      >
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          startIcon={<EditIcon />}
+                          onClick={() => setVehiculoModalOpen(true)}
+                        >
+                          Editar Vehículo
+                        </Button>
+                      </Box>
                     </>
                   ) : (
                     <Typography variant="body1" color="textSecondary">
@@ -1113,7 +1324,10 @@ export default function FinanciamientoDetailPage() {
                 <Button
                   variant="contained"
                   startIcon={<AddIcon />}
-                  onClick={() => setPagoModalOpen(true)}
+                  onClick={() => {
+                    setPagoEditar(null);
+                    setPagoModalOpen(true);
+                  }}
                   disabled={
                     financiamiento.estadoFinanciamiento === 'finalizado'
                   }
@@ -1217,6 +1431,26 @@ export default function FinanciamientoDetailPage() {
                                 >
                                   <VisibilityIcon fontSize="small" />
                                 </IconButton>
+                                {isAdmin() && (
+                                  <>
+                                    <IconButton
+                                      size="small"
+                                      color="primary"
+                                      onClick={() => handleEditarPago(pago)}
+                                      title="Editar pago"
+                                    >
+                                      <EditIcon fontSize="small" />
+                                    </IconButton>
+                                    <IconButton
+                                      size="small"
+                                      color="error"
+                                      onClick={() => handleEliminarPago(pago)}
+                                      title="Eliminar pago"
+                                    >
+                                      <DeleteIcon fontSize="small" />
+                                    </IconButton>
+                                  </>
+                                )}
                               </TableCell>
                             </TableRow>
                           ))}
@@ -1429,7 +1663,10 @@ export default function FinanciamientoDetailPage() {
         {/* Modal para registrar pagos */}
         <PagoCuotaModal
           open={pagoModalOpen}
-          onClose={() => setPagoModalOpen(false)}
+          onClose={() => {
+            setPagoModalOpen(false);
+            setPagoEditar(null);
+          }}
           financiamientoId={financiamiento._id || ''}
           moneda={monedaContrato}
           valorCuota={financiamiento.valorCuota}
@@ -1439,6 +1676,45 @@ export default function FinanciamientoDetailPage() {
           pagos={pagos}
           cuotasFuturas={financiamiento.cuotasFuturas || []}
           onPagoRegistrado={handlePagoRegistrado}
+          pagoEditar={pagoEditar}
+        />
+
+        {/* Modal para editar cliente */}
+        <ModalEditarCliente
+          open={clienteModalOpen}
+          onClose={() => setClienteModalOpen(false)}
+          cliente={
+            typeof financiamiento.cliente === 'object'
+              ? (financiamiento.cliente as ClienteType)
+              : null
+          }
+          onSave={handleGuardarCliente}
+        />
+
+        {/* Modal para editar segundo cliente */}
+        <ModalEditarCliente
+          open={cliente2ModalOpen}
+          onClose={() => setCliente2ModalOpen(false)}
+          cliente={
+            typeof financiamiento.cliente2 === 'object'
+              ? (financiamiento.cliente2 as ClienteType)
+              : null
+          }
+          onSave={handleGuardarCliente2}
+        />
+
+        {/* Modal para editar vehículo */}
+        <FormularioVehiculo
+          open={vehiculoModalOpen}
+          onClose={() => setVehiculoModalOpen(false)}
+          onSave={handleGuardarVehiculo}
+          vehiculo={
+            typeof financiamiento.vehiculo === 'object' &&
+            financiamiento.vehiculo
+              ? (financiamiento.vehiculo as VehiculoType)
+              : null
+          }
+          title="Editar Vehículo"
         />
 
         {/* Modal para ver detalles del pago */}
@@ -1575,6 +1851,36 @@ export default function FinanciamientoDetailPage() {
           </DialogActions>
         </Dialog>
 
+        {/* Diálogo de confirmación de eliminación de pago */}
+        <Dialog
+          open={!!pagoEliminar}
+          onClose={() => setPagoEliminar(null)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Eliminar Pago</DialogTitle>
+          <DialogContent>
+            <Typography>
+              ¿Está seguro de que desea eliminar este pago
+              {pagoEliminar?.esExtra
+                ? ` (Cuota Extra #${pagoEliminar.numeroCuota})`
+                : ` (Cuota #${pagoEliminar?.numeroCuota})`}{' '}
+              por {formatCurrency(pagoEliminar?.montoPago || 0)}? Esta acción
+              recalculará el estado del financiamiento.
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setPagoEliminar(null)}>Cancelar</Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={handleConfirmarEliminarPago}
+            >
+              Eliminar
+            </Button>
+          </DialogActions>
+        </Dialog>
+
         {/* Diálogo de confirmación de eliminación */}
         <ModalConfirmarEliminar
           open={confirmDialog.open}
@@ -1597,6 +1903,21 @@ export default function FinanciamientoDetailPage() {
             sx={{ width: '100%' }}
           >
             {snackbar.message}
+          </Alert>
+        </Snackbar>
+
+        <Snackbar
+          open={snackbarPago.open}
+          autoHideDuration={6000}
+          onClose={() => setSnackbarPago(prev => ({ ...prev, open: false }))}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert
+            onClose={() => setSnackbarPago(prev => ({ ...prev, open: false }))}
+            severity={snackbarPago.severity}
+            sx={{ width: '100%' }}
+          >
+            {snackbarPago.message}
           </Alert>
         </Snackbar>
       </Container>

@@ -29,6 +29,8 @@ import {
   Collapse,
   Zoom,
   Grow,
+  Tooltip,
+  SlideProps,
 } from '@mui/material';
 import {
   DirectionsCar as CarIcon,
@@ -68,6 +70,20 @@ interface FormularioVehiculoProps {
   title: string;
 }
 
+// Errores del formulario: todos los campos admiten un mensaje de texto
+type VehiculoErrorForm = Partial<Record<keyof VehiculoFormType, string>>;
+
+const matriculaValida = (matricula: string): boolean => {
+  const valor = matricula.toUpperCase();
+  // Formato alfanumérico con guiones (ej. ABC-1234, ABC1234)
+  const formatoAlfanumerico = /^[A-Z0-9-]{3,10}$/;
+  // Formato nueva matrícula: 3 letras, espacio y 4 dígitos (ej. SDF 9834)
+  const formatoLetrasNumeros = /^[A-Z]{3} \d{4}$/;
+  return (
+    formatoAlfanumerico.test(valor) || formatoLetrasNumeros.test(valor)
+  );
+};
+
 export default function FormularioVehiculo({
   open,
   onClose,
@@ -86,7 +102,7 @@ export default function FormularioVehiculo({
     disponible: true,
   });
 
-  const [errors, setErrors] = useState<Partial<VehiculoFormType>>({});
+  const [errors, setErrors] = useState<VehiculoErrorForm>({});
   const [loading, setLoading] = useState(false);
   const [financiamientoActivo, setFinanciamientoActivo] =
     useState<FinanciamientoActivoResumen | null>(null);
@@ -136,9 +152,6 @@ export default function FormularioVehiculo({
           const data = await response.json();
           const activo = data.financiamientoActivo ?? null;
           setFinanciamientoActivo(activo);
-          if (activo) {
-            setFormData(prev => ({ ...prev, disponible: false }));
-          }
         }
       } catch {
         setFinanciamientoActivo(null);
@@ -149,7 +162,7 @@ export default function FormularioVehiculo({
   }, [open, vehiculo?._id]);
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<VehiculoFormType> = {};
+    const newErrors: VehiculoErrorForm = {};
 
     // Validación de marca
     if (!formData.Marca.trim()) {
@@ -172,12 +185,9 @@ export default function FormularioVehiculo({
     // Validación de matrícula
     if (!formData.Matricula.trim()) {
       newErrors.Matricula = 'La matrícula es requerida';
-    } else {
-      const matriculaRegex = /^[A-Z0-9-]{3,10}$/;
-      if (!matriculaRegex.test(formData.Matricula.trim())) {
-        newErrors.Matricula =
-          'La matrícula debe tener entre 3 y 10 caracteres alfanuméricos y guiones';
-      }
+    } else if (!matriculaValida(formData.Matricula.trim())) {
+      newErrors.Matricula =
+        'Formato inválido. Use letras, números y guiones (3-10 caracteres) o el formato de 3 letras, espacio y 4 dígitos (ej. SDF 9834)';
     }
 
     // Validación de año
@@ -185,16 +195,16 @@ export default function FormularioVehiculo({
       const currentYear = new Date().getFullYear();
       if (formData.Año < 1900 || formData.Año > currentYear + 1) {
         newErrors.Año =
-          `El año debe estar entre 1900 y ${currentYear + 1}` as any;
+          `El año debe estar entre 1900 y ${currentYear + 1}`;
       }
     }
 
     // Validación de padrón
     if (formData.Padron !== undefined && formData.Padron !== null) {
       if (formData.Padron < 0) {
-        newErrors.Padron = 'El padrón debe ser un número positivo' as any;
+        newErrors.Padron = 'El padrón debe ser un número positivo';
       } else if (formData.Padron > 9999999999) {
-        newErrors.Padron = 'El padrón no puede exceder 9,999,999,999' as any;
+        newErrors.Padron = 'El padrón no puede exceder 9,999,999,999';
       }
     }
 
@@ -212,16 +222,10 @@ export default function FormularioVehiculo({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleInputChange = (field: keyof VehiculoFormType, value: any) => {
-    if (field === 'disponible' && value === true && financiamientoActivo) {
-      setSnackbar({
-        open: true,
-        message: `No se puede marcar como disponible: está asociado al financiamiento ${financiamientoActivo._id}`,
-        severity: 'warning',
-      });
-      return;
-    }
-
+  const handleInputChange = (
+    field: keyof VehiculoFormType,
+    value: VehiculoFormType[keyof VehiculoFormType]
+  ) => {
     setFormData(prev => ({ ...prev, [field]: value }));
 
     // Limpiar error del campo cuando el usuario empieza a escribir
@@ -230,37 +234,36 @@ export default function FormularioVehiculo({
     }
 
     // Validación en tiempo real para algunos campos
-    if (field === 'Matricula' && value) {
-      const matriculaRegex = /^[A-Z0-9-]{3,10}$/;
-      if (!matriculaRegex.test(value.trim())) {
+    if (field === 'Matricula' && typeof value === 'string' && value) {
+      if (!matriculaValida(value.trim())) {
         setErrors(prev => ({
           ...prev,
           Matricula:
-            'Formato inválido. Use letras, números y guiones (3-10 caracteres)',
+            'Formato inválido. Use letras, números y guiones (3-10 caracteres) o el formato de 3 letras, espacio y 4 dígitos (ej. SDF 9834)',
         }));
       }
     }
 
-    if (field === 'Año' && value) {
+    if (field === 'Año' && typeof value === 'number' && value) {
       const currentYear = new Date().getFullYear();
       if (value < 1900 || value > currentYear + 1) {
         setErrors(prev => ({
           ...prev,
-          Año: `El año debe estar entre 1900 y ${currentYear + 1}` as any,
+          Año: `El año debe estar entre 1900 y ${currentYear + 1}`,
         }));
       }
     }
 
-    if (field === 'Padron' && value !== undefined && value !== null) {
+    if (field === 'Padron' && typeof value === 'number') {
       if (value < 0) {
         setErrors(prev => ({
           ...prev,
-          Padron: 'El padrón debe ser un número positivo' as any,
+          Padron: 'El padrón debe ser un número positivo',
         }));
       } else if (value > 9999999999) {
         setErrors(prev => ({
           ...prev,
-          Padron: 'El padrón no puede exceder 9,999,999,999' as any,
+          Padron: 'El padrón no puede exceder 9,999,999,999',
         }));
       }
     }
@@ -1160,59 +1163,58 @@ export default function FormularioVehiculo({
 
                       {/* Disponible */}
                       <Grid size={{ xs: 12, sm: 6 }}>
-                        <FormControl
-                          fullWidth
-                          sx={{
-                            '& .MuiOutlinedInput-root': {
-                              borderRadius: 2,
-                              backgroundColor: 'rgba(255,255,255,0.8)',
-                              transition: 'all 0.2s ease-in-out',
-                              '&:hover': {
-                                backgroundColor: 'rgba(255,255,255,1)',
-                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                              },
-                              '&.Mui-focused': {
-                                backgroundColor: 'rgba(255,255,255,1)',
-                                boxShadow: `0 0 0 2px ${verde}20`,
-                              },
-                            },
-                          }}
+                        <Tooltip
+                          title={
+                            financiamientoActivo
+                              ? `Este vehículo está asociado a un financiamiento${financiamientoActivo.clienteNombre ? ` del cliente ${financiamientoActivo.clienteNombre}` : ''} (estado: ${financiamientoActivo.estadoFinanciamiento}).`
+                              : ''
+                          }
+                          arrow
+                          placement="top"
                         >
-                          <InputLabel sx={{ fontWeight: 600 }}>
-                            Disponible
-                          </InputLabel>
-                          <Select
-                            value={
-                              formData.disponible !== false ? 'si' : 'no'
-                            }
-                            onChange={e =>
-                              handleInputChange(
-                                'disponible',
-                                e.target.value === 'si'
-                              )
-                            }
-                            label="Disponible"
-                            disabled={!!financiamientoActivo}
-                            startAdornment={
-                              <InputAdornment position="start">
-                                <CheckIcon sx={{ color: verde }} />
-                              </InputAdornment>
-                            }
+                          <FormControl
+                            fullWidth
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                borderRadius: 2,
+                                backgroundColor: 'rgba(255,255,255,0.8)',
+                                transition: 'all 0.2s ease-in-out',
+                                '&:hover': {
+                                  backgroundColor: 'rgba(255,255,255,1)',
+                                  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                                },
+                                '&.Mui-focused': {
+                                  backgroundColor: 'rgba(255,255,255,1)',
+                                  boxShadow: `0 0 0 2px ${verde}20`,
+                                },
+                              },
+                            }}
                           >
-                            <MenuItem value="si">Sí</MenuItem>
-                            <MenuItem value="no">No</MenuItem>
-                          </Select>
-                        </FormControl>
-                        {financiamientoActivo && (
-                          <Alert severity="warning" sx={{ mt: 1 }}>
-                            Este vehículo está asociado a un financiamiento
-                            {financiamientoActivo.clienteNombre
-                              ? ` del cliente ${financiamientoActivo.clienteNombre}`
-                              : ''}{' '}
-                            (estado: {financiamientoActivo.estadoFinanciamiento}
-                            ). No puede marcarse como disponible.
-                          </Alert>
-                        )}
+                            <InputLabel sx={{ fontWeight: 600 }}>
+                              Disponible
+                            </InputLabel>
+                            <Select
+                              value={
+                                formData.disponible !== false ? 'si' : 'no'
+                              }
+                              onChange={e =>
+                                handleInputChange(
+                                  'disponible',
+                                  e.target.value === 'si'
+                                )
+                              }
+                              label="Disponible"
+                              startAdornment={
+                                <InputAdornment position="start">
+                                  <CheckIcon sx={{ color: verde }} />
+                                </InputAdornment>
+                              }
+                            >
+                              <MenuItem value="si">Sí</MenuItem>
+                              <MenuItem value="no">No</MenuItem>
+                            </Select>
+                          </FormControl>
+                        </Tooltip>
                       </Grid>
 
                       {/* Descripción */}
@@ -1429,7 +1431,7 @@ export default function FormularioVehiculo({
         onClose={handleSnackbarClose}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
         TransitionComponent={Slide}
-        TransitionProps={{ direction: 'up' } as any}
+TransitionProps={{ direction: 'up' } as SlideProps}
         sx={{
           '& .MuiSnackbarContent-root': {
             borderRadius: 2,

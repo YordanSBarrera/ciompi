@@ -99,20 +99,6 @@ export async function PUT(
 
     const financiamientoActivo = await obtenerFinanciamientoActivo(id);
 
-    if (financiamientoActivo) {
-      if (data.disponible === true) {
-        return NextResponse.json(
-          {
-            error:
-              'No se puede marcar como disponible: el vehículo está asociado a un financiamiento activo',
-            financiamientoId: financiamientoActivo._id,
-          },
-          { status: 409 }
-        );
-      }
-      data.disponible = false;
-    }
-
     const vehiculoUpdated = await Vehiculo.findByIdAndUpdate(
       id,
       { ...data, usuarioModificacion: userId },
