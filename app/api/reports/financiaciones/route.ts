@@ -147,7 +147,7 @@ function generateFinanciacionesReportHTML(
     
     body {
       font-family: Arial, sans-serif;
-      font-size: 9px;
+      font-size: 11px;
       color: #333;
       background: white;
       padding: 15px;
@@ -167,7 +167,7 @@ function generateFinanciacionesReportHTML(
     }
     
     .header .fecha {
-      font-size: 11px;
+      font-size: 12px;
       color: #666;
     }
     
@@ -180,7 +180,7 @@ function generateFinanciacionesReportHTML(
     
     .summary-box {
       background: #f5f5f5;
-      padding: 8px;
+      padding: 10px;
       border-radius: 5px;
       border-left: 4px solid #1e88e5;
     }
@@ -202,14 +202,14 @@ function generateFinanciacionesReportHTML(
     }
     
     .summary-box h3 {
-      font-size: 9px;
+      font-size: 10px;
       color: #666;
       margin-bottom: 5px;
       text-transform: uppercase;
     }
     
     .summary-box .value {
-      font-size: 14px;
+      font-size: 16px;
       font-weight: 600;
       color: #333;
     }
@@ -218,7 +218,7 @@ function generateFinanciacionesReportHTML(
       width: 100%;
       border-collapse: collapse;
       margin-top: 10px;
-      font-size: 8px;
+      font-size: 10px;
     }
     
     thead {
@@ -227,17 +227,17 @@ function generateFinanciacionesReportHTML(
     }
     
     th {
-      padding: 6px 4px;
+      padding: 6px 5px;
       text-align: left;
       font-weight: 600;
       border: 1px solid #1565c0;
-      font-size: 8px;
+      font-size: 10px;
     }
     
     td {
-      padding: 5px 4px;
+      padding: 6px 5px;
       border: 1px solid #ddd;
-      font-size: 8px;
+      font-size: 10px;
     }
     
     tbody tr:nth-child(even) {
@@ -254,9 +254,9 @@ function generateFinanciacionesReportHTML(
     
     .estado-badge {
       display: inline-block;
-      padding: 2px 6px;
+      padding: 2px 7px;
       border-radius: 3px;
-      font-size: 7px;
+      font-size: 10px;
       font-weight: 600;
       text-transform: uppercase;
     }
@@ -266,7 +266,7 @@ function generateFinanciacionesReportHTML(
       padding-top: 10px;
       border-top: 2px solid #ddd;
       text-align: center;
-      font-size: 8px;
+      font-size: 10px;
       color: #666;
     }
     
@@ -322,17 +322,17 @@ function generateFinanciacionesReportHTML(
     <thead>
       <tr>
         <th style="width: 3%;">#</th>
-        <th style="width: 15%;">Cliente</th>
-        <th style="width: 12%;">Vehículo</th>
+        <th style="width: 13%;">Cliente</th>
+        <th style="width: 11%;">Vehículo</th>
         <th style="width: 4%;" class="text-center">Mon.</th>
         <th style="width: 8%;">Matrícula</th>
-        <th style="width: 8%;" class="text-right">Costo</th>
+        <th style="width: 7%;" class="text-right">Costo</th>
         <th style="width: 5%;" class="text-center">Cuotas</th>
         <th style="width: 6%;" class="text-center">Cuotas Pag.</th>
         <th style="width: 8%;" class="text-right">Valor Cuota</th>
-        <th style="width: 8%;" class="text-right">Monto Total</th>
-        <th style="width: 8%;" class="text-right">Saldo Pend.</th>
-        <th style="width: 7%;" class="text-center">Estado</th>
+        <th style="width: 9%;" class="text-right">Monto Total</th>
+        <th style="width: 9%;" class="text-right">Saldo Pend.</th>
+        <th style="width: 9%;" class="text-center">Estado</th>
         <th style="width: 8%;" class="text-center">Fecha Venta</th>
       </tr>
     </thead>

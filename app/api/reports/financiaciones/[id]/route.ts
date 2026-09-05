@@ -371,7 +371,7 @@ function generateFinanciamientoDetailReportHTML(
     
     body {
       font-family: Arial, sans-serif;
-      font-size: 8px;
+      font-size: 11px;
       color: #333;
       background: white;
       padding: 0;
@@ -387,29 +387,29 @@ function generateFinanciamientoDetailReportHTML(
     }
     
     .header h1 {
-      font-size: 14px;
+      font-size: 16px;
       color: #1e88e5;
       margin: 0 0 3px 0;
       font-weight: 700;
     }
     
     .header .subtitle {
-      font-size: 10px;
+      font-size: 11px;
       color: #666;
       margin: 0;
     }
     
     .header .fecha {
-      font-size: 8px;
+      font-size: 10px;
       color: #999;
       margin: 2px 0 0 0;
     }
     
     .estado-badge {
       display: inline-block;
-      padding: 2px 8px;
+      padding: 3px 8px;
       border-radius: 3px;
-      font-size: 8px;
+      font-size: 10px;
       font-weight: 600;
       text-transform: uppercase;
       margin-top: 3px;
@@ -417,7 +417,7 @@ function generateFinanciamientoDetailReportHTML(
     
     .section {
       margin-bottom: 6px;
-      padding: 6px;
+      padding: 8px;
       background: #f9f9f9;
       border-radius: 3px;
       border-left: 3px solid #1e88e5;
@@ -425,7 +425,7 @@ function generateFinanciamientoDetailReportHTML(
     }
     
     .section-title {
-      font-size: 10px;
+      font-size: 12px;
       color: #1e88e5;
       font-weight: 600;
       margin: 0 0 5px 0;
@@ -441,13 +441,13 @@ function generateFinanciamientoDetailReportHTML(
     }
     
     .info-item {
-      padding: 4px;
+      padding: 5px;
       background: white;
       border-radius: 2px;
     }
     
     .info-label {
-      font-size: 7px;
+      font-size: 9px;
       color: #666;
       text-transform: uppercase;
       font-weight: 600;
@@ -455,7 +455,7 @@ function generateFinanciamientoDetailReportHTML(
     }
     
     .info-value {
-      font-size: 9px;
+      font-size: 11px;
       color: #333;
       font-weight: 500;
       line-height: 1.2;
@@ -463,24 +463,24 @@ function generateFinanciamientoDetailReportHTML(
     
     .info-value.monospace {
       font-family: monospace;
-      font-size: 8px;
+      font-size: 11px;
     }
     
     .info-value.large {
-      font-size: 10px;
+      font-size: 12px;
       font-weight: 600;
     }
     
     .financial-summary {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 4px;
+      gap: 5px;
       margin-bottom: 6px;
     }
     
     .financial-box {
       background: white;
-      padding: 5px;
+      padding: 6px;
       border-radius: 3px;
       border-left: 3px solid #1e88e5;
       text-align: center;
@@ -503,7 +503,7 @@ function generateFinanciamientoDetailReportHTML(
     }
     
     .financial-box h3 {
-      font-size: 7px;
+      font-size: 9px;
       color: #666;
       margin: 0 0 3px 0;
       text-transform: uppercase;
@@ -511,7 +511,7 @@ function generateFinanciamientoDetailReportHTML(
     }
     
     .financial-box .value {
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 600;
       color: #333;
       margin: 0;
@@ -519,7 +519,7 @@ function generateFinanciamientoDetailReportHTML(
     
     .progress-bar {
       width: 100%;
-      height: 12px;
+      height: 14px;
       background: #e0e0e0;
       border-radius: 6px;
       overflow: hidden;
@@ -533,7 +533,7 @@ function generateFinanciamientoDetailReportHTML(
       align-items: center;
       justify-content: center;
       color: white;
-      font-size: 7px;
+      font-size: 10px;
       font-weight: 600;
     }
     
@@ -541,7 +541,7 @@ function generateFinanciamientoDetailReportHTML(
       width: 100%;
       border-collapse: collapse;
       margin-top: 4px;
-      font-size: 7px;
+      font-size: 10px;
       background: white;
     }
     
@@ -551,18 +551,18 @@ function generateFinanciamientoDetailReportHTML(
     }
     
     th {
-      padding: 4px 3px;
+      padding: 5px 4px;
       text-align: left;
       font-weight: 600;
       border: 1px solid #1565c0;
-      font-size: 7px;
+      font-size: 10px;
       line-height: 1.2;
     }
     
     td {
-      padding: 3px;
+      padding: 4px;
       border: 1px solid #ddd;
-      font-size: 7px;
+      font-size: 10px;
       line-height: 1.2;
     }
     
@@ -583,7 +583,7 @@ function generateFinanciamientoDetailReportHTML(
       padding-top: 5px;
       border-top: 1px solid #ddd;
       text-align: center;
-      font-size: 7px;
+      font-size: 10px;
       color: #666;
     }
     
@@ -591,7 +591,7 @@ function generateFinanciamientoDetailReportHTML(
       text-align: center;
       padding: 10px;
       color: #999;
-      font-size: 8px;
+      font-size: 10px;
       background: white;
       border-radius: 3px;
     }
@@ -618,28 +618,28 @@ function generateFinanciamientoDetailReportHTML(
   <div class="compact-row">
     <div class="section">
       <div class="section-title">Cliente Principal</div>
-      <div style="font-size: 9px; font-weight: 600; margin-bottom: 4px;">${clienteNombre}</div>
-      <div style="font-size: 7px; margin: 2px 0;"><strong>Cédula:</strong> ${escapeHtml(
+      <div style="font-size: 11px; font-weight: 600; margin-bottom: 4px;">${clienteNombre}</div>
+      <div style="font-size: 10px; margin: 2px 0;"><strong>Cédula:</strong> ${escapeHtml(
         typeof financiamiento?.cliente === 'object' && financiamiento.cliente?.cedula
           ? financiamiento.cliente.cedula
           : 'N/A'
       )}</div>
-      <div style="font-size: 7px; margin: 2px 0;"><strong>Prof:</strong> ${escapeHtml(
+      <div style="font-size: 10px; margin: 2px 0;"><strong>Prof:</strong> ${escapeHtml(
         typeof financiamiento?.cliente === 'object' && financiamiento.cliente?.profesion
           ? financiamiento.cliente.profesion
           : 'N/A'
       )}</div>
-      <div style="font-size: 7px; margin: 2px 0;"><strong>Tel:</strong> ${escapeHtml(
+      <div style="font-size: 10px; margin: 2px 0;"><strong>Tel:</strong> ${escapeHtml(
         typeof financiamiento?.cliente === 'object' && financiamiento.cliente?.TELEFONO
           ? financiamiento.cliente.TELEFONO
           : 'N/A'
       )}</div>
-      <div style="font-size: 7px; margin: 2px 0;"><strong>Email:</strong> ${escapeHtml(
+      <div style="font-size: 10px; margin: 2px 0;"><strong>Email:</strong> ${escapeHtml(
         typeof financiamiento?.cliente === 'object' && financiamiento.cliente?.correo
           ? financiamiento.cliente.correo
           : 'N/A'
       )}</div>
-      <div style="font-size: 7px; margin: 2px 0;"><strong>Dir:</strong> ${escapeHtml(
+      <div style="font-size: 10px; margin: 2px 0;"><strong>Dir:</strong> ${escapeHtml(
         typeof financiamiento?.cliente === 'object' && financiamiento.cliente?.DIRECCION
           ? financiamiento.cliente.DIRECCION
           : 'N/A'
@@ -649,33 +649,33 @@ function generateFinanciamientoDetailReportHTML(
     ${financiamiento?.cliente2 && typeof financiamiento.cliente2 === 'object' ? `
     <div class="section">
       <div class="section-title">Segundo Cliente</div>
-      <div style="font-size: 9px; font-weight: 600; margin-bottom: 4px;">${escapeHtml(financiamiento.cliente2.NOMBRE || 'N/A')}</div>
-      <div style="font-size: 7px; margin: 2px 0;"><strong>Cédula:</strong> ${escapeHtml(financiamiento.cliente2.cedula || 'N/A')}</div>
-      <div style="font-size: 7px; margin: 2px 0;"><strong>Prof:</strong> ${escapeHtml(financiamiento.cliente2.profesion || 'N/A')}</div>
-      <div style="font-size: 7px; margin: 2px 0;"><strong>Tel:</strong> ${escapeHtml(financiamiento.cliente2.TELEFONO || 'N/A')}</div>
-      <div style="font-size: 7px; margin: 2px 0;"><strong>Email:</strong> ${escapeHtml(financiamiento.cliente2.correo || 'N/A')}</div>
-      <div style="font-size: 7px; margin: 2px 0;"><strong>Dir:</strong> ${escapeHtml(financiamiento.cliente2.DIRECCION || 'N/A')}</div>
+      <div style="font-size: 11px; font-weight: 600; margin-bottom: 4px;">${escapeHtml(financiamiento.cliente2.NOMBRE || 'N/A')}</div>
+      <div style="font-size: 10px; margin: 2px 0;"><strong>Cédula:</strong> ${escapeHtml(financiamiento.cliente2.cedula || 'N/A')}</div>
+      <div style="font-size: 10px; margin: 2px 0;"><strong>Prof:</strong> ${escapeHtml(financiamiento.cliente2.profesion || 'N/A')}</div>
+      <div style="font-size: 10px; margin: 2px 0;"><strong>Tel:</strong> ${escapeHtml(financiamiento.cliente2.TELEFONO || 'N/A')}</div>
+      <div style="font-size: 10px; margin: 2px 0;"><strong>Email:</strong> ${escapeHtml(financiamiento.cliente2.correo || 'N/A')}</div>
+      <div style="font-size: 10px; margin: 2px 0;"><strong>Dir:</strong> ${escapeHtml(financiamiento.cliente2.DIRECCION || 'N/A')}</div>
     </div>
     ` : `
     <div class="section">
       <div class="section-title">Vehículo</div>
-      <div style="font-size: 9px; font-weight: 600; margin-bottom: 4px;">${vehiculoInfo}</div>
-      <div style="font-size: 7px; margin: 2px 0;"><strong>Matrícula:</strong> ${matricula}</div>
+      <div style="font-size: 11px; font-weight: 600; margin-bottom: 4px;">${vehiculoInfo}</div>
+      <div style="font-size: 10px; margin: 2px 0;"><strong>Matrícula:</strong> ${matricula}</div>
       ${typeof financiamiento?.vehiculo === 'object' && financiamiento.vehiculo?.Padron ? `
-      <div style="font-size: 7px; margin: 2px 0;"><strong>Padrón:</strong> ${escapeHtml(financiamiento.vehiculo.Padron.toString())}</div>
+      <div style="font-size: 10px; margin: 2px 0;"><strong>Padrón:</strong> ${escapeHtml(financiamiento.vehiculo.Padron.toString())}</div>
       ` : ''}
-      <div style="font-size: 7px; margin: 2px 0;"><strong>Año:</strong> ${escapeHtml(
+      <div style="font-size: 10px; margin: 2px 0;"><strong>Año:</strong> ${escapeHtml(
         typeof financiamiento?.vehiculo === 'object' && financiamiento.vehiculo?.Año
           ? financiamiento.vehiculo.Año
           : 'N/A'
       )}</div>
-      <div style="font-size: 7px; margin: 2px 0;"><strong>Color:</strong> ${escapeHtml(
+      <div style="font-size: 10px; margin: 2px 0;"><strong>Color:</strong> ${escapeHtml(
         typeof financiamiento?.vehiculo === 'object' && financiamiento.vehiculo?.Color
           ? financiamiento.vehiculo.Color
           : 'N/A'
       )}</div>
       ${typeof financiamiento?.vehiculo === 'object' && financiamiento.vehiculo?.Descripcion ? `
-      <div style="font-size: 7px; margin: 2px 0;"><strong>Desc:</strong> ${escapeHtml(financiamiento.vehiculo.Descripcion)}</div>
+      <div style="font-size: 10px; margin: 2px 0;"><strong>Desc:</strong> ${escapeHtml(financiamiento.vehiculo.Descripcion)}</div>
       ` : ''}
     </div>
     `}
@@ -730,7 +730,7 @@ function generateFinanciamientoDetailReportHTML(
   ${typeof financiamiento?.empresa === 'object' && financiamiento.empresa ? `
   <div class="section">
     <div class="section-title">Empresa</div>
-    <div style="font-size: 8px;">
+    <div style="font-size: 10px;">
       <strong>Nombre:</strong> ${escapeHtml(financiamiento.empresa.nombre || 'N/A')} | 
       <strong>Tel:</strong> ${escapeHtml(financiamiento.empresa.telefono || 'N/A')}
       ${financiamiento.empresa.descripcion ? ` | <strong>Desc:</strong> ${escapeHtml(financiamiento.empresa.descripcion)}` : ''}
@@ -781,13 +781,13 @@ function generateFinanciamientoDetailReportHTML(
       </div>
     </div>
     
-    <div style="font-size: 7px; margin-top: 4px; color: #666;">
+    <div style="font-size: 10px; margin-top: 4px; color: #666;">
       <strong>Fechas:</strong> Venta: ${formatDate(financiamiento?.fechaVenta)} | 
       Primera: ${formatDate(financiamiento?.fechaPrimeraCuota)} | 
       Última: ${formatDate(financiamiento?.fechaUltimaCuota)}
     </div>
     ${financiamiento?.observaciones ? `
-    <div style="font-size: 7px; margin-top: 4px; padding: 4px; background: white; border-radius: 2px;">
+    <div style="font-size: 10px; margin-top: 4px; padding: 4px; background: white; border-radius: 2px;">
       <strong>Observaciones:</strong> ${escapeHtml(financiamiento.observaciones)}
     </div>
     ` : ''}
@@ -815,7 +815,7 @@ function generateFinanciamientoDetailReportHTML(
         ${financiamiento?.progresoFinanciamiento || 0}%
       </div>
     </div>
-    <div style="font-size: 7px; margin-top: 4px; color: #666;">
+    <div style="font-size: 10px; margin-top: 4px; color: #666;">
       <strong>Monto Pagado:</strong> <span style="color: #4caf50;">${formatCurrency(financiamiento?.montoPagado)}</span>
     </div>
   </div>
@@ -862,14 +862,14 @@ function generateFinanciamientoDetailReportHTML(
         <tr style="background-color: ${cuota.pagada ? '#e8f5e9' : vencida ? '#ffebee' : 'transparent'};">
           <td class="text-center">
             <strong>#${cuota.numeroCuota}</strong>
-            ${cuota.esExtra ? ' <span style="font-size: 6px; color: #999;">(Extra)</span>' : ''}
+            ${cuota.esExtra ? ' <span style="font-size: 10px; color: #999;">(Extra)</span>' : ''}
           </td>
           <td class="text-center" style="${vencida && !cuota.pagada ? 'color: #f44336; font-weight: 600;' : ''}">${formatDate(cuota.fechaVencimiento)}</td>
           <td class="text-right"><strong>${formatCurrency(cuota.valorCuota)}</strong></td>
           <td class="text-right" style="${cuota.montoPagado > 0 ? 'color: #4caf50;' : ''}">${formatCurrency(cuota.montoPagado || 0)}</td>
           <td class="text-right" style="${cuota.montoPendiente > 0 ? 'color: #f44336;' : ''}">${formatCurrency(cuota.montoPendiente || 0)}</td>
           <td class="text-center">
-            <span style="font-size: 6px; padding: 2px 6px; border-radius: 3px; background: ${estadoColor}20; color: ${estadoColor}; font-weight: 600;">
+            <span style="font-size: 10px; padding: 2px 6px; border-radius: 3px; background: ${estadoColor}20; color: ${estadoColor}; font-weight: 600;">
               ${estadoText}
             </span>
           </td>
@@ -891,12 +891,12 @@ function generateFinanciamientoDetailReportHTML(
         <tr>
           <th style="width: 4%;">#</th>
           <th style="width: 8%;" class="text-center">Cuota</th>
-          <th style="width: 10%;" class="text-center">Fecha</th>
-          <th style="width: 10%;" class="text-right">Monto</th>
-          <th style="width: 10%;" class="text-center">Método</th>
-          <th style="width: 12%;">Comprobante</th>
-          <th style="width: 12%;">Banco</th>
-          <th style="width: 10%;">Registrado</th>
+          <th style="width: 11%;" class="text-center">Fecha</th>
+          <th style="width: 11%;" class="text-right">Monto</th>
+          <th style="width: 13%;" class="text-center">Método</th>
+          <th style="width: 15%;">Comprobante</th>
+          <th style="width: 13%;">Banco</th>
+          <th style="width: 25%;">Registrado</th>
         </tr>
       </thead>
       <tbody>
@@ -909,9 +909,9 @@ function generateFinanciamientoDetailReportHTML(
           <td class="text-center">${formatDate(pago?.fechaPago)}</td>
           <td class="text-right"><strong>${formatCurrency(pago?.montoPago)}</strong></td>
           <td class="text-center">${escapeHtml(pago?.metodoPago || '-')}</td>
-          <td style="font-size: 6px;">${escapeHtml(pago?.numeroComprobante || '-')}</td>
-          <td style="font-size: 6px;">${escapeHtml(pago?.banco || '-')}</td>
-          <td style="font-size: 6px;">
+          <td style="font-size: 10px;">${escapeHtml(pago?.numeroComprobante || '-')}</td>
+          <td style="font-size: 10px;">${escapeHtml(pago?.banco || '-')}</td>
+          <td style="font-size: 10px;">
             ${escapeHtml(
               typeof pago?.usuarioRegistro === 'object' && pago.usuarioRegistro?.nombre
                 ? pago.usuarioRegistro.nombre.split(' ')[0]
